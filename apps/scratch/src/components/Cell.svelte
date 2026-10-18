@@ -44,16 +44,18 @@
 			/>
 		{/if}
 
-		<SymbolIcon name={panel.name} size={diameter * 1.05} />
+		<Container y={-diameter * 0.08}>
+			<SymbolIcon name={panel.name} size={diameter * 0.6} />
+		</Container>
 
 		<Text
-			y={diameter * 0.42}
+			y={diameter * 0.32}
 			anchor={0.5}
 			text={mult > 0 ? `×${mult}` : '—'}
 			style={{
 				fontFamily: 'Outfit, sans-serif',
 				fontWeight: '800',
-				fontSize: diameter * 0.16,
+				fontSize: diameter * 0.15,
 				fill: mult > 0 ? 0xffffff : 0x7d97ad,
 			}}
 		/>
