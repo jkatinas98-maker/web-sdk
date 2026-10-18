@@ -10,6 +10,7 @@
 	import { playBookEvents } from '../game/utils';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
+	import Paytable from './Paytable.svelte';
 
 	const context = getContext();
 
@@ -34,9 +35,12 @@
 
 	// Space (in px) reserved above/below the pixi ticket canvas for the DOM
 	// overlay (difficulty picker + bet controls) — Ticket.svelte uses these
-	// to fit the grid between them instead of overlapping.
+	// to fit the grid between them instead of overlapping. BOTTOM_RESERVED in
+	// particular has to clear the bet-amount row + chip row + play button
+	// stacked in .ui-bottom, which is taller than the ticket's own footer.
 	const TOP_RESERVED = 150;
-	const BOTTOM_RESERVED = 150;
+	const BOTTOM_RESERVED = 215;
+	const PAYTABLE_Y = 110;
 
 	function playGame() {
 		if (isProcessing) return;
@@ -98,6 +102,9 @@
 <div class="pixi-layer">
 	<App>
 		<EnableGameActor />
+		{#if viewState !== 'playing'}
+			<Paytable y={PAYTABLE_Y} canvasWidth={context.stateLayoutDerived.canvasSizes().width} />
+		{/if}
 		<Ticket
 			{betMode}
 			top={TOP_RESERVED}
@@ -132,7 +139,7 @@
 
 		{#if viewState === 'start' || viewState === 'revealed'}
 			<div class="bet-row">
-				<button class="chip-style" onclick={() => setBetAmount(betAmount - 1)}>−</button>
+				<button class="chip-style wide" onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
 				<div class="bet-amount-wrap">
 					<span class="cur">$</span>
 					<input
@@ -144,7 +151,7 @@
 						oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
 					/>
 				</div>
-				<button class="chip-style" onclick={() => setBetAmount(betAmount + 1)}>+</button>
+				<button class="chip-style wide" onclick={() => setBetAmount(betAmount * 2)}>×2</button>
 			</div>
 			<div class="chip-row">
 				{#each BET_CHIPS as chip}

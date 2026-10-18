@@ -183,6 +183,13 @@ button:disabled {
 	margin: 0;
 }
 
+.chip-style.wide {
+	width: auto;
+	padding: 0 0.85rem;
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+
 .chip-style,
 .bet-row .chip-style {
 	width: 2.6rem;
