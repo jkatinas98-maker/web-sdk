@@ -10,11 +10,16 @@
 		betMode: BetMode;
 		top: number;
 		bottom: number;
+		// Desktop layout reserves fixed side panels (controls / paytable)
+		// either side of the canvas — 0 on mobile, where everything is
+		// stacked instead. The card centers itself in whatever width is left.
+		left?: number;
+		right?: number;
 		interactive: boolean;
 		onRevealIndex: (index: number) => void;
 	};
 
-	const { betMode, top, bottom, interactive, onRevealIndex }: Props = $props();
+	const { betMode, top, bottom, left = 0, right = 0, interactive, onRevealIndex }: Props = $props();
 
 	const context = getContext();
 
@@ -22,10 +27,13 @@
 	const rows = $derived(config.betModes[betMode].rows);
 
 	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
-	const cardWidth = $derived(Math.min(canvas.width - 32, 320));
-	const cardX = $derived((canvas.width - cardWidth) / 2);
-	const headerHeight = 46;
-	const footerHeight = 24;
+	const availableWidth = $derived(canvas.width - left - right);
+	const cardWidth = $derived(Math.min(availableWidth - 32, 340));
+	const cardX = $derived(left + (availableWidth - cardWidth) / 2);
+	// Small internal top margin only — the card no longer carries its own
+	// logo text, that moved to the external header bar in Game.svelte.
+	const headerHeight = 18;
+	const footerHeight = 22;
 	const pad = 14;
 
 	const gridWidth = $derived(cardWidth - pad * 2);
@@ -48,21 +56,23 @@
 
 	const cardHeight = $derived(headerHeight + footerHeight + pad * 2 + gridActualHeight);
 
-	// Blue -> purple top-to-bottom gradient card background. PIXI v8's
-	// FillGradient wasn't build-verified in an earlier pass, so this is
-	// wrapped defensively: if the API shape is off for some reason, it falls
-	// back to a flat indigo fill instead of throwing and blanking the card.
+	// Neon cyan -> purple -> pink top-to-bottom gradient card background.
+	// Wrapped defensively: if PIXI's FillGradient API ever throws for some
+	// reason, it falls back to a flat purple fill instead of blanking the
+	// card.
 	const drawCardBackground = (graphics: PIXI.Graphics, width: number, height: number) => {
 		graphics.roundRect(0, 0, width, height, 18);
 		try {
 			const gradient = new PIXI.FillGradient(0, 0, 0, 1);
-			gradient.addColorStop(0, 0x3b82f6); // blue, top
-			gradient.addColorStop(1, 0x7c3aed); // purple, bottom
+			gradient.addColorStop(0, 0x06b6d4); // cyan, top
+			gradient.addColorStop(0.55, 0x8b5cf6); // purple, mid
+			gradient.addColorStop(1, 0xec4899); // pink, bottom
 			graphics.fill(gradient);
 		} catch (error) {
 			console.error('Ticket gradient fill failed, using flat fallback:', error);
-			graphics.fill({ color: 0x4f46e5, alpha: 1 });
+			graphics.fill({ color: 0x8b5cf6, alpha: 1 });
 		}
+		graphics.stroke({ color: 0x0a0c10, width: 2, alpha: 0.5 });
 	};
 
 	const panels = $derived(context.stateGame.panels);
@@ -83,13 +93,6 @@
 
 <Container x={cardX} y={top}>
 	<Graphics draw={(graphics) => drawCardBackground(graphics, cardWidth, cardHeight)} />
-
-	<Text
-		x={pad}
-		y={pad}
-		text="Stake"
-		style={{ fontFamily: 'Outfit, sans-serif', fontWeight: '800', fontSize: 20, fill: 0xffffff }}
-	/>
 
 	{#each cellPositions as cell (cell.index)}
 		<Cell
@@ -113,7 +116,7 @@
 			fontWeight: '700',
 			fontSize: 9,
 			letterSpacing: 2,
-			fill: 0xe0e7ff,
+			fill: 0xf5f3ff,
 		}}
 	/>
 </Container>

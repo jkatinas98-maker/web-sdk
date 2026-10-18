@@ -5,15 +5,23 @@
 }
 
 :root {
-	--txt-1: hsl(220 10% 98%);
-	--txt-dim: hsl(220 15% 70%);
-	--bg-1: hsl(230 28% 8%);
-	--bg-2: hsl(230 22% 16%);
-	--bg-3: hsl(230 20% 22%);
-	--accent: #4f46e5;
-	--accent-light: #818cf8;
-	--border: hsl(180 100% 50%);
-	--pulse: hsl(9 100% 64%);
+	--txt-1: #f1f5f9;
+	--txt-dim: #94a3b8;
+	--bg-1: #06080d;
+	--bg-2: rgba(19, 23, 34, 0.92);
+	--bg-3: #1e2535;
+	--border: rgba(139, 92, 246, 0.35);
+	--cyan: #06b6d4;
+	--purple: #8b5cf6;
+	--pink: #ec4899;
+	--green: #10b981;
+	--gold: #f59e0b;
+
+	/* Layout constants — kept in sync with HEADER_H / FOOTER_H / SIDE_PANEL_W
+	   in Game.svelte, since the pixi canvas reserves the same space. */
+	--header-h: 48px;
+	--footer-h: 52px;
+	--side-panel-w: 230px;
 }
 
 html,
@@ -23,9 +31,13 @@ body {
 }
 
 body {
-	font-family: 'Poppins', sans-serif;
+	font-family: 'Rajdhani', 'Poppins', sans-serif;
 	color: var(--txt-1);
 	background-color: var(--bg-1);
+	background-image:
+		linear-gradient(to right, rgba(139, 92, 246, 0.08) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+	background-size: 22px 22px;
 }
 
 h2 {
@@ -45,7 +57,7 @@ button {
 	border-radius: 10px;
 	border: none;
 	cursor: pointer;
-	transition: transform 0.1s ease, filter 0.1s ease;
+	transition: transform 0.1s ease, filter 0.1s ease, border-color 0.15s ease;
 }
 
 button:active {
@@ -53,23 +65,24 @@ button:active {
 }
 
 button:disabled {
-	opacity: 0.5;
+	opacity: 0.4;
 	pointer-events: none;
 }
 
 .play-style {
 	width: 100%;
-	max-width: 260px;
-	padding: 0.85rem 1.5rem;
-	font-size: 1rem;
+	padding: 0.85rem 1.2rem;
+	font-size: 0.95rem;
 	letter-spacing: 0.3px;
-	color: white;
-	background: linear-gradient(180deg, var(--accent-light), var(--accent));
-	box-shadow: 0 4px 14px hsl(243 75% 59% / 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+	text-transform: uppercase;
+	color: #031018;
+	background: linear-gradient(135deg, var(--green), var(--cyan));
+	box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
-.play-style:hover {
-	filter: brightness(1.08);
+.play-style:hover:not(:disabled) {
+	filter: brightness(1.15);
+	box-shadow: 0 0 28px rgba(16, 185, 129, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.7);
 }
 
 /* The pixi canvas (ticket + grid) fills the screen behind the DOM chrome. */
@@ -79,42 +92,167 @@ button:disabled {
 	z-index: 0;
 }
 
-/* DOM chrome (difficulty picker, bet/result controls) floats above the
-   canvas. The layer itself ignores pointer events so taps reach the pixi
-   grid cells underneath; only its actual controls opt back in. */
+/* DOM chrome floats above the canvas; the layer itself ignores pointer
+   events so taps reach the pixi grid cells underneath, only its actual
+   controls opt back in. */
 .ui-layer {
 	position: fixed;
 	inset: 0;
 	z-index: 10;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
 	pointer-events: none;
-	padding: 1rem;
 }
 
-.ui-top,
-.ui-bottom {
+/* ---------- Header / footer bars (always visible, desktop + mobile) ---------- */
+
+.header-bar,
+.footer-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	background: rgba(6, 8, 13, 0.85);
+	backdrop-filter: blur(8px);
+	pointer-events: auto;
+	padding: 0 1rem;
+}
+
+.header-bar {
+	top: 0;
+	height: var(--header-h);
+	justify-content: space-between;
+	border-bottom: 1px solid var(--border);
+}
+
+.header-title {
+	font-weight: 900;
+	font-size: 0.95rem;
+	letter-spacing: 2px;
+	background: linear-gradient(90deg, var(--cyan), var(--purple));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.header-status {
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 1.5px;
+	color: var(--cyan);
+	text-transform: uppercase;
+	text-align: right;
+	max-width: 55%;
+}
+
+.footer-bar {
+	bottom: 0;
+	height: var(--footer-h);
+	justify-content: space-around;
+	border-top: 1px solid var(--border);
+}
+
+.footer-stat {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.75rem;
-	pointer-events: auto;
+	gap: 0.1rem;
 }
+
+.footer-stat-label {
+	font-size: 0.6rem;
+	font-weight: 700;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--txt-dim);
+}
+
+.footer-stat-value {
+	font-weight: 800;
+	font-size: 0.85rem;
+}
+
+.footer-stat-value.balance {
+	color: var(--cyan);
+}
+
+.footer-stat-value.win {
+	color: var(--green);
+}
+
+.footer-stat-value.bet {
+	color: var(--purple);
+}
+
+/* ---------- Desktop side panels ---------- */
+
+.side-panel {
+	position: fixed;
+	top: var(--header-h);
+	bottom: var(--footer-h);
+	width: var(--side-panel-w);
+	background: var(--bg-2);
+	backdrop-filter: blur(8px);
+	pointer-events: auto;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	overflow-y: auto;
+}
+
+.side-panel-left {
+	left: 0;
+	border-right: 1px solid var(--border);
+	justify-content: space-between;
+}
+
+.side-panel-right {
+	right: 0;
+	border-left: 1px solid var(--border);
+}
+
+.side-panel-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1.1rem;
+}
+
+.panel-label-row {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 0.4rem;
+}
+
+.panel-label-row.justify-center {
+	justify-content: center;
+}
+
+.panel-label {
+	font-size: 0.65rem;
+	font-weight: 800;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	color: var(--purple);
+}
+
+/* ---------- Mode select (difficulty) ---------- */
 
 .mode-select {
 	display: flex;
-	gap: 0.75rem;
+	gap: 0.3rem;
 	justify-content: center;
 	flex-wrap: wrap;
-}
-
-.mode-select {
 	background-color: rgba(10, 10, 20, 0.55);
 	backdrop-filter: blur(6px);
 	padding: 0.3rem;
 	border-radius: 12px;
-	gap: 0.3rem;
+}
+
+.mode-select.vertical {
+	flex-direction: column;
+	background: none;
+	padding: 0;
+	gap: 0.4rem;
 }
 
 .mode-select button {
@@ -122,47 +260,65 @@ button:disabled {
 	font-weight: 600;
 	padding: 0.5rem 0.8rem;
 	color: var(--txt-dim);
-	border: none;
+	border: 1px solid transparent;
+	text-transform: capitalize;
+}
+
+.mode-select.vertical button {
+	background: rgba(10, 10, 20, 0.55);
+	border-color: var(--bg-3);
+	text-align: left;
 }
 
 .mode-select button.selected {
-	color: white;
-	background: linear-gradient(180deg, var(--accent-light), var(--accent));
+	color: #031018;
+	background: linear-gradient(135deg, var(--cyan), var(--purple));
+	border-color: transparent;
 }
 
+/* ---------- Reveal all ---------- */
+
 .reveal-all-style {
-	background-color: rgba(10, 10, 20, 0.6);
-	backdrop-filter: blur(6px);
-	color: var(--txt-dim);
+	background: linear-gradient(135deg, var(--cyan), #2563eb);
+	color: #031018;
 	font-size: 0.75rem;
-	padding: 0.5rem 1rem;
+	padding: 0.55rem 1.1rem;
+	box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
 }
+
+.reveal-all-style.wide {
+	width: 100%;
+}
+
+/* ---------- Bet amount controls ---------- */
 
 .bet-row {
 	display: flex;
 	align-items: center;
 	gap: 0.6rem;
+	margin-top: 0.5rem;
 }
 
 .bet-amount-wrap {
 	display: flex;
 	align-items: center;
 	gap: 0.2rem;
-	background-color: var(--bg-2);
-	border: 1px solid var(--bg-3);
+	background-color: var(--bg-3);
+	border: 1px solid var(--border);
 	border-radius: 10px;
 	padding: 0.5rem 0.9rem;
 	min-width: 5.5rem;
 	justify-content: center;
+	flex: 1;
 }
 
 .bet-amount-wrap .cur {
-	color: var(--txt-dim);
+	color: var(--cyan);
 	font-weight: 700;
 }
 
 .bet-amount-input {
-	width: 3.5rem;
+	width: 100%;
 	background: none;
 	border: none;
 	color: inherit;
@@ -176,11 +332,30 @@ button:disabled {
 	outline: none;
 }
 
-/* Hide number input spinners so it reads as a clean amount field */
 .bet-amount-input::-webkit-outer-spin-button,
 .bet-amount-input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
+}
+
+.chip-style {
+	width: 2.6rem;
+	height: 2.6rem;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--bg-3);
+	border: 1px solid var(--border);
+	color: var(--txt-1);
+	font-size: 1.1rem;
+	border-radius: 10px;
+	flex-shrink: 0;
+}
+
+.chip-style:hover:not(:disabled) {
+	border-color: var(--cyan);
+	color: var(--cyan);
 }
 
 .chip-style.wide {
@@ -190,25 +365,10 @@ button:disabled {
 	font-weight: 700;
 }
 
-.chip-style,
-.bet-row .chip-style {
-	width: 2.6rem;
-	height: 2.6rem;
-	padding: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: var(--bg-2);
-	border: 1px solid var(--bg-3);
-	color: var(--txt-1);
-	font-size: 1.1rem;
-	border-radius: 10px;
-	flex-shrink: 0;
-}
-
 .chip-row {
 	display: flex;
 	gap: 0.5rem;
+	margin-top: 0.5rem;
 }
 
 .chip-row .chip-style {
@@ -218,14 +378,85 @@ button:disabled {
 	font-size: 0.75rem;
 	font-weight: 600;
 	color: var(--txt-dim);
+	flex: 1;
 }
 
 .chip-row .chip-style:active {
-	color: white;
-	border-color: var(--accent-light);
+	color: #031018;
+	background: linear-gradient(135deg, var(--cyan), var(--purple));
+	border-color: transparent;
 }
 
-/* Win celebration overlay */
+/* ---------- Mobile bottom stack ---------- */
+
+.mobile-bottom {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: var(--footer-h);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+	pointer-events: auto;
+	padding: 0.75rem 1rem;
+}
+
+.mobile-bottom .bet-row,
+.mobile-bottom .chip-row {
+	width: 100%;
+	max-width: 320px;
+	margin-top: 0;
+}
+
+.mobile-bottom .play-style {
+	max-width: 320px;
+}
+
+/* ---------- Desktop paytable (DOM list, right panel) ---------- */
+
+.paytable-list {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	overflow-y: auto;
+}
+
+.paytable-row {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	background: rgba(10, 10, 20, 0.5);
+	border: 1px solid var(--bg-3);
+	border-radius: 8px;
+	padding: 0.45rem 0.6rem;
+}
+
+.paytable-swatch {
+	width: 0.85rem;
+	height: 0.85rem;
+	border-radius: 50%;
+	flex-shrink: 0;
+	box-shadow: 0 0 6px currentColor;
+}
+
+.paytable-name {
+	flex: 1;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--txt-dim);
+	text-transform: capitalize;
+}
+
+.paytable-mult {
+	font-size: 0.85rem;
+	font-weight: 800;
+	color: var(--cyan);
+}
+
+/* ---------- Win celebration overlay ---------- */
+
 .win-backdrop {
 	position: fixed;
 	inset: 0;
@@ -233,7 +464,7 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(5, 5, 15, 0.72);
+	background: rgba(2, 3, 8, 0.78);
 	animation: win-fade-in 0.15s ease-out;
 }
 
@@ -244,8 +475,8 @@ button:disabled {
 	gap: 0.35rem;
 	padding: 2rem 2.5rem;
 	border-radius: 20px;
-	background: radial-gradient(circle at 50% 0%, hsl(45 100% 55%), hsl(35 90% 40%));
-	box-shadow: 0 0 60px 10px hsl(45 100% 55% / 0.6);
+	background: linear-gradient(160deg, var(--cyan), var(--purple) 55%, var(--pink));
+	box-shadow: 0 0 60px 10px rgba(139, 92, 246, 0.6);
 	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), win-glow 1.4s ease-in-out infinite 0.35s;
 }
 
@@ -254,7 +485,7 @@ button:disabled {
 	text-transform: uppercase;
 	letter-spacing: 2px;
 	font-weight: 800;
-	color: hsl(35 100% 15%);
+	color: rgba(3, 7, 18, 0.75);
 }
 
 .win-modal-amount {
@@ -267,7 +498,7 @@ button:disabled {
 .win-modal-mult {
 	font-size: 1.1rem;
 	font-weight: 700;
-	color: hsl(35 100% 15%);
+	color: rgba(3, 7, 18, 0.75);
 }
 
 .win-modal-hint {
@@ -275,7 +506,7 @@ button:disabled {
 	font-size: 0.7rem;
 	text-transform: uppercase;
 	letter-spacing: 1px;
-	color: hsl(35 100% 20% / 0.8);
+	color: rgba(3, 7, 18, 0.65);
 }
 
 @keyframes win-fade-in {
@@ -301,9 +532,9 @@ button:disabled {
 @keyframes win-glow {
 	0%,
 	100% {
-		box-shadow: 0 0 60px 10px hsl(45 100% 55% / 0.6);
+		box-shadow: 0 0 60px 10px rgba(139, 92, 246, 0.6);
 	}
 	50% {
-		box-shadow: 0 0 90px 22px hsl(45 100% 55% / 0.9);
+		box-shadow: 0 0 90px 22px rgba(236, 72, 153, 0.75);
 	}
 }

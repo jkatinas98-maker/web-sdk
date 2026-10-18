@@ -8,9 +8,20 @@
 	import type { BookEventOfType } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
+	import { SYMBOL_COLORS } from '../game/symbolIcons';
+	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
 	import Paytable from './Paytable.svelte';
+
+	// Desktop's right-side paytable panel, highest prize first (plain DOM —
+	// it sits behind an opaque glass panel, where the pixi-rendered strip
+	// used on mobile would be hidden).
+	const payEntries = (Object.entries(config.symbols) as [SymbolName, { mult: number }][])
+		.filter(([, sym]) => sym.mult > 0)
+		.sort((a, b) => b[1].mult - a[1].mult);
+
+	const swatch = (name: SymbolName) => `#${SYMBOL_COLORS[name].fill.toString(16).padStart(6, '0')}`;
 
 	const context = getContext();
 
@@ -27,23 +38,53 @@
 	// and only surface it once they've revealed every panel themselves.
 	let pendingWin: number | null = $state(null);
 
+	// Local demo wallet, used only while there's no RGS backend to talk to
+	// (see playGame below) so the footer stat bar has something real to show
+	// during dev. Once rgs_url is present, the real balance from stateBet
+	// (populated by the actual wallet/play + wallet/end-round responses)
+	// is shown instead.
+	let mockBalance = $state(1000);
+	let mockLastWin = $state(0);
+
+	const isMockMode = !stateUrlDerived.rgsUrl();
+	const displayBalance = $derived(isMockMode ? mockBalance : stateBet.balanceAmount);
+	const displayLastWin = $derived(isMockMode ? mockLastWin : stateBet.winBookEventAmount);
+
 	const BET_CHIPS = [1, 5, 10, 25];
 
 	function setBetAmount(value: number) {
 		betAmount = Math.max(0.1, Math.round(value * 100) / 100);
 	}
 
-	// Space (in px) reserved above/below the pixi ticket canvas for the DOM
-	// overlay (difficulty picker + bet controls) — Ticket.svelte uses these
-	// to fit the grid between them instead of overlapping. BOTTOM_RESERVED in
-	// particular has to clear the bet-amount row + chip row + play button
-	// stacked in .ui-bottom, which is taller than the ticket's own footer.
-	const TOP_RESERVED = 150;
-	const BOTTOM_RESERVED = 215;
-	const PAYTABLE_Y = 110;
+	// Desktop gets a 3-panel layout (controls | ticket | paytable) with fixed
+	// side columns; mobile stacks everything vertically instead. Driven off
+	// the same canvasSizes() the pixi canvas already reacts to, so the DOM
+	// chrome and the card's own positioning never disagree about the layout.
+	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
+	const isDesktop = $derived(canvas.width >= 760);
+
+	const HEADER_H = 48;
+	const FOOTER_H = 52;
+	const SIDE_PANEL_W = 230;
+
+	const topReserved = $derived(isDesktop ? HEADER_H + 20 : HEADER_H + 90);
+	const bottomReserved = $derived(isDesktop ? FOOTER_H + 20 : FOOTER_H + 215);
+	const leftReserved = $derived(isDesktop ? SIDE_PANEL_W : 0);
+	const rightReserved = $derived(isDesktop ? SIDE_PANEL_W : 0);
+
+	const statusText = $derived(
+		viewState === 'playing'
+			? 'SCRATCH TO REVEAL'
+			: viewState === 'revealed'
+				? totalWin > 0
+					? `WINNER! ${(totalWin / betAmount).toFixed(1)}X`
+					: 'NO MATCH — TRY AGAIN'
+				: 'MATCH 3 SYMBOLS TO WIN',
+	);
 
 	function playGame() {
 		if (isProcessing) return;
+		if (isMockMode && mockBalance < betAmount) return;
 
 		isProcessing = true;
 		viewState = 'playing';
@@ -55,11 +96,8 @@
 		stateBet.activeBetModeKey = betMode;
 		stateBet.betAmount = betAmount;
 
-		// No RGS backend to talk to during plain local dev (no rgs_url query
-		// param, e.g. opening localhost directly instead of through Stake
-		// Engine's platform or a local math-sdk RGS mock server) — fall back
-		// to a locally-generated ticket so the UI can still be tested.
-		if (!stateUrlDerived.rgsUrl()) {
+		if (isMockMode) {
+			mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
 			playBookEvents(createMockBet(betMode, betAmount));
 			return;
 		}
@@ -88,6 +126,10 @@
 			totalWin = pendingWin;
 			viewState = 'revealed';
 			isProcessing = false;
+			if (isMockMode) {
+				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
+				mockLastWin = totalWin;
+			}
 			if (totalWin > 0) showWinModal = true;
 		}
 	});
@@ -102,68 +144,155 @@
 <div class="pixi-layer">
 	<App>
 		<EnableGameActor />
-		{#if viewState !== 'playing'}
-			<Paytable y={PAYTABLE_Y} canvasWidth={context.stateLayoutDerived.canvasSizes().width} />
+		{#if !isDesktop && viewState !== 'playing'}
+			<Paytable x={canvas.width / 2} y={HEADER_H + 55} />
 		{/if}
 		<Ticket
 			{betMode}
-			top={TOP_RESERVED}
-			bottom={BOTTOM_RESERVED}
+			top={topReserved}
+			bottom={bottomReserved}
+			left={leftReserved}
+			right={rightReserved}
 			interactive={viewState === 'playing'}
 			onRevealIndex={revealPanel}
 		/>
 	</App>
 </div>
 
-<div class="ui-layer">
-	<div class="ui-top">
-		{#if viewState !== 'playing'}
-			<div class="mode-select">
-				{#each Object.keys(config.betModes) as mode}
-					<button class:selected={betMode === mode} onclick={() => (betMode = mode as BetMode)}>
-						{mode} (max {config.betModes[mode as BetMode].max_win}x)
-					</button>
-				{/each}
-			</div>
-		{/if}
+<div class="ui-layer" class:desktop={isDesktop}>
+	<!-- HEADER BAR -->
+	<header class="header-bar">
+		<span class="header-title">NEON ALCHEMY</span>
+		<span class="header-status">{statusText}</span>
+	</header>
 
-		{#if viewState === 'playing'}
-			<button class="reveal-all-style" onclick={revealEverything}>Reveal all</button>
-		{/if}
-	</div>
-
-	<div class="ui-bottom">
-		{#if viewState === 'revealed' && totalWin === 0}
-			<h2>No win this time</h2>
-		{/if}
-
-		{#if viewState === 'start' || viewState === 'revealed'}
-			<div class="bet-row">
-				<button class="chip-style wide" onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
-				<div class="bet-amount-wrap">
-					<span class="cur">$</span>
-					<input
-						class="bet-amount-input"
-						type="number"
-						min="0.1"
-						step="0.1"
-						value={betAmount}
-						oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
-					/>
+	{#if isDesktop}
+		<!-- DESKTOP: fixed left controls panel -->
+		<aside class="side-panel side-panel-left">
+			<div class="side-panel-content">
+				<div>
+					<div class="panel-label-row">
+						<span class="panel-label">Difficulty</span>
+					</div>
+					<div class="mode-select vertical">
+						{#each Object.keys(config.betModes) as mode}
+							<button class:selected={betMode === mode} disabled={viewState === 'playing'} onclick={() => (betMode = mode as BetMode)}>
+								{mode} (max {config.betModes[mode as BetMode].max_win}x)
+							</button>
+						{/each}
+					</div>
 				</div>
-				<button class="chip-style wide" onclick={() => setBetAmount(betAmount * 2)}>×2</button>
-			</div>
-			<div class="chip-row">
-				{#each BET_CHIPS as chip}
-					<button class="chip-style" onclick={() => setBetAmount(chip)}>${chip}</button>
-				{/each}
+
+				<div>
+					<span class="panel-label">Bet amount</span>
+					<div class="bet-row">
+						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
+						<div class="bet-amount-wrap">
+							<span class="cur">$</span>
+							<input
+								class="bet-amount-input"
+								type="number"
+								min="0.1"
+								step="0.1"
+								disabled={viewState === 'playing'}
+								value={betAmount}
+								oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
+							/>
+						</div>
+						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount * 2)}>×2</button>
+					</div>
+					<div class="chip-row">
+						{#each BET_CHIPS as chip}
+							<button class="chip-style" disabled={viewState === 'playing'} onclick={() => setBetAmount(chip)}>${chip}</button>
+						{/each}
+					</div>
+				</div>
 			</div>
 
-			<button class="play-style" onclick={playGame} disabled={isProcessing}>
-				{viewState === 'start' ? 'Play' : 'Bet again?'}
+			<button class="play-style" onclick={playGame} disabled={isProcessing || viewState === 'playing'}>
+				{viewState === 'start' ? `Play ($${betAmount.toFixed(2)})` : 'Bet again?'}
 			</button>
-		{/if}
-	</div>
+		</aside>
+
+		<!-- DESKTOP: fixed right paytable panel -->
+		<aside class="side-panel side-panel-right">
+			<div class="panel-label-row justify-center">
+				<span class="panel-label">Paytable</span>
+			</div>
+			<div class="paytable-list">
+				{#each payEntries as [name, sym] (name)}
+					<div class="paytable-row">
+						<span class="paytable-swatch" style="background:{swatch(name)}"></span>
+						<span class="paytable-name">{name}</span>
+						<span class="paytable-mult">×{sym.mult}</span>
+					</div>
+				{/each}
+			</div>
+			{#if viewState === 'playing'}
+				<button class="reveal-all-style wide" onclick={revealEverything}>Reveal all</button>
+			{/if}
+		</aside>
+	{:else}
+		<!-- MOBILE: stacked bottom controls -->
+		<div class="mobile-bottom">
+			{#if viewState !== 'playing'}
+				<div class="mode-select">
+					{#each Object.keys(config.betModes) as mode}
+						<button class:selected={betMode === mode} onclick={() => (betMode = mode as BetMode)}>
+							{mode} (max {config.betModes[mode as BetMode].max_win}x)
+						</button>
+					{/each}
+				</div>
+			{/if}
+
+			{#if viewState === 'playing'}
+				<button class="reveal-all-style" onclick={revealEverything}>Reveal all</button>
+			{/if}
+
+			{#if viewState === 'start' || viewState === 'revealed'}
+				<div class="bet-row">
+					<button class="chip-style wide" onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
+					<div class="bet-amount-wrap">
+						<span class="cur">$</span>
+						<input
+							class="bet-amount-input"
+							type="number"
+							min="0.1"
+							step="0.1"
+							value={betAmount}
+							oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
+						/>
+					</div>
+					<button class="chip-style wide" onclick={() => setBetAmount(betAmount * 2)}>×2</button>
+				</div>
+				<div class="chip-row">
+					{#each BET_CHIPS as chip}
+						<button class="chip-style" onclick={() => setBetAmount(chip)}>${chip}</button>
+					{/each}
+				</div>
+
+				<button class="play-style" onclick={playGame} disabled={isProcessing}>
+					{viewState === 'start' ? 'Play' : 'Bet again?'}
+				</button>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- FOOTER STAT BAR -->
+	<footer class="footer-bar">
+		<div class="footer-stat">
+			<span class="footer-stat-label">Balance</span>
+			<span class="footer-stat-value balance">${displayBalance.toFixed(2)}</span>
+		</div>
+		<div class="footer-stat">
+			<span class="footer-stat-label">Last win</span>
+			<span class="footer-stat-value win">${displayLastWin.toFixed(2)}</span>
+		</div>
+		<div class="footer-stat">
+			<span class="footer-stat-label">Bet</span>
+			<span class="footer-stat-value bet">${betAmount.toFixed(2)}</span>
+		</div>
+	</footer>
 </div>
 
 {#if showWinModal}
