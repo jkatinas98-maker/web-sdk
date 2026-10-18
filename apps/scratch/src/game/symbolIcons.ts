@@ -4,7 +4,7 @@ import type { SymbolName } from './types';
 // — every "2x" is 🙂 whether it shows up in easy, medium, or hard, not a
 // separate icon per mode. Picked by the user directly:
 //   1.5x 💩   2x 🙂   4x 🍑   5x 😘   6x 🥵   9x ❤️   16x 🔥
-//   36x 💸   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
+//   36x 🙏   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
 export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	skull: '💀',
 	bonus: '🎁',
@@ -15,7 +15,7 @@ export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	mult6: '🥵',
 	mult9: '❤️',
 	mult16: '🔥',
-	mult36: '💸',
+	mult36: '🙏',
 	mult41: '🤑',
 	mult45: '💎',
 	mult110: '👽',
@@ -36,7 +36,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	mult6: 'Hot Face',
 	mult9: 'Heart',
 	mult16: 'Blaze',
-	mult36: 'Money Wings',
+	mult36: 'Praying Hands',
 	mult41: 'Money Face',
 	mult45: 'Diamond',
 	mult110: 'Alien',
