@@ -1,16 +1,20 @@
 import type { SymbolName } from './types';
 
-// Each symbol is rendered as a plain emoji glyph (matching the reference UI
-// the user pointed at) rather than hand-drawn vector art — simpler, and
-// reads as more "finished" at small cell sizes than custom shapes did.
+// Each symbol is rendered as a plain emoji glyph rather than hand-drawn
+// vector art — simpler, and reads as more "finished" at small cell sizes
+// than custom shapes did. Picked a playful, non-money set instead of the
+// coin/wallet/chest/crown cliche — 💩 is deliberately the lowest payer,
+// 🤑 the jackpot. Symbol ids (coin, wallet, ...) are kept as-is to stay in
+// sync with games/scratch/game_config.py; they're just internal keys now,
+// not literal descriptions of what's drawn.
 export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	skull: '💀',
-	coin: '🪙',
-	wallet: '👛',
-	chest: '💰',
-	crown: '👑',
-	star: '⭐',
-	diamond: '💎',
+	coin: '💩',
+	wallet: '🙂',
+	chest: '🍑',
+	crown: '❤️',
+	star: '🔥',
+	diamond: '🤑',
 };
 
 // Accent colors: `fill` is the symbol's accent hue (used for the DOM
