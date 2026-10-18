@@ -80,7 +80,11 @@
 	// bottom, same as the reference layout.
 	const HEADER_H = 64;
 	const FOOTER_H = 52;
-	const CONTROLS_H = 172;
+	// Difficulty row + bet stepper (amount line + quick-button line) + play
+	// button, each an .option-card with its own padding/gap — taller than it
+	// looks added up in a glance, so this is measured against the actual
+	// rendered controls-stack height rather than guessed.
+	const CONTROLS_H = 238;
 
 	const topReserved = HEADER_H + 10;
 	const bottomReserved = FOOTER_H + CONTROLS_H;

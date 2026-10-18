@@ -21,7 +21,7 @@
 	   in Game.svelte, since the pixi canvas reserves the same space. */
 	--header-h: 64px;
 	--footer-h: 52px;
-	--controls-h: 172px;
+	--controls-h: 238px;
 }
 
 html,
