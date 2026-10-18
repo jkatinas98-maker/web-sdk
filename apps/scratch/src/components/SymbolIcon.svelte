@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Container, Graphics } from 'pixi-svelte';
+	import { Text } from 'pixi-svelte';
 
-	import { drawSymbolIcon } from '../game/symbolIcons';
+	import { SYMBOL_EMOJI, SYMBOL_COLORS } from '../game/symbolIcons';
 	import type { SymbolName } from '../game/types';
 
 	type Props = {
@@ -11,11 +11,19 @@
 
 	const { name, size }: Props = $props();
 
-	// Icons are drawn in a fixed 100x100 local box (see symbolIcons.ts); scale
-	// that box down to whatever pixel size this cell needs.
-	const scale = $derived(size / 100);
+	const glow = $derived(SYMBOL_COLORS[name].glow);
 </script>
 
-<Container x={-size / 2} y={-size / 2} {scale}>
-	<Graphics draw={(graphics) => drawSymbolIcon(graphics, name)} />
-</Container>
+<Text
+	anchor={0.5}
+	text={SYMBOL_EMOJI[name]}
+	style={{
+		fontSize: size,
+		dropShadow: {
+			color: glow,
+			blur: size * 0.18,
+			distance: 0,
+			alpha: 0.75,
+		},
+	}}
+/>

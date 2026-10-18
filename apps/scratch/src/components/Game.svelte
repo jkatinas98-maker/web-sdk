@@ -34,6 +34,7 @@
 	let betAmount = $state(1);
 	let totalWin: number = $state(0);
 	let showWinModal = $state(false);
+	let winningSymbol: SymbolName | null = $state(null);
 	// The RGS result (including the win amount) arrives the instant the bet
 	// resolves, but the player hasn't scratched anything yet — hold it here
 	// and only surface it once they've revealed every panel themselves.
@@ -111,6 +112,7 @@
 		viewState = 'playing';
 		totalWin = 0;
 		showWinModal = false;
+		winningSymbol = null;
 		pendingWin = null;
 		context.stateGameDerived.reset();
 
@@ -163,6 +165,15 @@
 				mockLastWin = totalWin;
 			}
 			if (totalWin > 0) {
+				// Re-derive which symbol actually won from the resolved panels
+				// and payout — the book doesn't carry a dedicated "winning
+				// symbol" field, but matching totalWin back to a paytable
+				// entry is unambiguous since every symbol's multiplier is
+				// distinct.
+				const match = (Object.entries(config.symbols) as [SymbolName, { mult: number }][]).find(
+					([, sym]) => Math.abs(sym.mult * betAmount - totalWin) < 0.005,
+				);
+				winningSymbol = match ? match[0] : null;
 				showWinModal = true;
 				playSound('win');
 			}
@@ -189,6 +200,7 @@
 			left={leftReserved}
 			right={rightReserved}
 			interactive={viewState === 'playing'}
+			{winningSymbol}
 			onRevealIndex={revealPanel}
 		/>
 	</App>

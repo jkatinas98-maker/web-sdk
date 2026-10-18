@@ -1,9 +1,8 @@
 <script lang="ts">
 	import * as PIXI from 'pixi.js';
-	import { Container, Circle, Graphics, Text } from 'pixi-svelte';
+	import { Container, Graphics, Text } from 'pixi-svelte';
 
 	import SymbolIcon from './SymbolIcon.svelte';
-	import { SYMBOL_TIER, SYMBOL_COLORS } from '../game/symbolIcons';
 	import config from '../game/config';
 	import { playSound } from '../game/sound';
 	import type { RawSymbol } from '../game/types';
@@ -11,57 +10,64 @@
 	type Props = {
 		x: number;
 		y: number;
-		diameter: number;
+		size: number;
 		panel: RawSymbol | undefined;
 		revealed: boolean;
+		winning: boolean;
 		interactive: boolean;
 		onReveal: () => void;
 	};
 
-	const { x, y, diameter, panel, revealed, interactive, onReveal }: Props = $props();
+	const { x, y, size, panel, revealed, winning, interactive, onReveal }: Props = $props();
 
-	const tier = $derived(panel ? SYMBOL_TIER[panel.name] : 0);
-	const glowAlpha = $derived(tier === 0 ? 0 : 0.1 + tier * 0.035);
-	const glowColor = $derived(panel ? SYMBOL_COLORS[panel.name].glow : 0xffffff);
-	const ringColor = $derived(panel ? SYMBOL_COLORS[panel.name].fill : 0x334155);
-	// The book only ever sends `{ name }` for a panel (see scratch_sim.py) —
-	// the display multiplier always comes from the local paytable, matched
-	// by symbol id, never from a `multiplier` field on the panel itself.
 	const mult = $derived(panel ? config.symbols[panel.name].mult : 0);
 
-	// Soft layered glow behind the icon: several concentric, decreasing-alpha
-	// circles fake a blur without needing a filter dependency.
-	const glowLayers = $derived(
-		glowAlpha > 0
-			? [
-					{ scale: 1.65, alpha: glowAlpha * 0.35 },
-					{ scale: 1.35, alpha: glowAlpha * 0.6 },
-					{ scale: 1.1, alpha: glowAlpha },
-				]
-			: [],
-	);
+	const borderColor = $derived(winning ? 0x10b981 : revealed ? 0x06b6d4 : 0x8b5cf6);
+	const borderAlpha = $derived(winning ? 0.9 : revealed ? 0.55 : 0.3);
+	const borderWidth = $derived(winning ? 2.5 : revealed ? 1.5 : 1);
+	const fillColor = $derived(winning ? 0x10b981 : 0x0f172a);
+	const fillAlpha = $derived(winning ? 0.22 : 0.9);
+	const radius = $derived(size * 0.18);
 
-	// Diagonal holographic foil cover, in the same cyan/purple/pink family as
-	// the ticket card, instead of a flat grey coin — wrapped defensively like
-	// the card's own gradient fill.
-	const drawFoil = (graphics: PIXI.Graphics, size: number) => {
-		const r = size / 2;
-		graphics.circle(r, r, r);
-		try {
-			const gradient = new PIXI.FillGradient(0, 0, 1, 1);
-			gradient.addColorStop(0, 0x1e1b4b);
-			gradient.addColorStop(0.5, 0x3730a3);
-			gradient.addColorStop(1, 0x0f172a);
-			graphics.fill(gradient);
-		} catch (error) {
-			console.error('Foil gradient fill failed, using flat fallback:', error);
-			graphics.fill({ color: 0x334155, alpha: 1 });
-		}
-		graphics.stroke({ color: 0x8b5cf6, width: 1.5, alpha: 0.45 });
+	const drawTile = (graphics: PIXI.Graphics) => {
+		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
+		graphics.fill({ color: fillColor, alpha: fillAlpha });
+		graphics.stroke({ color: borderColor, width: borderWidth, alpha: borderAlpha });
 	};
 
-	// Pop the symbol in with a little overshoot when a panel is first
-	// revealed, instead of it just instantly appearing.
+	const drawFoil = (graphics: PIXI.Graphics) => {
+		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
+		graphics.fill({ color: 0x1e293b, alpha: 1 });
+		graphics.stroke({ color: 0x8b5cf6, width: 1, alpha: 0.3 });
+	};
+
+	// Invisible but hit-testable — keeps the tap target the full tile even
+	// though the visible foil is drawn by the sibling Graphics above it.
+	const drawHitArea = (graphics: PIXI.Graphics) => {
+		graphics.rect(-size / 2, -size / 2, size, size);
+		graphics.fill({ color: 0x000000, alpha: 0.001 });
+	};
+
+	// Winning tiles breathe slowly (matches the reference's pulseWin
+	// keyframe: scale 0.97 <-> 1.03).
+	let pulseScale = $state(1);
+	$effect(() => {
+		if (!winning) {
+			pulseScale = 1;
+			return;
+		}
+		let raf: number;
+		const start = performance.now();
+		const loop = (now: number) => {
+			const elapsed = (now - start) / 800;
+			pulseScale = 1 + Math.sin(elapsed * Math.PI) * 0.03;
+			raf = requestAnimationFrame(loop);
+		};
+		raf = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(raf);
+	});
+
+	// Pop the symbol in with a little overshoot when first revealed.
 	let displayScale = $state(1);
 	let wasRevealed = false;
 
@@ -90,41 +96,24 @@
 	}
 </script>
 
-<Container {x} {y}>
+<Container {x} {y} scale={pulseScale}>
+	<Graphics draw={revealed ? drawTile : drawFoil} />
+
 	{#if revealed && panel}
 		<Container scale={displayScale}>
-			<Circle diameter={diameter} anchor={0.5} backgroundColor={0x0b0e17} backgroundAlpha={0.9} />
-			<Circle
-				diameter={diameter}
-				anchor={0.5}
-				backgroundAlpha={0}
-				borderColor={ringColor}
-				borderWidth={2}
-				borderAlpha={0.55}
-			/>
-
-			{#each glowLayers as layer (layer.scale)}
-				<Circle
-					diameter={diameter * layer.scale}
-					anchor={0.5}
-					backgroundColor={glowColor}
-					backgroundAlpha={layer.alpha}
-				/>
-			{/each}
-
-			<Container y={-diameter * 0.08}>
-				<SymbolIcon name={panel.name} size={diameter * 0.6} />
+			<Container y={-size * 0.1}>
+				<SymbolIcon name={panel.name} size={size * 0.42} />
 			</Container>
 
 			<Text
-				y={diameter * 0.32}
+				y={size * 0.3}
 				anchor={0.5}
 				text={mult > 0 ? `×${mult}` : '—'}
 				style={{
 					fontFamily: 'Outfit, sans-serif',
 					fontWeight: '800',
-					fontSize: diameter * 0.15,
-					fill: mult > 0 ? 0xffffff : 0x64748b,
+					fontSize: size * 0.14,
+					fill: mult > 0 ? 0x06b6d4 : 0x64748b,
 				}}
 			/>
 		</Container>
@@ -134,14 +123,17 @@
 			cursor={interactive ? 'pointer' : 'default'}
 			onpointerup={interactive ? handleReveal : undefined}
 		>
-			<Graphics draw={(graphics) => drawFoil(graphics, diameter)} />
-			<Circle
-				diameter={diameter * 0.8}
+			<Graphics draw={drawHitArea} />
+			<Text
 				anchor={0.5}
-				x={-diameter * 0.14}
-				y={-diameter * 0.14}
-				backgroundColor={0xffffff}
-				backgroundAlpha={0.08}
+				text="SCRATCH"
+				style={{
+					fontFamily: 'Outfit, sans-serif',
+					fontWeight: '700',
+					fontSize: size * 0.1,
+					letterSpacing: 1,
+					fill: 0x475569,
+				}}
 			/>
 		</Container>
 	{/if}
