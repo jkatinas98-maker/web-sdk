@@ -8,7 +8,7 @@
 	import type { BookEventOfType } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setSoundEnabled } from '../game/sound';
+	import { playSound, setVolume } from '../game/sound';
 	import { SYMBOL_EMOJI, SYMBOL_LABEL } from '../game/symbolIcons';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
@@ -55,11 +55,16 @@
 	const MIN_BET = 0.5;
 	const BET_STEP = 0.5;
 
-	let soundOn = $state(true);
-	function toggleSound() {
-		soundOn = !soundOn;
-		setSoundEnabled(soundOn);
-		if (soundOn) playSound('click');
+	// Cycle through 4 volume steps on each tap (mute / low / mid / full)
+	// instead of a plain on-off mute — "max" alone was still too quiet, so
+	// this also doubles as the way to actually turn it up.
+	const VOLUME_LEVELS = [0, 0.4, 0.7, 1];
+	const VOLUME_ICONS = ['🔇', '🔈', '🔉', '🔊'];
+	let volumeLevel = $state(VOLUME_LEVELS.length - 1);
+	function cycleVolume() {
+		volumeLevel = (volumeLevel + 1) % VOLUME_LEVELS.length;
+		setVolume(VOLUME_LEVELS[volumeLevel]);
+		if (VOLUME_LEVELS[volumeLevel] > 0) playSound('click');
 	}
 
 	function setBetAmount(value: number) {
@@ -223,7 +228,9 @@
 			}
 			if (totalWin > 0 || awardedFreeScratches > 0) {
 				showWinModal = true;
-				playSound('win');
+				// Bonus gets its own fanfare instead of the regular win jingle,
+				// even when it lands alongside a cash win the same round.
+				playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
 			}
 		}
 	});
@@ -261,8 +268,8 @@
 				? `🎁 ${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
 				: `Win up to ${maxWin}x bet`}
 		</div>
-		<button class="sound-toggle" onclick={toggleSound} aria-label={soundOn ? 'Mute sound' : 'Unmute sound'}>
-			{soundOn ? '🔊' : '🔇'}
+		<button class="sound-toggle" onclick={cycleVolume} aria-label="Change volume">
+			{VOLUME_ICONS[volumeLevel]}
 		</button>
 	</header>
 
@@ -326,7 +333,7 @@
 			<span class="footer-stat-value win">${displayLastWin.toFixed(2)}</span>
 		</div>
 		<div class="icon-actions">
-			<button class="icon-btn" onclick={togglePaytable} aria-label="Paytable">ℹ️</button>
+			<button class="icon-btn paytable-btn" onclick={togglePaytable}>PAYTABLE</button>
 		</div>
 	</footer>
 </div>

@@ -106,7 +106,9 @@
 
 	$effect(() => {
 		if (revealed && !wasRevealed) {
-			playSound('reveal');
+			// Landing the mode's top symbol gets its own sparklier chime
+			// instead of the plain reveal blip.
+			playSound(jackpot ? 'jackpot' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 
