@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as PIXI from 'pixi.js';
+	import type * as PIXI from 'pixi.js';
 	import { Container, Circle, Graphics } from 'pixi-svelte';
 	import { getContext } from '../game/context';
 	import Cell from './Cell.svelte';

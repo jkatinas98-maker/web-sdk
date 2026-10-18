@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as PIXI from 'pixi.js';
+	import type * as PIXI from 'pixi.js';
 	import { Container, Graphics, Text } from 'pixi-svelte';
 
 	import SymbolIcon from './SymbolIcon.svelte';
