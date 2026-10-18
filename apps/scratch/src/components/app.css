@@ -1,5 +1,3 @@
-/* @import '@fontsource/poppins'; */
-
 * {
 	margin: 0;
 	padding: 0;
@@ -17,33 +15,24 @@
 html,
 body {
 	height: 100%;
+	overflow: hidden;
 }
 
 body {
-	display: grid;
-	place-content: center;
-	padding: 2rem;
 	font-family: 'Poppins', sans-serif;
 	color: var(--txt-1);
 	background-color: var(--bg-1);
 }
 
-h1 {
-	font-size: 4rem;
+h2 {
+	font-size: 1.25rem;
 	text-align: center;
 	text-transform: capitalize;
 }
 
-h1 + button {
-	width: max-content;
-	margin-top: 2rem;
-	margin-inline: auto;
-	border: 4px solid var(--border);
-}
-
 button {
-	padding: 1.5rem;
-	font-size: 2rem;
+	padding: 0.75rem 1.5rem;
+	font-size: 1rem;
 	font-weight: 900;
 	color: inherit;
 	background: none;
@@ -59,47 +48,50 @@ button {
 	border: 2px solid grey;
 	cursor: pointer;
 }
+
+/* The pixi canvas (ticket + grid) fills the screen behind the DOM chrome. */
+.pixi-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+}
+
+/* DOM chrome (difficulty picker, bet/result controls) floats above the
+   canvas. The layer itself ignores pointer events so taps reach the pixi
+   grid cells underneath; only its actual controls opt back in. */
+.ui-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	pointer-events: none;
+	padding: 1rem;
+}
+
+.ui-top,
+.ui-bottom {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+	pointer-events: auto;
+}
+
 .mode-select {
 	display: flex;
-	gap: 1rem;
+	gap: 0.75rem;
 	justify-content: center;
-	margin-top: 1.5rem;
+	flex-wrap: wrap;
 }
 
 .mode-select button {
-	font-size: 1rem;
-	padding: 0.75rem 1.25rem;
+	font-size: 0.85rem;
+	padding: 0.6rem 1rem;
 	border: 2px solid var(--bg-2);
 }
 
 .mode-select button.selected {
 	border-color: var(--border);
-}
-
-.ticket-grid {
-	display: grid;
-	gap: 0.75rem;
-	margin-top: 2rem;
-	width: min(90vw, 480px);
-}
-
-.panel {
-	aspect-ratio: 1;
-	border: 2px solid var(--bg-2);
-	background-color: var(--bg-2);
-	font-size: 1.25rem;
-	padding: 0.5rem;
-}
-
-.panel.revealed {
-	border-color: var(--border);
-	background-color: hsl(220 20% 15%);
-}
-
-.panel-name {
-	text-transform: capitalize;
-}
-
-.panel-cover {
-	opacity: 0.5;
 }

@@ -1,31 +1,40 @@
 <script lang="ts">
 	import './app.css';
+	import { App } from 'pixi-svelte';
 	import { getContext } from '../game/context';
 	import { stateBet } from 'state-shared';
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
 	import type { BookEventOfType } from '../game/typesBookEvent';
 	import EnableGameActor from './EnableGameActor.svelte';
+	import Ticket from './Ticket.svelte';
 
 	const context = getContext();
 
 	type ViewState = 'start' | 'playing' | 'revealed';
 
-	let viewState: ViewState = 'start';
-	let isProcessing = false;
-	let betMode: BetMode = 'easy';
-	let totalWin: number = 0;
+	let viewState: ViewState = $state('start');
+	let isProcessing = $state(false);
+	let betMode: BetMode = $state('easy');
+	let totalWin: number = $state(0);
+	// The RGS result (including the win amount) arrives the instant the bet
+	// resolves, but the player hasn't scratched anything yet — hold it here
+	// and only surface it once they've revealed every panel themselves.
+	let pendingWin: number | null = $state(null);
 
-	// placeholder scratch-ticket grid: this renders the panels as plain DOM
-	// cells (name + multiplier) so the scaffold builds and plays end-to-end.
-	// The real pixi ticket/foil-scratch visuals (see gem-scratch.html) come
-	// in a follow-up pass.
+	// Space (in px) reserved above/below the pixi ticket canvas for the DOM
+	// overlay (difficulty picker + bet controls) — Ticket.svelte uses these
+	// to fit the grid between them instead of overlapping.
+	const TOP_RESERVED = 150;
+	const BOTTOM_RESERVED = 150;
+
 	function playGame() {
 		if (isProcessing) return;
 
 		isProcessing = true;
 		viewState = 'playing';
 		totalWin = 0;
+		pendingWin = null;
 		context.stateGameDerived.reset();
 
 		stateBet.activeBetModeKey = betMode;
@@ -36,71 +45,64 @@
 		context.stateGameDerived.reveal(index);
 	}
 
-	function revealAll() {
-		context.stateGameDerived.revealAll();
-	}
-
-	context.eventEmitter.subscribeOnMount({
-		revealPanels: () => {
+	// Once the player has scratched every panel, surface the result that was
+	// already sitting in pendingWin.
+	$effect(() => {
+		const { panels, revealedCount } = context.stateGame;
+		if (
+			viewState === 'playing' &&
+			pendingWin !== null &&
+			panels.length > 0 &&
+			revealedCount >= panels.length
+		) {
+			totalWin = pendingWin;
 			viewState = 'revealed';
-		},
-		finalWin: ({ data }: { data: BookEventOfType<'finalWin'> }) => {
-			totalWin = data.amount;
 			isProcessing = false;
-		},
+		}
 	});
 
-	const cols = () => config.betModes[betMode].cols;
-	const rows = () => config.betModes[betMode].rows;
+	context.eventEmitter.subscribeOnMount({
+		finalWin: ({ data }: { data: BookEventOfType<'finalWin'> }) => {
+			pendingWin = data.amount;
+		},
+	});
 </script>
 
-<EnableGameActor />
+<div class="pixi-layer">
+	<App>
+		<EnableGameActor />
+		<Ticket
+			{betMode}
+			top={TOP_RESERVED}
+			bottom={BOTTOM_RESERVED}
+			interactive={viewState === 'playing'}
+			onRevealIndex={revealPanel}
+		/>
+	</App>
+</div>
 
-{#if viewState === 'start'}
-	<h1>Scratch</h1>
-
-	<div class="mode-select">
-		{#each Object.keys(config.betModes) as mode}
-			<button
-				class:selected={betMode === mode}
-				onclick={() => (betMode = mode as BetMode)}
-			>
-				{mode} (max {config.betModes[mode as BetMode].max_win}x)
-			</button>
-		{/each}
+<div class="ui-layer">
+	<div class="ui-top">
+		{#if viewState === 'start'}
+			<div class="mode-select">
+				{#each Object.keys(config.betModes) as mode}
+					<button class:selected={betMode === mode} onclick={() => (betMode = mode as BetMode)}>
+						{mode} (max {config.betModes[mode as BetMode].max_win}x)
+					</button>
+				{/each}
+			</div>
+		{/if}
 	</div>
 
-	<button class="play-style" onclick={playGame}>Play</button>
-{/if}
+	<div class="ui-bottom">
+		{#if viewState === 'revealed'}
+			<h2>{totalWin > 0 ? `You won ${totalWin}x!` : 'No win this time'}</h2>
+		{/if}
 
-{#if viewState === 'playing' || viewState === 'revealed'}
-	<div
-		class="ticket-grid"
-		style="grid-template-columns: repeat({cols()}, 1fr);"
-	>
-		{#each context.stateGame.panels as panel, index}
-			<button
-				class="panel"
-				class:revealed={index < context.stateGame.revealedCount}
-				onclick={() => revealPanel(index)}
-			>
-				{#if index < context.stateGame.revealedCount}
-					<span class="panel-name">{panel.name}</span>
-				{:else}
-					<span class="panel-cover">?</span>
-				{/if}
+		{#if viewState === 'start' || viewState === 'revealed'}
+			<button class="play-style" onclick={playGame} disabled={isProcessing}>
+				{viewState === 'start' ? 'Play' : 'Bet again?'}
 			</button>
-		{/each}
+		{/if}
 	</div>
-
-	{#if context.stateGame.revealedCount < context.stateGame.panels.length}
-		<button class="play-style" onclick={revealAll}>Reveal all</button>
-	{/if}
-
-	{#if viewState === 'revealed'}
-		<h2>{totalWin > 0 ? `You won ${totalWin}x!` : 'No win this time'}</h2>
-		<button class="play-style" onclick={playGame} disabled={isProcessing}>
-			Bet again?
-		</button>
-	{/if}
-{/if}
+</div>
