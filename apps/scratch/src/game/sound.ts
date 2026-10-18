@@ -1,62 +1,74 @@
-import { createSound } from 'utils-sound';
+// Lightweight synth sound effects via the Web Audio API — no audio files to
+// bundle or host. Every sound is a short oscillator blip, generated on the
+// fly, so this works the moment the page loads with zero assets.
+type SoundType = 'click' | 'scratch' | 'reveal' | 'win';
 
-export type MusicName =
-	| 'bgm_main'
-	| 'bgm_freespin'
-	| 'bgm_winlevel_big'
-	| 'bgm_winlevel_epic'
-	| 'bgm_winlevel_max'
-	| 'bgm_winlevel_mega'
-	| 'bgm_winlevel_superwin';
+let audioCtx: AudioContext | null = null;
+let enabled = true;
 
-export type SoundEffectName =
-	| 'jng_intro_fs'
-	| 'sfx_anticipation'
-	| 'sfx_anticipation_start'
-	| 'sfx_bigwin_coinloop'
-	| 'sfx_btn_general'
-	| 'sfx_btn_spin'
-	| 'sfx_fs_respins'
-	| 'sfx_multiplier_combine_a'
-	| 'sfx_multiplier_combine_b'
-	| 'sfx_multiplier_explosion_a'
-	| 'sfx_multiplier_explosion_b'
-	| 'sfx_multiplier_explosion_c'
-	| 'sfx_multiplier_landing'
-	| 'sfx_multiplier_reset'
-	| 'sfx_multiplier_up'
-	| 'sfx_multiplier_update'
-	| 'sfx_multiplier_win'
-	| 'sfx_reel_stop_1'
-	| 'sfx_reel_stop_2'
-	| 'sfx_reel_stop_3'
-	| 'sfx_reel_stop_4'
-	| 'sfx_reel_stop_5'
-	| 'sfx_royals_landing'
-	| 'sfx_scatter_reveal'
-	| 'sfx_scatter_stop_1'
-	| 'sfx_scatter_stop_2'
-	| 'sfx_scatter_stop_3'
-	| 'sfx_scatter_stop_4'
-	| 'sfx_scatter_stop_5'
-	| 'sfx_scatter_win'
-	| 'sfx_scatter_win_v2'
-	| 'sfx_superfreespin'
-	| 'sfx_symbols_landing'
-	| 'sfx_wild_explode'
-	| 'sfx_winlevel_end'
-	| 'sfx_winlevel_nice'
-	| 'sfx_winlevel_small'
-	| 'sfx_winlevel_standard'
-	| 'sfx_winlevel_substantial'
-	| 'sfx_youwon_panel'
-	| 'tumble_win_1'
-	| 'tumble_win_2'
-	| 'tumble_win_3'
-	| 'tumble_win_4';
+const getContext = (): AudioContext | null => {
+	if (typeof window === 'undefined') return null;
+	if (!audioCtx) {
+		const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+		if (!Ctor) return null;
+		audioCtx = new Ctor();
+	}
+	return audioCtx;
+};
 
-export type SoundName = MusicName | SoundEffectName;
+export const setSoundEnabled = (value: boolean) => {
+	enabled = value;
+};
 
-const sound = createSound<SoundName>();
+export const isSoundEnabled = () => enabled;
 
-export { sound };
+export const playSound = (type: SoundType) => {
+	if (!enabled) return;
+
+	try {
+		const ctx = getContext();
+		if (!ctx) return;
+		if (ctx.state === 'suspended') ctx.resume();
+
+		const osc = ctx.createOscillator();
+		const gain = ctx.createGain();
+		osc.connect(gain);
+		gain.connect(ctx.destination);
+		const now = ctx.currentTime;
+
+		if (type === 'click') {
+			osc.type = 'sine';
+			osc.frequency.setValueAtTime(520, now);
+			gain.gain.setValueAtTime(0.025, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+			osc.start(now);
+			osc.stop(now + 0.03);
+		} else if (type === 'scratch') {
+			osc.type = 'sawtooth';
+			osc.frequency.setValueAtTime(140 + Math.random() * 160, now);
+			gain.gain.setValueAtTime(0.015, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+			osc.start(now);
+			osc.stop(now + 0.03);
+		} else if (type === 'reveal') {
+			osc.type = 'sine';
+			osc.frequency.setValueAtTime(420, now);
+			osc.frequency.exponentialRampToValueAtTime(820, now + 0.08);
+			gain.gain.setValueAtTime(0.035, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+			osc.start(now);
+			osc.stop(now + 0.1);
+		} else if (type === 'win') {
+			osc.type = 'triangle';
+			osc.frequency.setValueAtTime(420, now);
+			osc.frequency.setValueAtTime(630, now + 0.1);
+			osc.frequency.setValueAtTime(840, now + 0.25);
+			gain.gain.setValueAtTime(0.06, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+			osc.start(now);
+			osc.stop(now + 0.45);
+		}
+	} catch (error) {
+		console.error('playSound failed:', error);
+	}
+};

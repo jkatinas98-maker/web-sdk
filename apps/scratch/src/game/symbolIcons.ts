@@ -2,24 +2,25 @@ import type * as PIXI from 'pixi.js';
 
 import type { SymbolName } from './types';
 
-// Flat-color approximations of the gem-scratch.html SVG gradients (fill ->
-// gradient midpoint, dark -> the darker gradient stop / ink color used for
-// details). PIXI.Graphics fills here are solid, not gradients, to keep this
-// first pixi pass on confirmed-working Graphics APIs; a gradient pass is a
-// follow-up once this is build-verified.
-export const SYMBOL_COLORS: Record<SymbolName, { fill: number; dark: number }> = {
-	skull: { fill: 0x6d7986, dark: 0x1b2024 },
-	coin: { fill: 0xf0b93a, dark: 0x8a5a12 },
-	wallet: { fill: 0x3a95ea, dark: 0xf3f6f7 },
-	chest: { fill: 0xeb9142, dark: 0x7a3d0c },
-	crown: { fill: 0xf3c96c, dark: 0xffffff },
-	star: { fill: 0xef5a81, dark: 0xffffff },
-	diamond: { fill: 0xb7eeff, dark: 0xffffff },
+// Neon line-art palette: `fill` is the symbol's accent hue (used for the
+// low-alpha fill, the background glow, and the DOM paytable swatch — the
+// contract other files rely on), `glow` is a brighter variant of the same
+// hue used for the icon's outline stroke. Icons are drawn mostly as outline
+// + soft fill rather than solid cartoon shapes, to sit cleanly against the
+// cyan/purple/pink neon theme instead of clashing with it.
+export const SYMBOL_COLORS: Record<SymbolName, { fill: number; glow: number }> = {
+	skull: { fill: 0x64748b, glow: 0x94a3b8 },
+	coin: { fill: 0xf0b93a, glow: 0xffe08a },
+	wallet: { fill: 0x38bdf8, glow: 0xbae6fd },
+	chest: { fill: 0xf97316, glow: 0xfed7aa },
+	crown: { fill: 0xfbbf24, glow: 0xfff3c4 },
+	star: { fill: 0xf472b6, glow: 0xfbcfe8 },
+	diamond: { fill: 0x22d3ee, glow: 0xcffafe },
 };
 
 // Payout-tier rank (0 = skull/no-win .. 6 = diamond/max-win), used to scale
 // the glow behind the symbol so the eye is drawn toward rarer symbols as
-// they're revealed. Mirrors the CSS glow ladder in gem-scratch.html.
+// they're revealed.
 export const SYMBOL_TIER: Record<SymbolName, number> = {
 	skull: 0,
 	coin: 1,
@@ -30,9 +31,8 @@ export const SYMBOL_TIER: Record<SymbolName, number> = {
 	diamond: 6,
 };
 
-// Each icon is drawn in a 100x100 local box (matches the gem-scratch.html
-// SVG viewBox) so a single `scale` on the parent Container sizes it for any
-// cell diameter.
+// Each icon is drawn in a 100x100 local box so a single `scale` on the
+// parent Container sizes it for any cell diameter.
 export function drawSymbolIcon(graphics: PIXI.Graphics, name: SymbolName) {
 	const colors = SYMBOL_COLORS[name];
 
@@ -48,74 +48,70 @@ export function drawSymbolIcon(graphics: PIXI.Graphics, name: SymbolName) {
 		graphics.bezierCurveTo(74, 66, 82, 56, 82, 44);
 		graphics.bezierCurveTo(82, 24, 70, 10, 50, 10);
 		graphics.closePath();
-		graphics.fill({ color: colors.fill, alpha: 1 });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.3 });
-		graphics.circle(37, 45, 10);
-		graphics.fill({ color: colors.dark });
-		graphics.circle(63, 45, 10);
-		graphics.fill({ color: colors.dark });
-		graphics.poly([50, 55, 45, 68, 55, 68]);
-		graphics.fill({ color: colors.dark });
-		graphics.roundRect(40, 76, 20, 10, 3);
-		graphics.fill({ color: colors.dark });
+		graphics.fill({ color: colors.fill, alpha: 0.16 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.8 });
+		graphics.circle(37, 45, 7);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.6 });
+		graphics.circle(63, 45, 7);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.6 });
 		return;
 	}
 
 	if (name === 'coin') {
-		graphics.circle(50, 50, 40);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 3, alpha: 0.4 });
-		graphics.circle(50, 50, 30);
-		graphics.stroke({ color: 0x000000, width: 2, alpha: 0.18 });
+		graphics.circle(50, 50, 38);
+		graphics.fill({ color: colors.fill, alpha: 0.18 });
+		graphics.stroke({ color: colors.glow, width: 3, alpha: 0.95 });
+		graphics.circle(50, 50, 27);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.5 });
 		return;
 	}
 
 	if (name === 'wallet') {
-		graphics.roundRect(15, 30, 70, 52, 10);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.35 });
-		graphics.moveTo(15, 45);
-		graphics.lineTo(85, 45);
-		graphics.stroke({ color: 0x000000, width: 3, alpha: 0.2 });
-		graphics.circle(68, 62, 7);
-		graphics.fill({ color: colors.dark });
+		graphics.roundRect(15, 30, 70, 50, 10);
+		graphics.fill({ color: colors.fill, alpha: 0.16 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.9 });
+		graphics.moveTo(15, 46);
+		graphics.lineTo(85, 46);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.5 });
+		graphics.circle(68, 62, 4);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.7 });
 		return;
 	}
 
 	if (name === 'chest') {
-		graphics.poly([20, 38, 80, 38, 80, 44, 20, 44]);
-		graphics.fill({ color: colors.fill });
-		graphics.roundRect(15, 44, 70, 38, 6);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.35 });
-		graphics.roundRect(42, 44, 16, 14, 3);
-		graphics.fill({ color: colors.dark });
+		graphics.poly([18, 40, 82, 40, 82, 46, 18, 46]);
+		graphics.stroke({ color: colors.glow, width: 2, alpha: 0.7 });
+		graphics.roundRect(15, 46, 70, 36, 6);
+		graphics.fill({ color: colors.fill, alpha: 0.16 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.9 });
+		graphics.circle(50, 56, 5);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.7 });
 		return;
 	}
 
 	if (name === 'crown') {
-		graphics.poly([15, 40, 30, 65, 70, 65, 85, 40, 65, 52, 50, 22, 35, 52]);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.35 });
-		graphics.roundRect(20, 70, 60, 8, 3);
-		graphics.fill({ color: colors.fill });
+		graphics.poly([15, 42, 30, 65, 70, 65, 85, 42, 65, 54, 50, 24, 35, 54]);
+		graphics.fill({ color: colors.fill, alpha: 0.18 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.9 });
+		graphics.roundRect(20, 70, 60, 7, 3);
+		graphics.stroke({ color: colors.glow, width: 1.5, alpha: 0.6 });
 		return;
 	}
 
 	if (name === 'star') {
 		graphics.poly([50, 10, 61, 36, 89, 36, 66, 53, 75, 79, 50, 63, 25, 79, 34, 53, 11, 36, 39, 36]);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.35 });
+		graphics.fill({ color: colors.fill, alpha: 0.22 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.95 });
 		return;
 	}
 
 	if (name === 'diamond') {
 		graphics.poly([30, 15, 70, 15, 88, 38, 50, 88, 12, 38]);
-		graphics.fill({ color: colors.fill });
-		graphics.stroke({ color: 0xffffff, width: 2, alpha: 0.45 });
+		graphics.fill({ color: colors.fill, alpha: 0.2 });
+		graphics.stroke({ color: colors.glow, width: 2.5, alpha: 0.95 });
 		graphics.moveTo(12, 38);
 		graphics.lineTo(88, 38);
-		graphics.stroke({ color: 0xffffff, width: 1.5, alpha: 0.4 });
+		graphics.stroke({ color: colors.glow, width: 1, alpha: 0.5 });
 		return;
 	}
 }

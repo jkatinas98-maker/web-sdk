@@ -8,6 +8,7 @@
 	import type { BookEventOfType } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
+	import { playSound, setSoundEnabled } from '../game/sound';
 	import { SYMBOL_COLORS } from '../game/symbolIcons';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
@@ -52,8 +53,27 @@
 
 	const BET_CHIPS = [1, 5, 10, 25];
 
+	let soundOn = $state(true);
+	function toggleSound() {
+		soundOn = !soundOn;
+		setSoundEnabled(soundOn);
+		if (soundOn) playSound('click');
+	}
+
 	function setBetAmount(value: number) {
 		betAmount = Math.max(0.1, Math.round(value * 100) / 100);
+	}
+
+	// Separate from setBetAmount so typing in the amount field doesn't fire a
+	// click sound per keystroke — only the +/- and preset chip buttons do.
+	function setBetAmountWithSound(value: number) {
+		setBetAmount(value);
+		playSound('click');
+	}
+
+	function selectMode(mode: BetMode) {
+		betMode = mode;
+		playSound('click');
 	}
 
 	// Desktop gets a 3-panel layout (controls | ticket | paytable) with fixed
@@ -86,6 +106,7 @@
 		if (isProcessing) return;
 		if (isMockMode && mockBalance < betAmount) return;
 
+		playSound('click');
 		isProcessing = true;
 		viewState = 'playing';
 		totalWin = 0;
@@ -110,7 +131,18 @@
 	}
 
 	function revealEverything() {
-		context.stateGameDerived.revealAll();
+		playSound('click');
+		// Stagger each panel's reveal instead of flipping them all in the same
+		// frame — reuses the same per-index reveal() action a manual tap
+		// uses, so each tile still gets its own pop-in + reveal sound, just
+		// cascading left-to-right/top-to-bottom instead of all at once.
+		const { panels, revealed } = context.stateGame;
+		let delay = 0;
+		for (let i = 0; i < panels.length; i++) {
+			if (revealed.has(i)) continue;
+			setTimeout(() => context.stateGameDerived.reveal(i), delay);
+			delay += 45;
+		}
 	}
 
 	// Once the player has scratched every panel, surface the result that was
@@ -130,7 +162,10 @@
 				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
 				mockLastWin = totalWin;
 			}
-			if (totalWin > 0) showWinModal = true;
+			if (totalWin > 0) {
+				showWinModal = true;
+				playSound('win');
+			}
 		}
 	});
 
@@ -164,6 +199,9 @@
 	<header class="header-bar">
 		<span class="header-title">NEON ALCHEMY</span>
 		<span class="header-status">{statusText}</span>
+		<button class="sound-toggle" onclick={toggleSound} aria-label={soundOn ? 'Mute sound' : 'Unmute sound'}>
+			{soundOn ? '🔊' : '🔇'}
+		</button>
 	</header>
 
 	{#if isDesktop}
@@ -176,7 +214,7 @@
 					</div>
 					<div class="mode-select vertical">
 						{#each Object.keys(config.betModes) as mode}
-							<button class:selected={betMode === mode} disabled={viewState === 'playing'} onclick={() => (betMode = mode as BetMode)}>
+							<button class:selected={betMode === mode} disabled={viewState === 'playing'} onclick={() => selectMode(mode as BetMode)}>
 								{mode} (max {config.betModes[mode as BetMode].max_win}x)
 							</button>
 						{/each}
@@ -186,7 +224,7 @@
 				<div>
 					<span class="panel-label">Bet amount</span>
 					<div class="bet-row">
-						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
+						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(betAmount / 2)}>÷2</button>
 						<div class="bet-amount-wrap">
 							<span class="cur">$</span>
 							<input
@@ -199,11 +237,11 @@
 								oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
 							/>
 						</div>
-						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount * 2)}>×2</button>
+						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(betAmount * 2)}>×2</button>
 					</div>
 					<div class="chip-row">
 						{#each BET_CHIPS as chip}
-							<button class="chip-style" disabled={viewState === 'playing'} onclick={() => setBetAmount(chip)}>${chip}</button>
+							<button class="chip-style" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(chip)}>${chip}</button>
 						{/each}
 					</div>
 				</div>
@@ -238,7 +276,7 @@
 			{#if viewState !== 'playing'}
 				<div class="mode-select">
 					{#each Object.keys(config.betModes) as mode}
-						<button class:selected={betMode === mode} onclick={() => (betMode = mode as BetMode)}>
+						<button class:selected={betMode === mode} onclick={() => selectMode(mode as BetMode)}>
 							{mode} (max {config.betModes[mode as BetMode].max_win}x)
 						</button>
 					{/each}
@@ -251,7 +289,7 @@
 
 			{#if viewState === 'start' || viewState === 'revealed'}
 				<div class="bet-row">
-					<button class="chip-style wide" onclick={() => setBetAmount(betAmount / 2)}>÷2</button>
+					<button class="chip-style wide" onclick={() => setBetAmountWithSound(betAmount / 2)}>÷2</button>
 					<div class="bet-amount-wrap">
 						<span class="cur">$</span>
 						<input
@@ -263,11 +301,11 @@
 							oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
 						/>
 					</div>
-					<button class="chip-style wide" onclick={() => setBetAmount(betAmount * 2)}>×2</button>
+					<button class="chip-style wide" onclick={() => setBetAmountWithSound(betAmount * 2)}>×2</button>
 				</div>
 				<div class="chip-row">
 					{#each BET_CHIPS as chip}
-						<button class="chip-style" onclick={() => setBetAmount(chip)}>${chip}</button>
+						<button class="chip-style" onclick={() => setBetAmountWithSound(chip)}>${chip}</button>
 					{/each}
 				</div>
 
