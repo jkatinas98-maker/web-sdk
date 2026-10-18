@@ -48,7 +48,7 @@
 	const cardHeight = $derived(headerHeight + footerHeight + pad * 2 + gridActualHeight);
 
 	const panels = $derived(context.stateGame.panels);
-	const revealedCount = $derived(context.stateGame.revealedCount);
+	const revealed = $derived(context.stateGame.revealed);
 
 	const cellPositions = $derived(
 		Array.from({ length: cols * rows }, (_, index) => {
@@ -83,8 +83,8 @@
 			y={cell.y}
 			{diameter}
 			panel={panels[cell.index]}
-			revealed={cell.index < revealedCount}
-			interactive={interactive && cell.index >= revealedCount}
+			revealed={revealed.has(cell.index)}
+			interactive={interactive && !revealed.has(cell.index)}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>
 	{/each}

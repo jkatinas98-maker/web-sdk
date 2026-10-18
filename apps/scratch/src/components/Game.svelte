@@ -60,12 +60,12 @@
 	// Once the player has scratched every panel, surface the result that was
 	// already sitting in pendingWin.
 	$effect(() => {
-		const { panels, revealedCount } = context.stateGame;
+		const { panels, revealed } = context.stateGame;
 		if (
 			viewState === 'playing' &&
 			pendingWin !== null &&
 			panels.length > 0 &&
-			revealedCount >= panels.length
+			revealed.size >= panels.length
 		) {
 			totalWin = pendingWin;
 			viewState = 'revealed';
