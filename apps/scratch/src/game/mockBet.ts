@@ -9,28 +9,56 @@
 // countable matches, skull (mult 0) never counts" rule — see the earlier
 // sketch3.py simulation. This is NOT the certified math; it exists only to
 // drive the UI during local development.
-import type { SymbolName, RawSymbol } from './types';
+//
+// Each difficulty draws from its own symbol pool now (see
+// betModes[mode].symbols in config.ts) since every mode has a fully
+// distinct set of paying symbols rather than one shared paytable. Medium
+// and hard's weights are invented (skewed harder toward skull as the top
+// payout climbs) to keep bigger wins feeling rare — same "not certified
+// math" caveat applies to them as to easy's original numbers.
+import type { SymbolName, RawSymbol, BetMode } from './types';
 import type { BookEvent } from './typesBookEvent';
 import config from './config';
 
-const WEIGHTS: Array<{ name: SymbolName; weight: number }> = [
-	{ name: 'skull', weight: 66.8504 },
-	{ name: 'coin', weight: 14.1968 },
-	{ name: 'wallet', weight: 8.5181 },
-	{ name: 'chest', weight: 5.6787 },
-	{ name: 'crown', weight: 2.8394 },
-	{ name: 'star', weight: 1.4197 },
-	{ name: 'diamond', weight: 0.4969 },
-];
+const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
+	easy: [
+		{ name: 'skull', weight: 66.8504 },
+		{ name: 'easy1', weight: 14.1968 },
+		{ name: 'easy2', weight: 8.5181 },
+		{ name: 'easy3', weight: 5.6787 },
+		{ name: 'easy4', weight: 2.8394 },
+		{ name: 'easy5', weight: 1.4197 },
+		{ name: 'easy6', weight: 0.4969 },
+	],
+	medium: [
+		{ name: 'skull', weight: 70 },
+		{ name: 'medium1', weight: 12 },
+		{ name: 'medium2', weight: 7 },
+		{ name: 'medium3', weight: 4.5 },
+		{ name: 'medium4', weight: 3.5 },
+		{ name: 'medium5', weight: 2 },
+		{ name: 'medium6', weight: 1 },
+	],
+	hard: [
+		{ name: 'skull', weight: 75 },
+		{ name: 'hard1', weight: 11 },
+		{ name: 'hard2', weight: 6 },
+		{ name: 'hard3', weight: 4 },
+		{ name: 'hard4', weight: 2.5 },
+		{ name: 'hard5', weight: 1.2 },
+		{ name: 'hard6', weight: 0.3 },
+	],
+};
 
-const weightedPick = (): SymbolName => {
-	const total = WEIGHTS.reduce((sum, w) => sum + w.weight, 0);
+const weightedPick = (betMode: BetMode): SymbolName => {
+	const pool = WEIGHTS[betMode];
+	const total = pool.reduce((sum, w) => sum + w.weight, 0);
 	let r = Math.random() * total;
-	for (const { name, weight } of WEIGHTS) {
+	for (const { name, weight } of pool) {
 		r -= weight;
 		if (r <= 0) return name;
 	}
-	return WEIGHTS[WEIGHTS.length - 1].name;
+	return pool[pool.length - 1].name;
 };
 
 export const createMockBet = (
@@ -45,7 +73,7 @@ export const createMockBet = (
 	let winMult = 0;
 
 	for (let i = 0; i < panelCount; i++) {
-		const name = weightedPick();
+		const name = weightedPick(betMode);
 		panels.push({ name });
 
 		const mult = config.symbols[name].mult;

@@ -9,15 +9,10 @@
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setSoundEnabled } from '../game/sound';
-	import { SYMBOL_EMOJI } from '../game/symbolIcons';
+	import { SYMBOL_EMOJI, SYMBOL_LABEL } from '../game/symbolIcons';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
-
-	// Paytable modal list, highest prize first.
-	const payEntries = (Object.entries(config.symbols) as [SymbolName, { mult: number }][])
-		.filter(([, sym]) => sym.mult > 0)
-		.sort((a, b) => b[1].mult - a[1].mult);
 
 	const context = getContext();
 
@@ -91,6 +86,15 @@
 
 	const maxWin = $derived(config.betModes[betMode].max_win);
 
+	// Paytable modal list for the CURRENT difficulty only — each mode has
+	// its own fully distinct 6 symbols/mults now, so this can't be a single
+	// shared list anymore, it has to follow betMode.
+	const payEntries = $derived(
+		(config.betModes[betMode].symbols as SymbolName[])
+			.map((name) => [name, config.symbols[name]] as [SymbolName, { mult: number }])
+			.sort((a, b) => b[1].mult - a[1].mult),
+	);
+
 	function playGame() {
 		if (isProcessing) return;
 		if (isMockMode && mockBalance < betAmount) return;
@@ -163,15 +167,20 @@
 				mockLastWin = totalWin;
 			}
 			if (totalWin > 0) {
-				// Re-derive which symbol actually won from the resolved panels
-				// and payout — the book doesn't carry a dedicated "winning
-				// symbol" field, but matching totalWin back to a paytable
-				// entry is unambiguous since every symbol's multiplier is
-				// distinct.
-				const match = (Object.entries(config.symbols) as [SymbolName, { mult: number }][]).find(
-					([, sym]) => Math.abs(sym.mult * betAmount - totalWin) < 0.005,
-				);
-				winningSymbol = match ? match[0] : null;
+				// Re-derive which symbol actually won by scanning the resolved
+				// panels for the first paying symbol to reach 3 occurrences —
+				// the same rule the book itself resolves by. (Matching
+				// totalWin back against a paytable entry instead would be
+				// ambiguous now that different difficulties can share the
+				// same multiplier, e.g. easy1 and medium1 are both 1.5x.)
+				const counts: Partial<Record<SymbolName, number>> = {};
+				let winner: SymbolName | null = null;
+				for (const panel of panels) {
+					if (!panel || config.symbols[panel.name].mult <= 0) continue;
+					counts[panel.name] = (counts[panel.name] ?? 0) + 1;
+					if (!winner && counts[panel.name]! >= 3) winner = panel.name;
+				}
+				winningSymbol = winner;
 				showWinModal = true;
 				playSound('win');
 			}
@@ -289,7 +298,7 @@
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">
 						<span class="pay-item-icon">{SYMBOL_EMOJI[name]}</span>
-						<span class="pay-item-name">{name}</span>
+						<span class="pay-item-name">{SYMBOL_LABEL[name]}</span>
 						<span class="pay-item-mult">×{sym.mult}</span>
 					</div>
 				{/each}
