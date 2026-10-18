@@ -29,12 +29,23 @@
 
 	const gridWidth = $derived(cardWidth - pad * 2);
 	const colGap = 8;
-	const diameter = $derived((gridWidth - colGap * (cols - 1)) / cols);
+	const rowGap = 8;
 
 	const availableHeight = $derived(Math.max(140, canvas.height - top - bottom - headerHeight - footerHeight - pad * 2));
-	const rowPitch = $derived(Math.min(diameter * 1.12, availableHeight / rows));
-	const gridHeight = $derived(rowPitch * rows);
-	const cardHeight = $derived(headerHeight + footerHeight + pad * 2 + gridHeight);
+
+	// The circle actually drawn can never be wider than the column slot or
+	// taller than the row slot — take whichever constraint is tighter so
+	// cells never overlap in either direction, then center the (possibly
+	// narrower) grid inside the card.
+	const diameterByWidth = $derived((gridWidth - colGap * (cols - 1)) / cols);
+	const diameterByHeight = $derived((availableHeight - rowGap * (rows - 1)) / rows);
+	const diameter = $derived(Math.min(diameterByWidth, diameterByHeight));
+
+	const gridActualWidth = $derived(diameter * cols + colGap * (cols - 1));
+	const gridActualHeight = $derived(diameter * rows + rowGap * (rows - 1));
+	const gridOffsetX = $derived(pad + (gridWidth - gridActualWidth) / 2);
+
+	const cardHeight = $derived(headerHeight + footerHeight + pad * 2 + gridActualHeight);
 
 	const panels = $derived(context.stateGame.panels);
 	const revealedCount = $derived(context.stateGame.revealedCount);
@@ -45,8 +56,8 @@
 			const row = Math.floor(index / cols);
 			return {
 				index,
-				x: pad + col * (diameter + colGap) + diameter / 2,
-				y: headerHeight + row * rowPitch + rowPitch / 2,
+				x: gridOffsetX + col * (diameter + colGap) + diameter / 2,
+				y: headerHeight + row * (diameter + rowGap) + diameter / 2,
 			};
 		}),
 	);
