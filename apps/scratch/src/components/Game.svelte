@@ -318,7 +318,7 @@
 				? 'Reveal all'
 				: freeScratchesRemaining > 0
 					? `Free scratch (${freeScratchesRemaining} left)`
-					: `Buy card ($${betAmount.toFixed(2)})`}
+					: `Play card ($${betAmount.toFixed(2)})`}
 		</button>
 	</div>
 
