@@ -171,8 +171,9 @@
 				// panels for the first paying symbol to reach 3 occurrences —
 				// the same rule the book itself resolves by. (Matching
 				// totalWin back against a paytable entry instead would be
-				// ambiguous now that different difficulties can share the
-				// same multiplier, e.g. easy1 and medium1 are both 1.5x.)
+				// ambiguous: several ids are shared across difficulties, e.g.
+				// mult2 is "2x" in every mode, so a win amount alone can't
+				// tell you which actual symbol hit.)
 				const counts: Partial<Record<SymbolName, number>> = {};
 				let winner: SymbolName | null = null;
 				for (const panel of panels) {

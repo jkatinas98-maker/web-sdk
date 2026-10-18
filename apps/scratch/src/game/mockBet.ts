@@ -10,12 +10,13 @@
 // sketch3.py simulation. This is NOT the certified math; it exists only to
 // drive the UI during local development.
 //
-// Each difficulty draws from its own symbol pool now (see
-// betModes[mode].symbols in config.ts) since every mode has a fully
-// distinct set of paying symbols rather than one shared paytable. Medium
-// and hard's weights are invented (skewed harder toward skull as the top
-// payout climbs) to keep bigger wins feeling rare — same "not certified
-// math" caveat applies to them as to easy's original numbers.
+// Each difficulty still draws from its own pool of weights (see
+// betModes[mode].symbols in config.ts for which ids belong to which mode —
+// several ids are shared across modes, e.g. mult2/mult9 appear in all
+// three, just drawn at different odds per mode). Medium and hard's weights
+// are invented (skewed harder toward skull as the top payout climbs) to
+// keep bigger wins feeling rare — same "not certified math" caveat applies
+// to them as to easy's original numbers.
 import type { SymbolName, RawSymbol, BetMode } from './types';
 import type { BookEvent } from './typesBookEvent';
 import config from './config';
@@ -23,30 +24,30 @@ import config from './config';
 const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	easy: [
 		{ name: 'skull', weight: 66.8504 },
-		{ name: 'easy1', weight: 14.1968 },
-		{ name: 'easy2', weight: 8.5181 },
-		{ name: 'easy3', weight: 5.6787 },
-		{ name: 'easy4', weight: 2.8394 },
-		{ name: 'easy5', weight: 1.4197 },
-		{ name: 'easy6', weight: 0.4969 },
+		{ name: 'mult1_5', weight: 14.1968 },
+		{ name: 'mult2', weight: 8.5181 },
+		{ name: 'mult4', weight: 5.6787 },
+		{ name: 'mult9', weight: 2.8394 },
+		{ name: 'mult16', weight: 1.4197 },
+		{ name: 'mult45', weight: 0.4969 },
 	],
 	medium: [
 		{ name: 'skull', weight: 70 },
-		{ name: 'medium1', weight: 12 },
-		{ name: 'medium2', weight: 7 },
-		{ name: 'medium3', weight: 4.5 },
-		{ name: 'medium4', weight: 3.5 },
-		{ name: 'medium5', weight: 2 },
-		{ name: 'medium6', weight: 1 },
+		{ name: 'mult1_5', weight: 12 },
+		{ name: 'mult2', weight: 7 },
+		{ name: 'mult5', weight: 4.5 },
+		{ name: 'mult9', weight: 3.5 },
+		{ name: 'mult41', weight: 2 },
+		{ name: 'mult110', weight: 1 },
 	],
 	hard: [
 		{ name: 'skull', weight: 75 },
-		{ name: 'hard1', weight: 11 },
-		{ name: 'hard2', weight: 6 },
-		{ name: 'hard3', weight: 4 },
-		{ name: 'hard4', weight: 2.5 },
-		{ name: 'hard5', weight: 1.2 },
-		{ name: 'hard6', weight: 0.3 },
+		{ name: 'mult2', weight: 11 },
+		{ name: 'mult6', weight: 6 },
+		{ name: 'mult9', weight: 4 },
+		{ name: 'mult36', weight: 2.5 },
+		{ name: 'mult130', weight: 1.2 },
+		{ name: 'mult1000', weight: 0.3 },
 	],
 };
 
