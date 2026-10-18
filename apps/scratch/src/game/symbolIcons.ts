@@ -3,7 +3,7 @@ import type { SymbolName } from './types';
 // One emoji per distinct multiplier VALUE, shared across every difficulty
 // — every "2x" is 🙂 whether it shows up in easy, medium, or hard, not a
 // separate icon per mode. Picked by the user directly:
-//   1.5x 💩   2x 🙂   4x 🍑   5x 😘   6x 🙉   9x ❤️   16x 🔥
+//   1.5x 💩   2x 🙂   4x 🍑   5x 😘   6x 🥵   9x ❤️   16x 🔥
 //   36x 💸   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
 export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	skull: '💀',
@@ -11,7 +11,7 @@ export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	mult2: '🙂',
 	mult4: '🍑',
 	mult5: '😘',
-	mult6: '🙉',
+	mult6: '🥵',
 	mult9: '❤️',
 	mult16: '🔥',
 	mult36: '💸',
@@ -31,7 +31,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	mult2: 'Smiley',
 	mult4: 'Peach',
 	mult5: 'Kiss',
-	mult6: 'Monkey',
+	mult6: 'Hot Face',
 	mult9: 'Heart',
 	mult16: 'Blaze',
 	mult36: 'Money Wings',
