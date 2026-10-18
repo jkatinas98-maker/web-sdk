@@ -1,7 +1,7 @@
 // Lightweight synth sound effects via the Web Audio API — no audio files to
 // bundle or host. Every sound is a short oscillator blip, generated on the
 // fly, so this works the moment the page loads with zero assets.
-type SoundType = 'click' | 'scratch' | 'reveal' | 'win' | 'bonus' | 'jackpot';
+type SoundType = 'click' | 'scratch' | 'reveal' | 'win' | 'bonus' | 'jackpot' | 'scatterLand';
 
 let audioCtx: AudioContext | null = null;
 // A single 0-1 volume knob instead of a plain on/off switch — 0 is mute,
@@ -79,6 +79,11 @@ export const playSound = (type: SoundType) => {
 			tone(660, 0.14, 0.1, 'sine', 0);
 			tone(990, 0.14, 0.12, 'sine', 0.06);
 			tone(1320, 0.16, 0.2, 'sine', 0.12);
+		} else if (type === 'scatterLand') {
+			// A quick magic-sparkle "ding" for landing an individual 🎁 tile —
+			// separate from the 4-note fanfare that plays once 3 have landed.
+			tone(1200, 0.14, 0.05, 'sine', 0);
+			tone(1800, 0.14, 0.09, 'sine', 0.04);
 		} else if (type === 'bonus') {
 			// A 4-note ascending fanfare for the 🎁 scatter trigger — meant
 			// to stand well apart from the regular win jingle.

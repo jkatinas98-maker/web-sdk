@@ -463,12 +463,12 @@ button:disabled {
 }
 
 .pay-item.bonus-item {
-	border-color: rgba(245, 158, 11, 0.5);
-	background: rgba(245, 158, 11, 0.08);
+	border-color: rgba(236, 72, 153, 0.5);
+	background: rgba(236, 72, 153, 0.08);
 }
 
 .pay-item.bonus-item .pay-item-mult {
-	color: var(--gold);
+	color: var(--pink);
 }
 
 /* ---------- Win celebration overlay ---------- */

@@ -25,13 +25,16 @@
 	const { x, y, size, panel, revealed, winning, jackpot, interactive, onReveal }: Props = $props();
 
 	const mult = $derived(panel ? config.symbols[panel.name].mult : 0);
+	const isBonus = $derived(panel?.name === 'bonus');
+	// Either kind of "special" tile gets the glow+blink treatment.
+	const special = $derived(jackpot || isBonus);
 
-	// Fast alpha flicker, jackpot tiles only — the "blink" half of "glow and
+	// Fast alpha flicker, special tiles only — the "blink" half of "glow and
 	// blink" (declared before the color derivations below so they can use
 	// it directly).
 	let blinkAlpha = $state(1);
 	$effect(() => {
-		if (!jackpot) {
+		if (!special) {
 			blinkAlpha = 1;
 			return;
 		}
@@ -47,20 +50,22 @@
 	});
 
 	// Color priority: a confirmed win (green) beats the jackpot-symbol glow
-	// (gold) beats a plain revealed tile (cyan) beats the unrevealed default
-	// (purple). The jackpot glow blinks on top of whatever color won out —
-	// stacks with the winning-tile breathing pulse rather than replacing
-	// it, so a jackpot symbol that's ALSO part of the win still reads as a
-	// win first, just a sparklier one.
-	const borderColor = $derived(winning ? 0x10b981 : jackpot ? 0xfbbf24 : revealed ? 0x06b6d4 : 0x8b5cf6);
-	const baseBorderAlpha = $derived(winning ? 0.9 : jackpot ? 0.95 : revealed ? 0.55 : 0.3);
-	const borderWidth = $derived(winning ? 2.5 : jackpot ? 2.5 : revealed ? 1.5 : 1);
-	const fillColor = $derived(winning ? 0x10b981 : jackpot ? 0xfbbf24 : 0x0f172a);
-	const baseFillAlpha = $derived(winning ? 0.22 : jackpot ? 0.18 : 0.9);
+	// (gold) beats the bonus-scatter glow (pink) beats a plain revealed tile
+	// (cyan) beats the unrevealed default (purple). The special glow blinks
+	// on top of whatever color won out — stacks with the winning-tile
+	// breathing pulse rather than replacing it, so a jackpot/bonus symbol
+	// that's ALSO part of the win still reads as a win first, just a
+	// sparklier one.
+	const specialColor = $derived(jackpot ? 0xfbbf24 : 0xec4899);
+	const borderColor = $derived(winning ? 0x10b981 : special ? specialColor : revealed ? 0x06b6d4 : 0x8b5cf6);
+	const baseBorderAlpha = $derived(winning ? 0.9 : special ? 0.95 : revealed ? 0.55 : 0.3);
+	const borderWidth = $derived(winning ? 2.5 : special ? 2.5 : revealed ? 1.5 : 1);
+	const fillColor = $derived(winning ? 0x10b981 : special ? specialColor : 0x0f172a);
+	const baseFillAlpha = $derived(winning ? 0.22 : special ? 0.18 : 0.9);
 	const radius = $derived(size * 0.18);
 
-	const borderAlpha = $derived(jackpot ? baseBorderAlpha * blinkAlpha : baseBorderAlpha);
-	const fillAlpha = $derived(jackpot ? baseFillAlpha * blinkAlpha : baseFillAlpha);
+	const borderAlpha = $derived(special ? baseBorderAlpha * blinkAlpha : baseBorderAlpha);
+	const fillAlpha = $derived(special ? baseFillAlpha * blinkAlpha : baseFillAlpha);
 
 	const drawTile = (graphics: PIXI.Graphics) => {
 		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
@@ -81,11 +86,11 @@
 		graphics.fill({ color: 0x000000, alpha: 0.001 });
 	};
 
-	// Winning AND jackpot tiles breathe slowly (matches the reference's
-	// pulseWin keyframe: scale 0.97 <-> 1.03).
+	// Winning AND special (jackpot/bonus) tiles breathe slowly (matches the
+	// reference's pulseWin keyframe: scale 0.97 <-> 1.03).
 	let pulseScale = $state(1);
 	$effect(() => {
-		if (!winning && !jackpot) {
+		if (!winning && !special) {
 			pulseScale = 1;
 			return;
 		}
@@ -106,9 +111,9 @@
 
 	$effect(() => {
 		if (revealed && !wasRevealed) {
-			// Landing the mode's top symbol gets its own sparklier chime
-			// instead of the plain reveal blip.
-			playSound(jackpot ? 'jackpot' : 'reveal');
+			// Landing the mode's top symbol or a 🎁 scatter each get their own
+			// distinct chime instead of the plain reveal blip.
+			playSound(jackpot ? 'jackpot' : isBonus ? 'scatterLand' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 
@@ -148,7 +153,7 @@
 					fontFamily: 'Outfit, sans-serif',
 					fontWeight: '800',
 					fontSize: panel.name === 'bonus' ? size * 0.1 : size * 0.14,
-					fill: mult > 0 ? 0x06b6d4 : panel.name === 'bonus' ? 0xfbbf24 : 0x64748b,
+					fill: mult > 0 ? 0x06b6d4 : panel.name === 'bonus' ? 0xec4899 : 0x64748b,
 				}}
 			/>
 		</Container>
