@@ -60,7 +60,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 // Landing this many bonus scatters anywhere on the card awards free
 // scratches, same "reach N occurrences" rule as every other symbol.
 const BONUS_SCATTER_COUNT = 3;
-const FREE_SCRATCHES_AWARDED = 5;
+const FREE_SCRATCHES_AWARDED = 10;
 
 const weightedPick = (betMode: BetMode): SymbolName => {
 	const pool = WEIGHTS[betMode];

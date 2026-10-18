@@ -355,7 +355,7 @@
 				<div class="pay-item bonus-item">
 					<span class="pay-item-icon">{SYMBOL_EMOJI.bonus}</span>
 					<span class="pay-item-name">{SYMBOL_LABEL.bonus} (land 3)</span>
-					<span class="pay-item-mult">5 Free Scratches</span>
+					<span class="pay-item-mult">10 Free Scratches</span>
 				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">

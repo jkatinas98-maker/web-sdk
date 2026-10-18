@@ -57,7 +57,7 @@ export default {
 	symbols: {
 		skull: { paytable: null, mult: 0 },
 		// Scatter — doesn't pay on its own; landing 3 anywhere on the card
-		// (same "reach 3 occurrences" rule as every other symbol) awards 5
+		// (same "reach 3 occurrences" rule as every other symbol) awards 10
 		// free scratches instead of a cash multiplier. Shared across every
 		// difficulty, same as skull.
 		bonus: { paytable: null, mult: 0 },
