@@ -9,20 +9,15 @@
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setSoundEnabled } from '../game/sound';
-	import { SYMBOL_COLORS } from '../game/symbolIcons';
+	import { SYMBOL_EMOJI } from '../game/symbolIcons';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
-	import Paytable from './Paytable.svelte';
 
-	// Desktop's right-side paytable panel, highest prize first (plain DOM —
-	// it sits behind an opaque glass panel, where the pixi-rendered strip
-	// used on mobile would be hidden).
+	// Paytable modal list, highest prize first.
 	const payEntries = (Object.entries(config.symbols) as [SymbolName, { mult: number }][])
 		.filter(([, sym]) => sym.mult > 0)
 		.sort((a, b) => b[1].mult - a[1].mult);
-
-	const swatch = (name: SymbolName) => `#${SYMBOL_COLORS[name].fill.toString(16).padStart(6, '0')}`;
 
 	const context = getContext();
 
@@ -34,6 +29,7 @@
 	let betAmount = $state(1);
 	let totalWin: number = $state(0);
 	let showWinModal = $state(false);
+	let showPaytable = $state(false);
 	let winningSymbol: SymbolName | null = $state(null);
 	// The RGS result (including the win amount) arrives the instant the bet
 	// resolves, but the player hasn't scratched anything yet — hold it here
@@ -52,7 +48,8 @@
 	const displayBalance = $derived(isMockMode ? mockBalance : stateBet.balanceAmount);
 	const displayLastWin = $derived(isMockMode ? mockLastWin : stateBet.winBookEventAmount);
 
-	const BET_CHIPS = [1, 5, 10, 25];
+	const MIN_BET = 0.5;
+	const BET_STEP = 0.5;
 
 	let soundOn = $state(true);
 	function toggleSound() {
@@ -62,13 +59,8 @@
 	}
 
 	function setBetAmount(value: number) {
-		betAmount = Math.max(0.1, Math.round(value * 100) / 100);
-	}
-
-	// Separate from setBetAmount so typing in the amount field doesn't fire a
-	// click sound per keystroke — only the +/- and preset chip buttons do.
-	function setBetAmountWithSound(value: number) {
-		setBetAmount(value);
+		const maxBet = Math.min(100, displayBalance || 100);
+		betAmount = Math.min(maxBet, Math.max(MIN_BET, Math.round(value * 100) / 100));
 		playSound('click');
 	}
 
@@ -77,31 +69,23 @@
 		playSound('click');
 	}
 
-	// Desktop gets a 3-panel layout (controls | ticket | paytable) with fixed
-	// side columns; mobile stacks everything vertically instead. Driven off
-	// the same canvasSizes() the pixi canvas already reacts to, so the DOM
-	// chrome and the card's own positioning never disagree about the layout.
-	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
-	const isDesktop = $derived(canvas.width >= 760);
+	function togglePaytable() {
+		playSound('click');
+		showPaytable = !showPaytable;
+	}
 
-	const HEADER_H = 48;
+	// Single-column mobile layout, always — no separate desktop panels. The
+	// board frame (ticket) fills whatever space is left between the header
+	// pill/banner at the top and the controls stack + footer bar at the
+	// bottom, same as the reference layout.
+	const HEADER_H = 64;
 	const FOOTER_H = 52;
-	const SIDE_PANEL_W = 230;
+	const CONTROLS_H = 172;
 
-	const topReserved = $derived(isDesktop ? HEADER_H + 20 : HEADER_H + 90);
-	const bottomReserved = $derived(isDesktop ? FOOTER_H + 20 : FOOTER_H + 215);
-	const leftReserved = $derived(isDesktop ? SIDE_PANEL_W : 0);
-	const rightReserved = $derived(isDesktop ? SIDE_PANEL_W : 0);
+	const topReserved = HEADER_H + 10;
+	const bottomReserved = FOOTER_H + CONTROLS_H;
 
-	const statusText = $derived(
-		viewState === 'playing'
-			? 'SCRATCH TO REVEAL'
-			: viewState === 'revealed'
-				? totalWin > 0
-					? `WINNER! ${(totalWin / betAmount).toFixed(1)}X`
-					: 'NO MATCH — TRY AGAIN'
-				: 'MATCH 3 SYMBOLS TO WIN',
-	);
+	const maxWin = $derived(config.betModes[betMode].max_win);
 
 	function playGame() {
 		if (isProcessing) return;
@@ -144,6 +128,16 @@
 			if (revealed.has(i)) continue;
 			setTimeout(() => context.stateGameDerived.reveal(i), delay);
 			delay += 45;
+		}
+	}
+
+	// One main action button, like the reference: it plays a round while
+	// idle/done, and becomes "Reveal all" while a round is in progress.
+	function handleMainAction() {
+		if (viewState === 'playing') {
+			revealEverything();
+		} else {
+			playGame();
 		}
 	}
 
@@ -190,15 +184,10 @@
 <div class="pixi-layer">
 	<App>
 		<EnableGameActor />
-		{#if !isDesktop && viewState !== 'playing'}
-			<Paytable x={canvas.width / 2} y={HEADER_H + 55} />
-		{/if}
 		<Ticket
 			{betMode}
 			top={topReserved}
 			bottom={bottomReserved}
-			left={leftReserved}
-			right={rightReserved}
 			interactive={viewState === 'playing'}
 			{winningSymbol}
 			onRevealIndex={revealPanel}
@@ -206,127 +195,62 @@
 	</App>
 </div>
 
-<div class="ui-layer" class:desktop={isDesktop}>
-	<!-- HEADER BAR -->
+<div class="ui-layer">
+	<!-- HEADER: logo pill + max-win banner, centered -->
 	<header class="header-bar">
-		<span class="header-title">NEON ALCHEMY</span>
-		<span class="header-status">{statusText}</span>
+		<div class="logo-pill">
+			<span class="logo-emoji">😜</span>
+			<span class="logo-title">Emoji Scratch</span>
+		</div>
+		<div class="max-win-banner">Win up to {maxWin}x bet</div>
 		<button class="sound-toggle" onclick={toggleSound} aria-label={soundOn ? 'Mute sound' : 'Unmute sound'}>
 			{soundOn ? '🔊' : '🔇'}
 		</button>
 	</header>
 
-	{#if isDesktop}
-		<!-- DESKTOP: fixed left controls panel -->
-		<aside class="side-panel side-panel-left">
-			<div class="side-panel-content">
-				<div>
-					<div class="panel-label-row">
-						<span class="panel-label">Difficulty</span>
-					</div>
-					<div class="mode-select vertical">
-						{#each Object.keys(config.betModes) as mode}
-							<button class:selected={betMode === mode} disabled={viewState === 'playing'} onclick={() => selectMode(mode as BetMode)}>
-								{mode} (max {config.betModes[mode as BetMode].max_win}x)
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div>
-					<span class="panel-label">Bet amount</span>
-					<div class="bet-row">
-						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(betAmount / 2)}>÷2</button>
-						<div class="bet-amount-wrap">
-							<span class="cur">$</span>
-							<input
-								class="bet-amount-input"
-								type="number"
-								min="0.1"
-								step="0.1"
-								disabled={viewState === 'playing'}
-								value={betAmount}
-								oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
-							/>
-						</div>
-						<button class="chip-style wide" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(betAmount * 2)}>×2</button>
-					</div>
-					<div class="chip-row">
-						{#each BET_CHIPS as chip}
-							<button class="chip-style" disabled={viewState === 'playing'} onclick={() => setBetAmountWithSound(chip)}>${chip}</button>
-						{/each}
-					</div>
-				</div>
-			</div>
-
-			<button class="play-style" onclick={playGame} disabled={isProcessing || viewState === 'playing'}>
-				{viewState === 'start' ? `Play ($${betAmount.toFixed(2)})` : 'Bet again?'}
-			</button>
-		</aside>
-
-		<!-- DESKTOP: fixed right paytable panel -->
-		<aside class="side-panel side-panel-right">
-			<div class="panel-label-row justify-center">
-				<span class="panel-label">Paytable</span>
-			</div>
-			<div class="paytable-list">
-				{#each payEntries as [name, sym] (name)}
-					<div class="paytable-row">
-						<span class="paytable-swatch" style="background:{swatch(name)}"></span>
-						<span class="paytable-name">{name}</span>
-						<span class="paytable-mult">×{sym.mult}</span>
-					</div>
+	<!-- CONTROLS STACK (above the footer bar) -->
+	<div class="controls-stack">
+		<div class="option-card">
+			<span class="option-title">Difficulty</span>
+			<div class="diff-row">
+				{#each Object.keys(config.betModes) as mode}
+					{@const m = config.betModes[mode as BetMode]}
+					<button
+						class="diff-btn"
+						class:active={betMode === mode}
+						disabled={viewState === 'playing'}
+						onclick={() => selectMode(mode as BetMode)}
+					>
+						{mode} ({m.rows}x{m.cols})
+					</button>
 				{/each}
 			</div>
-			{#if viewState === 'playing'}
-				<button class="reveal-all-style wide" onclick={revealEverything}>Reveal all</button>
-			{/if}
-		</aside>
-	{:else}
-		<!-- MOBILE: stacked bottom controls -->
-		<div class="mobile-bottom">
-			{#if viewState !== 'playing'}
-				<div class="mode-select">
-					{#each Object.keys(config.betModes) as mode}
-						<button class:selected={betMode === mode} onclick={() => selectMode(mode as BetMode)}>
-							{mode} (max {config.betModes[mode as BetMode].max_win}x)
-						</button>
-					{/each}
-				</div>
-			{/if}
-
-			{#if viewState === 'playing'}
-				<button class="reveal-all-style" onclick={revealEverything}>Reveal all</button>
-			{/if}
-
-			{#if viewState === 'start' || viewState === 'revealed'}
-				<div class="bet-row">
-					<button class="chip-style wide" onclick={() => setBetAmountWithSound(betAmount / 2)}>÷2</button>
-					<div class="bet-amount-wrap">
-						<span class="cur">$</span>
-						<input
-							class="bet-amount-input"
-							type="number"
-							min="0.1"
-							step="0.1"
-							value={betAmount}
-							oninput={(e) => setBetAmount(Number((e.target as HTMLInputElement).value) || 0.1)}
-						/>
-					</div>
-					<button class="chip-style wide" onclick={() => setBetAmountWithSound(betAmount * 2)}>×2</button>
-				</div>
-				<div class="chip-row">
-					{#each BET_CHIPS as chip}
-						<button class="chip-style" onclick={() => setBetAmountWithSound(chip)}>${chip}</button>
-					{/each}
-				</div>
-
-				<button class="play-style" onclick={playGame} disabled={isProcessing}>
-					{viewState === 'start' ? 'Play' : 'Bet again?'}
-				</button>
-			{/if}
 		</div>
-	{/if}
+
+		<div class="option-card">
+			<span class="option-title">Bet amount</span>
+			<div class="bet-stepper">
+				<button class="step-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount - BET_STEP)}>−</button>
+				<div class="bet-display">${betAmount.toFixed(2)}</div>
+				<button class="step-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount + BET_STEP)}>+</button>
+				<div class="quick-row">
+					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount / 2)}>½</button>
+					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount * 2)}>2×</button>
+					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(MIN_BET)}>Min</button>
+					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(100)}>Max</button>
+				</div>
+			</div>
+		</div>
+
+		<button
+			class="main-btn"
+			class:reveal-mode={viewState === 'playing'}
+			onclick={handleMainAction}
+			disabled={viewState !== 'playing' && isProcessing}
+		>
+			{viewState === 'playing' ? 'Reveal all' : `Buy card ($${betAmount.toFixed(2)})`}
+		</button>
+	</div>
 
 	<!-- FOOTER STAT BAR -->
 	<footer class="footer-bar">
@@ -338,12 +262,37 @@
 			<span class="footer-stat-label">Last win</span>
 			<span class="footer-stat-value win">${displayLastWin.toFixed(2)}</span>
 		</div>
-		<div class="footer-stat">
-			<span class="footer-stat-label">Bet</span>
-			<span class="footer-stat-value bet">${betAmount.toFixed(2)}</span>
+		<div class="icon-actions">
+			<button class="icon-btn" onclick={togglePaytable} aria-label="Paytable">ℹ️</button>
 		</div>
 	</footer>
 </div>
+
+{#if showPaytable}
+	<div
+		class="paytable-backdrop"
+		role="button"
+		tabindex="0"
+		onclick={togglePaytable}
+		onkeydown={(e) => e.key === 'Enter' && togglePaytable()}
+	>
+		<div class="paytable-modal" role="dialog" onclick={(e) => e.stopPropagation()}>
+			<div class="paytable-modal-header">
+				<span class="paytable-modal-title">Emoji paytable</span>
+				<button class="close-btn" onclick={togglePaytable} aria-label="Close">✕</button>
+			</div>
+			<div class="paytable-modal-list">
+				{#each payEntries as [name, sym] (name)}
+					<div class="pay-item">
+						<span class="pay-item-icon">{SYMBOL_EMOJI[name]}</span>
+						<span class="pay-item-name">{name}</span>
+						<span class="pay-item-mult">×{sym.mult}</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+	</div>
+{/if}
 
 {#if showWinModal}
 	<div
