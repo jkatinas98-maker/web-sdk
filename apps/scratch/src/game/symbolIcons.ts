@@ -2,23 +2,23 @@ import type { SymbolName } from './types';
 
 // One emoji per distinct multiplier VALUE, shared across every difficulty
 // — every "2x" is 🙂 whether it shows up in easy, medium, or hard, not a
-// separate icon per mode. Low to high payout, no money theme:
-//   1.5x 💩   2x 🙂   4x 🍑   5x 🐸   6x 🦊   9x ❤️   16x 🔥
-//   36x 🐺   41x 🦁   45x 🤑   110x 🐉   130x 👽   1000x 🛸
+// separate icon per mode. Picked by the user directly:
+//   1.5x 💩   2x 🙂   4x 🍑   5x 😘   6x 🙉   9x ❤️   16x 🔥
+//   36x 💸   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
 export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	skull: '💀',
 	mult1_5: '💩',
 	mult2: '🙂',
 	mult4: '🍑',
-	mult5: '🐸',
-	mult6: '🦊',
+	mult5: '😘',
+	mult6: '🙉',
 	mult9: '❤️',
 	mult16: '🔥',
-	mult36: '🐺',
-	mult41: '🦁',
-	mult45: '🤑',
-	mult110: '🐉',
-	mult130: '👽',
+	mult36: '💸',
+	mult41: '🤑',
+	mult45: '💎',
+	mult110: '👽',
+	mult130: '🚀',
 	mult1000: '🛸',
 };
 
@@ -30,15 +30,15 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	mult1_5: 'Dookie',
 	mult2: 'Smiley',
 	mult4: 'Peach',
-	mult5: 'Frog',
-	mult6: 'Fox',
+	mult5: 'Kiss',
+	mult6: 'Monkey',
 	mult9: 'Heart',
 	mult16: 'Blaze',
-	mult36: 'Wolf',
-	mult41: 'Lion',
-	mult45: 'Jackpot Face',
-	mult110: 'Dragon',
-	mult130: 'Alien',
+	mult36: 'Money Wings',
+	mult41: 'Money Face',
+	mult45: 'Diamond',
+	mult110: 'Alien',
+	mult130: 'Rocket',
 	mult1000: 'UFO',
 };
 
