@@ -31,6 +31,15 @@
 	// and only surface it once they've revealed every panel themselves.
 	let pendingWin: number | null = $state(null);
 
+	// 3+ 🎁 scatters award free scratches — pendingFreeScratches holds this
+	// round's award until the reveal-everything effect below surfaces it,
+	// the same way pendingWin does; freeScratchesRemaining is the player's
+	// actual free-scratch balance; awardedFreeScratches is just what the win
+	// modal shows for the round that just resolved.
+	let pendingFreeScratches = 0;
+	let freeScratchesRemaining = $state(0);
+	let awardedFreeScratches = $state(0);
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet
@@ -60,7 +69,7 @@
 	}
 
 	function selectMode(mode: BetMode) {
-		if (mode === betMode) return;
+		if (mode === betMode || freeScratchesRemaining > 0) return;
 		betMode = mode;
 		playSound('click');
 		// Clear the previous round's panels — otherwise the last mode's
@@ -95,6 +104,11 @@
 	const topReserved = HEADER_H + 10;
 	const bottomReserved = FOOTER_H + CONTROLS_H;
 
+	// Difficulty and bet amount lock while a round is live AND while free
+	// scratches are owed — a free scratch replays at whatever mode/bet
+	// triggered it, so they have to be used up before either can change.
+	const locked = $derived(viewState === 'playing' || freeScratchesRemaining > 0);
+
 	const maxWin = $derived(config.betModes[betMode].max_win);
 
 	// Paytable modal list for the CURRENT difficulty only — each mode has
@@ -108,7 +122,8 @@
 
 	function playGame() {
 		if (isProcessing) return;
-		if (isMockMode && mockBalance < betAmount) return;
+		const isFreeRound = freeScratchesRemaining > 0;
+		if (!isFreeRound && isMockMode && mockBalance < betAmount) return;
 
 		playSound('click');
 		isProcessing = true;
@@ -117,14 +132,22 @@
 		showWinModal = false;
 		winningSymbol = null;
 		pendingWin = null;
+		pendingFreeScratches = 0;
+		awardedFreeScratches = 0;
 		context.stateGameDerived.reset();
 
 		stateBet.activeBetModeKey = betMode;
 		stateBet.betAmount = betAmount;
 
 		if (isMockMode) {
-			mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
-			playBookEvents(createMockBet(betMode, betAmount));
+			if (isFreeRound) {
+				freeScratchesRemaining -= 1;
+			} else {
+				mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
+			}
+			const { events, freeScratches } = createMockBet(betMode, betAmount);
+			pendingFreeScratches = freeScratches;
+			playBookEvents(events);
 			return;
 		}
 
@@ -177,6 +200,10 @@
 				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
 				mockLastWin = totalWin;
 			}
+			if (pendingFreeScratches > 0) {
+				freeScratchesRemaining += pendingFreeScratches;
+				awardedFreeScratches = pendingFreeScratches;
+			}
 			if (totalWin > 0) {
 				// Re-derive which symbol actually won by scanning the resolved
 				// panels for the first paying symbol to reach 3 occurrences —
@@ -193,6 +220,8 @@
 					if (!winner && counts[panel.name]! >= 3) winner = panel.name;
 				}
 				winningSymbol = winner;
+			}
+			if (totalWin > 0 || awardedFreeScratches > 0) {
 				showWinModal = true;
 				playSound('win');
 			}
@@ -227,7 +256,11 @@
 			<span class="logo-emoji">😜</span>
 			<span class="logo-title">Emoji Scratch</span>
 		</div>
-		<div class="max-win-banner">Win up to {maxWin}x bet</div>
+		<div class="max-win-banner">
+			{freeScratchesRemaining > 0
+				? `🎁 ${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
+				: `Win up to ${maxWin}x bet`}
+		</div>
 		<button class="sound-toggle" onclick={toggleSound} aria-label={soundOn ? 'Mute sound' : 'Unmute sound'}>
 			{soundOn ? '🔊' : '🔇'}
 		</button>
@@ -243,7 +276,7 @@
 					<button
 						class="diff-btn"
 						class:active={betMode === mode}
-						disabled={viewState === 'playing'}
+						disabled={locked}
 						onclick={() => selectMode(mode as BetMode)}
 					>
 						{mode} ({m.rows}x{m.cols})
@@ -255,14 +288,14 @@
 		<div class="option-card">
 			<span class="option-title">Bet amount</span>
 			<div class="bet-stepper">
-				<button class="step-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount - BET_STEP)}>−</button>
+				<button class="step-btn" disabled={locked} onclick={() => setBetAmount(betAmount - BET_STEP)}>−</button>
 				<div class="bet-display">${betAmount.toFixed(2)}</div>
-				<button class="step-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount + BET_STEP)}>+</button>
+				<button class="step-btn" disabled={locked} onclick={() => setBetAmount(betAmount + BET_STEP)}>+</button>
 				<div class="quick-row">
-					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount / 2)}>½</button>
-					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(betAmount * 2)}>2×</button>
-					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(MIN_BET)}>Min</button>
-					<button class="q-btn" disabled={viewState === 'playing'} onclick={() => setBetAmount(100)}>Max</button>
+					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(betAmount / 2)}>½</button>
+					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(betAmount * 2)}>2×</button>
+					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(MIN_BET)}>Min</button>
+					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(100)}>Max</button>
 				</div>
 			</div>
 		</div>
@@ -270,10 +303,15 @@
 		<button
 			class="main-btn"
 			class:reveal-mode={viewState === 'playing'}
+			class:bonus-mode={viewState !== 'playing' && freeScratchesRemaining > 0}
 			onclick={handleMainAction}
 			disabled={viewState !== 'playing' && isProcessing}
 		>
-			{viewState === 'playing' ? 'Reveal all' : `Buy card ($${betAmount.toFixed(2)})`}
+			{viewState === 'playing'
+				? 'Reveal all'
+				: freeScratchesRemaining > 0
+					? `Free scratch (${freeScratchesRemaining} left)`
+					: `Buy card ($${betAmount.toFixed(2)})`}
 		</button>
 	</div>
 
@@ -307,6 +345,11 @@
 				<button class="close-btn" onclick={togglePaytable} aria-label="Close">✕</button>
 			</div>
 			<div class="paytable-modal-list">
+				<div class="pay-item bonus-item">
+					<span class="pay-item-icon">{SYMBOL_EMOJI.bonus}</span>
+					<span class="pay-item-name">{SYMBOL_LABEL.bonus} (land 3)</span>
+					<span class="pay-item-mult">5 Free Scratches</span>
+				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">
 						<span class="pay-item-icon">{SYMBOL_EMOJI[name]}</span>
@@ -328,9 +371,14 @@
 		onkeydown={(e) => e.key === 'Enter' && (showWinModal = false)}
 	>
 		<div class="win-modal">
-			<div class="win-modal-title">You won!</div>
-			<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
-			<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
+			<div class="win-modal-title">{totalWin > 0 ? 'You won!' : 'Bonus!'}</div>
+			{#if totalWin > 0}
+				<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
+				<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
+			{/if}
+			{#if awardedFreeScratches > 0}
+				<div class="win-modal-bonus">🎁 +{awardedFreeScratches} Free Scratches!</div>
+			{/if}
 			<div class="win-modal-hint">Tap anywhere to continue</div>
 		</div>
 	</div>

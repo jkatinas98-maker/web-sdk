@@ -292,6 +292,11 @@ button:disabled {
 	box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
+.main-btn.bonus-mode {
+	background: linear-gradient(135deg, var(--gold), #f97316);
+	box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
 /* ---------- Footer stat bar ---------- */
 
 .footer-bar {
@@ -441,6 +446,15 @@ button:disabled {
 	color: var(--cyan);
 }
 
+.pay-item.bonus-item {
+	border-color: rgba(245, 158, 11, 0.5);
+	background: rgba(245, 158, 11, 0.08);
+}
+
+.pay-item.bonus-item .pay-item-mult {
+	color: var(--gold);
+}
+
 /* ---------- Win celebration overlay ---------- */
 
 .win-backdrop {
@@ -485,6 +499,14 @@ button:disabled {
 	font-size: 1.1rem;
 	font-weight: 700;
 	color: rgba(3, 7, 18, 0.75);
+}
+
+.win-modal-bonus {
+	margin-top: 0.25rem;
+	font-size: 1.1rem;
+	font-weight: 800;
+	color: #fff7e0;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .win-modal-hint {

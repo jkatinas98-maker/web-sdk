@@ -141,12 +141,12 @@
 			<Text
 				y={size * 0.3}
 				anchor={0.5}
-				text={mult > 0 ? `×${mult}` : '—'}
+				text={mult > 0 ? `×${mult}` : panel.name === 'bonus' ? 'BONUS' : '—'}
 				style={{
 					fontFamily: 'Outfit, sans-serif',
 					fontWeight: '800',
-					fontSize: size * 0.14,
-					fill: mult > 0 ? 0x06b6d4 : 0x64748b,
+					fontSize: panel.name === 'bonus' ? size * 0.1 : size * 0.14,
+					fill: mult > 0 ? 0x06b6d4 : panel.name === 'bonus' ? 0xfbbf24 : 0x64748b,
 				}}
 			/>
 		</Container>

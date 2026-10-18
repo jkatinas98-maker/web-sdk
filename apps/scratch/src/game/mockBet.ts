@@ -21,9 +21,13 @@ import type { SymbolName, RawSymbol, BetMode } from './types';
 import type { BookEvent } from './typesBookEvent';
 import config from './config';
 
+// `bonus` (🎁) is folded into each pool at a low weight — it dilutes the
+// other odds slightly rather than being re-balanced to an exact 100, which
+// is fine since weightedPick normalizes against the pool's actual total.
 const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	easy: [
 		{ name: 'skull', weight: 66.8504 },
+		{ name: 'bonus', weight: 0.8 },
 		{ name: 'mult1_5', weight: 14.1968 },
 		{ name: 'mult2', weight: 8.5181 },
 		{ name: 'mult4', weight: 5.6787 },
@@ -33,6 +37,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	],
 	medium: [
 		{ name: 'skull', weight: 70 },
+		{ name: 'bonus', weight: 0.6 },
 		{ name: 'mult1_5', weight: 12 },
 		{ name: 'mult2', weight: 7 },
 		{ name: 'mult5', weight: 4.5 },
@@ -42,6 +47,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	],
 	hard: [
 		{ name: 'skull', weight: 75 },
+		{ name: 'bonus', weight: 0.4 },
 		{ name: 'mult2', weight: 11 },
 		{ name: 'mult6', weight: 6 },
 		{ name: 'mult9', weight: 4 },
@@ -50,6 +56,11 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'mult1000', weight: 0.3 },
 	],
 };
+
+// Landing this many bonus scatters anywhere on the card awards free
+// scratches, same "reach N occurrences" rule as every other symbol.
+const BONUS_SCATTER_COUNT = 3;
+const FREE_SCRATCHES_AWARDED = 5;
 
 const weightedPick = (betMode: BetMode): SymbolName => {
 	const pool = WEIGHTS[betMode];
@@ -63,19 +74,27 @@ const weightedPick = (betMode: BetMode): SymbolName => {
 };
 
 export const createMockBet = (
-	betMode: keyof typeof config.betModes,
+	betMode: BetMode,
 	betAmount: number,
-): BookEvent[] => {
+): { events: BookEvent[]; freeScratches: number } => {
 	const { cols, rows } = config.betModes[betMode];
 	const panelCount = cols * rows;
 
 	const panels: RawSymbol[] = [];
 	const counts: Partial<Record<SymbolName, number>> = {};
 	let winMult = 0;
+	let bonusCount = 0;
 
 	for (let i = 0; i < panelCount; i++) {
 		const name = weightedPick(betMode);
 		panels.push({ name });
+
+		// Bonus is a scatter: it counts toward its own 3-of-a-kind trigger
+		// but never toward (or against) the regular cash-win matching above.
+		if (name === 'bonus') {
+			bonusCount += 1;
+			continue;
+		}
 
 		const mult = config.symbols[name].mult;
 		if (mult > 0) {
@@ -86,18 +105,15 @@ export const createMockBet = (
 		}
 	}
 
-	// Pad the rest of the ticket with non-matching filler so the grid is
-	// always full-size even after an early stop (the real sim does the
-	// same — a resolved ticket still shows every panel, just un-animated).
-	while (panels.length < panelCount) {
-		panels.push({ name: 'skull' });
-	}
-
 	const amount = winMult * betAmount;
+	const freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
-	return [
-		{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' },
-		{ index: 1, type: 'setTotalWin', amount },
-		{ index: 2, type: 'finalWin', amount },
-	];
+	return {
+		events: [
+			{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' },
+			{ index: 1, type: 'setTotalWin', amount },
+			{ index: 2, type: 'finalWin', amount },
+		],
+		freeScratches,
+	};
 };

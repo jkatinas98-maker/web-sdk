@@ -7,6 +7,7 @@ import type { SymbolName } from './types';
 //   36x 💸   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
 export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 	skull: '💀',
+	bonus: '🎁',
 	mult1_5: '💩',
 	mult2: '🙂',
 	mult4: '🍑',
@@ -27,6 +28,7 @@ export const SYMBOL_EMOJI: Record<SymbolName, string> = {
 // something to show a player.
 export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	skull: 'Bust',
+	bonus: 'Bonus',
 	mult1_5: 'Dookie',
 	mult2: 'Smiley',
 	mult4: 'Peach',
@@ -47,6 +49,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 // variant used for the emoji's drop-shadow glow.
 export const SYMBOL_COLORS: Record<SymbolName, { fill: number; glow: number }> = {
 	skull: { fill: 0x64748b, glow: 0x94a3b8 },
+	bonus: { fill: 0xfbbf24, glow: 0xfde68a },
 	mult1_5: { fill: 0xa16207, glow: 0xd9b48f },
 	mult2: { fill: 0xfacc15, glow: 0xfff3b0 },
 	mult4: { fill: 0xfb923c, glow: 0xffd3a6 },
