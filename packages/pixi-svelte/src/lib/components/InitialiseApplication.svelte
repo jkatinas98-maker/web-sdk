@@ -18,19 +18,39 @@
 		PIXI.Assets.reset();
 
 		await preloadFont();
-		context.stateApp.pixiApplication = new PIXI.Application<PIXI.Renderer<HTMLCanvasElement>>();
-		await context.stateApp.pixiApplication.init({
+
+		const baseOptions = {
 			autoDensity: true,
 			backgroundAlpha: 0,
 			hello: true,
 			multiView: false,
 			antialias: true,
 			clearBeforeRender: true,
-			preference: 'webgpu',
-			powerPreference: 'high-performance',
+			powerPreference: 'high-performance' as const,
 			resolution: devicePixelRatio.current,
 			resizeTo: window,
-		});
+		};
+
+		context.stateApp.pixiApplication = new PIXI.Application<PIXI.Renderer<HTMLCanvasElement>>();
+		try {
+			// Preferred path: WebGPU, where supported, for better performance.
+			await context.stateApp.pixiApplication.init({ ...baseOptions, preference: 'webgpu' });
+		} catch (webgpuError) {
+			// PixiJS's own webgpu->webgl fallback doesn't catch every failure
+			// mode (seen in the wild on Android Chrome, where WebGPU context
+			// creation can reject outright instead of degrading gracefully).
+			// Left uncaught, that rejection used to propagate all the way up
+			// to the silent onMount catch below, which only logged it and
+			// left `initialised` false forever -- the entire Pixi scene
+			// (ticket card, cells, glow) never mounted while every HTML
+			// overlay (header, controls, win modal) kept working fine, since
+			// those don't depend on Pixi at all. Explicitly retrying on
+			// WebGL here instead of trusting the implicit fallback fixes
+			// that class of device dead in its tracks.
+			console.warn('WebGPU init failed, falling back to WebGL:', webgpuError);
+			context.stateApp.pixiApplication = new PIXI.Application<PIXI.Renderer<HTMLCanvasElement>>();
+			await context.stateApp.pixiApplication.init({ ...baseOptions, preference: 'webgl' });
+		}
 
 		wrap.appendChild(context.stateApp.pixiApplication.canvas);
 
