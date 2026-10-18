@@ -2,10 +2,12 @@
 	import './app.css';
 	import { App } from 'pixi-svelte';
 	import { getContext } from '../game/context';
-	import { stateBet } from 'state-shared';
+	import { stateBet, stateUrlDerived } from 'state-shared';
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
 	import type { BookEventOfType } from '../game/typesBookEvent';
+	import { createMockBet } from '../game/mockBet';
+	import { playBookEvents } from '../game/utils';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
 
@@ -38,6 +40,16 @@
 		context.stateGameDerived.reset();
 
 		stateBet.activeBetModeKey = betMode;
+
+		// No RGS backend to talk to during plain local dev (no rgs_url query
+		// param, e.g. opening localhost directly instead of through Stake
+		// Engine's platform or a local math-sdk RGS mock server) — fall back
+		// to a locally-generated ticket so the UI can still be tested.
+		if (!stateUrlDerived.rgsUrl()) {
+			playBookEvents(createMockBet(betMode));
+			return;
+		}
+
 		context.eventEmitter.broadcast({ type: 'bet' });
 	}
 
