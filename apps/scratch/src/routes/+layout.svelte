@@ -13,8 +13,15 @@
 
 	let showYourLoader = $state(false);
 
-	const loaderUrlStakeEngine = new URL('../../stake-engine-loader.gif', import.meta.url).href;
-	const loaderUrl = new URL('../../loader.gif', import.meta.url).href;
+	// These two gifs live in static/, which adapter-static copies verbatim
+	// next to index.html — a plain relative path resolves correctly against
+	// the deployed page's own URL no matter what subpath it's served under.
+	// (The previous `new URL(..., import.meta.url)` form is for Vite-bundled
+	// assets living under src/, not static/ files; it pointed two directories
+	// too high, so the gif never loaded and the loading overlay never
+	// cleared — the loader only clears via the gif's onload callback.)
+	const loaderUrlStakeEngine = 'stake-engine-loader.gif';
+	const loaderUrl = 'loader.gif';
 
 	setContext();
 </script>
