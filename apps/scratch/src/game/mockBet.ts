@@ -33,7 +33,10 @@ const weightedPick = (): SymbolName => {
 	return WEIGHTS[WEIGHTS.length - 1].name;
 };
 
-export const createMockBet = (betMode: keyof typeof config.betModes): BookEvent[] => {
+export const createMockBet = (
+	betMode: keyof typeof config.betModes,
+	betAmount: number,
+): BookEvent[] => {
 	const { cols, rows } = config.betModes[betMode];
 	const panelCount = cols * rows;
 
@@ -61,7 +64,7 @@ export const createMockBet = (betMode: keyof typeof config.betModes): BookEvent[
 		panels.push({ name: 'skull' });
 	}
 
-	const amount = winMult * config.betModes[betMode].cost;
+	const amount = winMult * betAmount;
 
 	return [
 		{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' },

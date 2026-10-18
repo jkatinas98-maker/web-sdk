@@ -95,3 +95,131 @@ button {
 .mode-select button.selected {
 	border-color: var(--border);
 }
+
+.reveal-all-style {
+	background-color: rgba(0, 0, 0, 0.45);
+	border: 2px solid var(--bg-2);
+	font-size: 0.8rem;
+}
+
+.bet-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.bet-amount-wrap {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	background-color: var(--bg-2);
+	border-radius: 8px;
+	padding: 0.4rem 0.75rem;
+}
+
+.bet-amount-input {
+	width: 4.5rem;
+	background: none;
+	border: none;
+	color: inherit;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.bet-amount-input:focus {
+	outline: none;
+}
+
+.chip-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.chip-style {
+	background-color: var(--bg-2);
+	font-size: 0.75rem;
+	padding: 0.5rem 0.9rem;
+}
+
+/* Win celebration overlay */
+.win-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(5, 5, 15, 0.72);
+	animation: win-fade-in 0.15s ease-out;
+}
+
+.win-modal {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 2rem 2.5rem;
+	border-radius: 20px;
+	background: radial-gradient(circle at 50% 0%, hsl(45 100% 55%), hsl(35 90% 40%));
+	box-shadow: 0 0 60px 10px hsl(45 100% 55% / 0.6);
+	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), win-glow 1.4s ease-in-out infinite 0.35s;
+}
+
+.win-modal-title {
+	font-size: 1rem;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-weight: 800;
+	color: hsl(35 100% 15%);
+}
+
+.win-modal-amount {
+	font-size: 2.75rem;
+	font-weight: 900;
+	color: white;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.win-modal-mult {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: hsl(35 100% 15%);
+}
+
+.win-modal-hint {
+	margin-top: 0.75rem;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	color: hsl(35 100% 20% / 0.8);
+}
+
+@keyframes win-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes win-pop {
+	from {
+		transform: scale(0.6);
+		opacity: 0;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes win-glow {
+	0%,
+	100% {
+		box-shadow: 0 0 60px 10px hsl(45 100% 55% / 0.6);
+	}
+	50% {
+		box-shadow: 0 0 90px 22px hsl(45 100% 55% / 0.9);
+	}
+}
