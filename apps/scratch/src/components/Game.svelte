@@ -60,8 +60,19 @@
 	}
 
 	function selectMode(mode: BetMode) {
+		if (mode === betMode) return;
 		betMode = mode;
 		playSound('click');
+		// Clear the previous round's panels — otherwise the last mode's
+		// (wrong-sized, wrong-symbol-set) grid stays on screen, stale, until
+		// the next bet is placed. The difficulty buttons are disabled while
+		// viewState === 'playing' so this never interrupts a live round.
+		viewState = 'start';
+		totalWin = 0;
+		showWinModal = false;
+		winningSymbol = null;
+		pendingWin = null;
+		context.stateGameDerived.reset();
 	}
 
 	function togglePaytable() {

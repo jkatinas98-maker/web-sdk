@@ -14,20 +14,53 @@
 		panel: RawSymbol | undefined;
 		revealed: boolean;
 		winning: boolean;
+		// This difficulty's top-paying symbol — glows gold and blinks the
+		// instant it's revealed, win or not (an anticipation cue, like
+		// landing a scratcher's jackpot icon before you know if it's a win).
+		jackpot: boolean;
 		interactive: boolean;
 		onReveal: () => void;
 	};
 
-	const { x, y, size, panel, revealed, winning, interactive, onReveal }: Props = $props();
+	const { x, y, size, panel, revealed, winning, jackpot, interactive, onReveal }: Props = $props();
 
 	const mult = $derived(panel ? config.symbols[panel.name].mult : 0);
 
-	const borderColor = $derived(winning ? 0x10b981 : revealed ? 0x06b6d4 : 0x8b5cf6);
-	const borderAlpha = $derived(winning ? 0.9 : revealed ? 0.55 : 0.3);
-	const borderWidth = $derived(winning ? 2.5 : revealed ? 1.5 : 1);
-	const fillColor = $derived(winning ? 0x10b981 : 0x0f172a);
-	const fillAlpha = $derived(winning ? 0.22 : 0.9);
+	// Fast alpha flicker, jackpot tiles only — the "blink" half of "glow and
+	// blink" (declared before the color derivations below so they can use
+	// it directly).
+	let blinkAlpha = $state(1);
+	$effect(() => {
+		if (!jackpot) {
+			blinkAlpha = 1;
+			return;
+		}
+		let raf: number;
+		const start = performance.now();
+		const loop = (now: number) => {
+			const elapsed = (now - start) / 220;
+			blinkAlpha = 0.45 + Math.abs(Math.sin(elapsed * Math.PI)) * 0.55;
+			raf = requestAnimationFrame(loop);
+		};
+		raf = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(raf);
+	});
+
+	// Color priority: a confirmed win (green) beats the jackpot-symbol glow
+	// (gold) beats a plain revealed tile (cyan) beats the unrevealed default
+	// (purple). The jackpot glow blinks on top of whatever color won out —
+	// stacks with the winning-tile breathing pulse rather than replacing
+	// it, so a jackpot symbol that's ALSO part of the win still reads as a
+	// win first, just a sparklier one.
+	const borderColor = $derived(winning ? 0x10b981 : jackpot ? 0xfbbf24 : revealed ? 0x06b6d4 : 0x8b5cf6);
+	const baseBorderAlpha = $derived(winning ? 0.9 : jackpot ? 0.95 : revealed ? 0.55 : 0.3);
+	const borderWidth = $derived(winning ? 2.5 : jackpot ? 2.5 : revealed ? 1.5 : 1);
+	const fillColor = $derived(winning ? 0x10b981 : jackpot ? 0xfbbf24 : 0x0f172a);
+	const baseFillAlpha = $derived(winning ? 0.22 : jackpot ? 0.18 : 0.9);
 	const radius = $derived(size * 0.18);
+
+	const borderAlpha = $derived(jackpot ? baseBorderAlpha * blinkAlpha : baseBorderAlpha);
+	const fillAlpha = $derived(jackpot ? baseFillAlpha * blinkAlpha : baseFillAlpha);
 
 	const drawTile = (graphics: PIXI.Graphics) => {
 		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
@@ -48,11 +81,11 @@
 		graphics.fill({ color: 0x000000, alpha: 0.001 });
 	};
 
-	// Winning tiles breathe slowly (matches the reference's pulseWin
-	// keyframe: scale 0.97 <-> 1.03).
+	// Winning AND jackpot tiles breathe slowly (matches the reference's
+	// pulseWin keyframe: scale 0.97 <-> 1.03).
 	let pulseScale = $state(1);
 	$effect(() => {
-		if (!winning) {
+		if (!winning && !jackpot) {
 			pulseScale = 1;
 			return;
 		}

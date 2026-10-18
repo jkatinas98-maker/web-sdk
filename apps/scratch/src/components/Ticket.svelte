@@ -48,6 +48,15 @@
 	const displayCols = $derived(Math.max(cols, rows));
 	const displayRows = $derived(Math.min(cols, rows));
 
+	// This difficulty's own top-paying symbol — landing it gets a gold
+	// glow+blink the instant it's revealed, regardless of whether it ends
+	// up part of a win (anticipation, like a real scratcher's jackpot icon).
+	const jackpotSymbol = $derived(
+		(config.betModes[betMode].symbols as SymbolName[]).reduce((best, name) =>
+			config.symbols[name].mult > config.symbols[best].mult ? name : best,
+		),
+	);
+
 	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
 	const availableWidth = $derived(canvas.width - left - right);
 	const cardWidth = $derived(Math.min(availableWidth - 24, 400));
@@ -128,6 +137,7 @@
 			panel={panels[cell.index]}
 			revealed={revealed.has(cell.index)}
 			winning={revealed.has(cell.index) && panels[cell.index]?.name === winningSymbol}
+			jackpot={revealed.has(cell.index) && panels[cell.index]?.name === jackpotSymbol}
 			interactive={interactive && !revealed.has(cell.index)}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>
