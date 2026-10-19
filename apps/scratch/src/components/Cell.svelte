@@ -26,8 +26,9 @@
 
 	const mult = $derived(panel ? config.symbols[panel.name].mult : 0);
 	const isBonus = $derived(panel?.name === 'bonus');
-	// Either kind of "special" tile gets the glow+blink treatment.
-	const special = $derived(jackpot || isBonus);
+	const isKey = $derived(panel?.name === 'key');
+	// Every "special" tile kind gets the glow+blink treatment.
+	const special = $derived(jackpot || isBonus || isKey);
 
 	// Fast alpha flicker, special tiles only — the "blink" half of "glow and
 	// blink" (declared before the color derivations below so they can use
@@ -56,7 +57,7 @@
 	// breathing pulse rather than replacing it, so a jackpot/bonus symbol
 	// that's ALSO part of the win still reads as a win first, just a
 	// sparklier one.
-	const specialColor = $derived(jackpot ? 0xfbbf24 : 0xec4899);
+	const specialColor = $derived(jackpot ? 0xfbbf24 : isKey ? 0xca8a04 : 0xec4899);
 	const borderColor = $derived(winning ? 0x10b981 : special ? specialColor : revealed ? 0x06b6d4 : 0x8b5cf6);
 	const baseBorderAlpha = $derived(winning ? 0.9 : special ? 0.95 : revealed ? 0.55 : 0.3);
 	const borderWidth = $derived(winning ? 2.5 : special ? 2.5 : revealed ? 1.5 : 1);
@@ -111,9 +112,11 @@
 
 	$effect(() => {
 		if (revealed && !wasRevealed) {
-			// Landing the mode's top symbol or a 🎁 scatter each get their own
-			// distinct chime instead of the plain reveal blip.
-			playSound(jackpot ? 'jackpot' : isBonus ? 'scatterLand' : 'reveal');
+			// Landing the mode's top symbol, the scatter, or a key each get
+			// their own distinct chime instead of the plain reveal blip. Key
+			// reuses the scatter chime for now (TODO: a dedicated "keyLand"
+			// synth once the feature it triggers is built).
+			playSound(jackpot ? 'jackpot' : isBonus || isKey ? 'scatterLand' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 
@@ -148,12 +151,12 @@
 			<Text
 				y={size * 0.3}
 				anchor={0.5}
-				text={mult > 0 ? `×${mult}` : panel.name === 'bonus' ? 'BONUS' : '—'}
+				text={mult > 0 ? `×${mult}` : isBonus ? 'BONUS' : isKey ? 'KEY' : '—'}
 				style={{
 					fontFamily: 'Outfit, sans-serif',
 					fontWeight: '800',
-					fontSize: panel.name === 'bonus' ? size * 0.1 : size * 0.14,
-					fill: mult > 0 ? 0x06b6d4 : panel.name === 'bonus' ? 0xec4899 : 0x64748b,
+					fontSize: isBonus || isKey ? size * 0.1 : size * 0.14,
+					fill: mult > 0 ? 0x06b6d4 : isBonus ? 0xec4899 : isKey ? 0xca8a04 : 0x64748b,
 				}}
 			/>
 		</Container>

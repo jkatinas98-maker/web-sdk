@@ -25,9 +25,14 @@ import config from './config';
 // other odds slightly rather than being re-balanced to an exact 100, which
 // is fine since weightedPick normalizes against the pool's actual total.
 const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
+	// `key` is folded in at a low weight, same treatment as `bonus` -- not
+	// rebalanced to an exact total, since weightedPick normalizes against
+	// the pool's actual sum. It doesn't do anything yet (see config.ts); this
+	// just makes it drawable so the symbol is visible/testable in mock mode.
 	easy: [
 		{ name: 'skull', weight: 66.8504 },
 		{ name: 'bonus', weight: 0.8 },
+		{ name: 'key', weight: 0.5 },
 		{ name: 'mult1_5', weight: 14.1968 },
 		{ name: 'mult2', weight: 8.5181 },
 		{ name: 'mult4', weight: 5.6787 },
@@ -38,6 +43,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	medium: [
 		{ name: 'skull', weight: 70 },
 		{ name: 'bonus', weight: 0.6 },
+		{ name: 'key', weight: 0.4 },
 		{ name: 'mult1_5', weight: 12 },
 		{ name: 'mult2', weight: 7 },
 		{ name: 'mult5', weight: 4.5 },
@@ -48,6 +54,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	hard: [
 		{ name: 'skull', weight: 75 },
 		{ name: 'bonus', weight: 0.4 },
+		{ name: 'key', weight: 0.3 },
 		{ name: 'mult2', weight: 11 },
 		{ name: 'mult6', weight: 6 },
 		{ name: 'mult9', weight: 4 },

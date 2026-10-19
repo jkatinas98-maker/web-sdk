@@ -61,6 +61,14 @@ export default {
 		// free scratches instead of a cash multiplier. Shared across every
 		// difficulty, same as skull.
 		bonus: { paytable: null, mult: 0 },
+		// New feature symbol (not yet wired to a feature -- see
+		// stake-scratch-game notes). Doesn't pay cash and doesn't count
+		// toward the bonus scatter trigger; it's meant to drop on its own and
+		// launch the Treasure Chest pick bonus directly, same as landing the
+		// Treasure Meter's pop threshold. That trigger logic isn't built yet
+		// -- this entry just reserves the id/weight/art slot so the symbol is
+		// drawable and visible end-to-end while the feature gets built.
+		key: { paytable: null, mult: 0 },
 		mult1_5: { paytable: [{ '3': 1.5 }], mult: 1.5 },
 		mult2: { paytable: [{ '3': 2 }], mult: 2 },
 		mult4: { paytable: [{ '3': 4 }], mult: 4 },

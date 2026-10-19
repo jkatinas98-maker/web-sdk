@@ -1,66 +1,77 @@
 import type { SymbolName } from './types';
 
-// One emoji per distinct multiplier VALUE, shared across every difficulty
-// — every "2x" is 🙂 whether it shows up in easy, medium, or hard, not a
-// separate icon per mode. Picked by the user directly:
-//   1.5x 💩   2x 🙂   4x 🍑   5x 😘   6x 🥵   9x ❤️   16x 🔥
-//   36x 🙏   41x 🤑   45x 💎   110x 👽   130x 🚀   1000x 🛸
-export const SYMBOL_EMOJI: Record<SymbolName, string> = {
-	skull: '💀',
-	bonus: '🎁',
-	mult1_5: '💩',
-	mult2: '🙂',
-	mult4: '🍑',
-	mult5: '😘',
-	mult6: '🥵',
-	mult9: '❤️',
-	mult16: '🔥',
-	mult36: '🙏',
-	mult41: '🤑',
-	mult45: '💎',
-	mult110: '👽',
-	mult130: '🚀',
-	mult1000: '🛸',
+// PLACEHOLDER ART. Each symbol gets a distinct geometric glyph + accent color
+// so the game is visually legible and testable before the commissioned
+// pirate-theme art lands. This is deliberately NOT emoji (that was the
+// feedback that got the last Stake Engine submission rejected) and
+// deliberately not an attempt to fake finished art either -- a plain shape
+// signals "art goes here" honestly. Swap SYMBOL_PLACEHOLDER_GLYPH (and
+// eventually this whole file) for the artist's Spine/PNG assets; nothing
+// else in the component tree needs to change, since SymbolIcon.svelte is the
+// only consumer.
+export const SYMBOL_PLACEHOLDER_GLYPH: Record<SymbolName, string> = {
+	skull: '☠',
+	bonus: '▣', // scatter -- small closed treasure chest
+	key: '◈', // feature symbol -- ornate key
+	mult1_5: '●', // flintlock pistol
+	mult2: '◆', // crab
+	mult4: '▲', // rum barrel
+	mult5: '■', // parrot
+	mult6: '▼', // crossed cutlasses
+	mult9: '★', // ship's wheel
+	mult16: '⬟', // spyglass & compass
+	mult36: '✦', // anchor
+	mult41: '✚', // treasure map
+	mult45: '◉', // Jolly Roger flag
+	mult110: '❖', // jeweled crown / gem cluster
+	mult130: '✧', // stacked gold bars
+	mult1000: '✪', // overflowing treasure hoard (open chest, highest tier)
 };
 
-// Human-readable label for the paytable modal — symbol ids (mult1_5,
+// Human-readable label for the paytable modal -- symbol ids (mult1_5,
 // mult1000, ...) are just internal keys shared with config.ts, not
-// something to show a player.
+// something to show a player. Pirate theme names, matching the artist brief.
 export const SYMBOL_LABEL: Record<SymbolName, string> = {
-	skull: 'Bust',
-	bonus: 'Bonus',
-	mult1_5: 'Dookie',
-	mult2: 'Smiley',
-	mult4: 'Peach',
-	mult5: 'Kiss',
-	mult6: 'Hot Face',
-	mult9: 'Heart',
-	mult16: 'Blaze',
-	mult36: 'Praying Hands',
-	mult41: 'Money Face',
-	mult45: 'Diamond',
-	mult110: 'Alien',
-	mult130: 'Rocket',
-	mult1000: 'UFO',
+	skull: 'Skull & Crossbones',
+	bonus: 'Treasure Chest',
+	key: 'Golden Key',
+	mult1_5: 'Flintlock Pistol',
+	mult2: 'Crab',
+	mult4: 'Rum Barrel',
+	mult5: 'Parrot',
+	mult6: 'Crossed Cutlasses',
+	mult9: "Ship's Wheel",
+	mult16: 'Spyglass & Compass',
+	mult36: 'Anchor',
+	mult41: 'Treasure Map',
+	mult45: 'Jolly Roger Flag',
+	mult110: 'Jeweled Crown',
+	mult130: 'Gold Bars',
+	mult1000: 'Overflowing Hoard',
 };
 
 // Accent colors: `fill` is the symbol's accent hue (used for the DOM
 // paytable swatch and the cell's background glow), `glow` is a brighter
-// variant used for the emoji's drop-shadow glow.
+// variant used for the glyph's drop-shadow glow. Deliberately NOT a
+// monotone gold ladder -- only the top two tiers (mult130, mult1000) lean
+// gold; everything below breaks color on purpose (red crab, amber rum,
+// green parrot, steel cutlasses, jewel tones) so the mid-ladder doesn't
+// read as "more yellow coins" at a glance.
 export const SYMBOL_COLORS: Record<SymbolName, { fill: number; glow: number }> = {
 	skull: { fill: 0x64748b, glow: 0x94a3b8 },
-	bonus: { fill: 0xfbbf24, glow: 0xfde68a },
-	mult1_5: { fill: 0xa16207, glow: 0xd9b48f },
-	mult2: { fill: 0xfacc15, glow: 0xfff3b0 },
-	mult4: { fill: 0xfb923c, glow: 0xffd3a6 },
-	mult5: { fill: 0x22c55e, glow: 0xbbf7d0 },
-	mult6: { fill: 0xf97316, glow: 0xfed7aa },
-	mult9: { fill: 0xf43f5e, glow: 0xfca5b1 },
-	mult16: { fill: 0xef4444, glow: 0xfecaca },
-	mult36: { fill: 0x64748b, glow: 0xcbd5e1 },
-	mult41: { fill: 0xf59e0b, glow: 0xfde68a },
-	mult45: { fill: 0xeab308, glow: 0xfef08a },
-	mult110: { fill: 0x10b981, glow: 0x6ee7b7 },
-	mult130: { fill: 0x22d3ee, glow: 0xa5f3fc },
-	mult1000: { fill: 0x14b8a6, glow: 0x99f6e4 },
+	bonus: { fill: 0x8b5a2b, glow: 0xd2a679 }, // wood/iron scatter chest
+	key: { fill: 0xca8a04, glow: 0xfde68a },
+	mult1_5: { fill: 0x475569, glow: 0xcbd5e1 }, // gunmetal pistol
+	mult2: { fill: 0xea580c, glow: 0xfdba74 }, // crab
+	mult4: { fill: 0x92400e, glow: 0xd97706 }, // rum barrel
+	mult5: { fill: 0x16a34a, glow: 0x86efac }, // parrot
+	mult6: { fill: 0x94a3b8, glow: 0xe2e8f0 }, // steel cutlasses
+	mult9: { fill: 0x78350f, glow: 0xd4a373 }, // ship's wheel wood+brass
+	mult16: { fill: 0xb45309, glow: 0xfbbf24 }, // brass spyglass
+	mult36: { fill: 0x475569, glow: 0x94a3b8 }, // iron anchor
+	mult41: { fill: 0xb91c1c, glow: 0xf87171 }, // treasure map's red X
+	mult45: { fill: 0x1e293b, glow: 0xcbd5e1 }, // black/white Jolly Roger
+	mult110: { fill: 0x7e22ce, glow: 0xd8b4fe }, // jeweled crown
+	mult130: { fill: 0xeab308, glow: 0xfef08a }, // gold bars
+	mult1000: { fill: 0xf59e0b, glow: 0xfde68a }, // overflowing hoard -- richest, biggest glow
 };
