@@ -134,10 +134,20 @@
 		if(stateUrlDerived.replay()) {
 			stateUi.config.mode = 'replay';
 			await handleReplay();
-		} else {
+		} else if (stateUrlDerived.rgsUrl()) {
+			// Only talk to the RGS when the page was actually launched with an
+			// rgs_url (Stake Engine portal, or a local math-sdk RGS server).
+			// With no rgs_url -- e.g. a bare static deploy for previewing the
+			// front end on its own -- Game.svelte already falls back to fully
+			// local mock-mode betting (see isMockMode in Game.svelte), so
+			// calling authenticate() here would just hit `https:///wallet/...`,
+			// fail, and throw up a permanent, non-dismissable error modal
+			// (ModalError is `persistent`) over an otherwise-working game.
 			stateUi.config.mode = 'default';
 			await authenticate();
-		};
+		} else {
+			stateUi.config.mode = 'default';
+		}
 
 		authenticated = true;
 	});
