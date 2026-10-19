@@ -26,7 +26,40 @@ type BookEventFinalWin = {
 	amount: number;
 };
 
-export type BookEvent = BookEventRevealPanels | BookEventSetTotalWin | BookEventFinalWin;
+// One `key` symbol landed, or the Treasure Meter popped -- both fire one of
+// these. Each entry is one chest's outcome, always chests_per_trigger (3)
+// of them minimum, more if a 'retrigger'/'key' outcome queued extra opens
+// (matches games/scratch/scratch_sim.py's resolve_chest_sequence exactly).
+// `value` units match config.ts's symbol mults: 'cash' is a flat per-$1
+// multiplier added to the round, 'multiplier' multiplies the round's
+// running total so far, 'retrigger'/'key' are counts of extra opens queued.
+export type ChestOutcomeKind = 'cash' | 'multiplier' | 'retrigger' | 'key';
+export type ChestOutcome = { id: string; kind: ChestOutcomeKind; value: number };
+
+type BookEventChestSequence = {
+	index: number;
+	type: 'chestSequence';
+	chests: ChestOutcome[];
+};
+
+// Hidden 1-10 vs hidden 1-10; a match pays a flat multiplier (same per-$1
+// units as everything else) regardless of whatever else happened on this
+// card. `amount` is 0 when `hit` is false.
+type BookEventKrakenResult = {
+	index: number;
+	type: 'krakenResult';
+	playerNumber: number;
+	krakenNumber: number;
+	hit: boolean;
+	amount: number;
+};
+
+export type BookEvent =
+	| BookEventRevealPanels
+	| BookEventSetTotalWin
+	| BookEventFinalWin
+	| BookEventChestSequence
+	| BookEventKrakenResult;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;

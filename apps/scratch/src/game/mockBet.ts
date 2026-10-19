@@ -4,11 +4,10 @@
 // real round. This generates a locally-faked book so the ticket can still
 // be scratched and resolved end-to-end during front-end dev.
 //
-// The weights/logic here mirror games/scratch/scratch_sim.py's easy-mode
-// symbol distribution and its sequential "stop at first symbol to reach 3
-// countable matches, skull (mult 0) never counts" rule — see the earlier
-// sketch3.py simulation. This is NOT the certified math; it exists only to
-// drive the UI during local development.
+// The weights/logic here mirror games/scratch/scratch_sim.py and
+// game_config.py (math-sdk repo) as closely as this file's different calling
+// shape allows -- see the per-feature notes below for where they diverge.
+// This is NOT the certified math; it exists only to drive the UI locally.
 //
 // Each difficulty still draws from its own pool of weights (see
 // betModes[mode].symbols in config.ts for which ids belong to which mode —
@@ -18,21 +17,16 @@
 // keep bigger wins feeling rare — same "not certified math" caveat applies
 // to them as to easy's original numbers.
 import type { SymbolName, RawSymbol, BetMode } from './types';
-import type { BookEvent } from './typesBookEvent';
+import type { BookEvent, ChestOutcome, ChestOutcomeKind } from './typesBookEvent';
 import config from './config';
 
-// `bonus` (🎁) is folded into each pool at a low weight — it dilutes the
-// other odds slightly rather than being re-balanced to an exact 100, which
-// is fine since weightedPick normalizes against the pool's actual total.
+// `bonus`/`key` are folded in at a low weight — not rebalanced to an exact
+// total, since weightedPick normalizes against the pool's actual total.
 const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
-	// `key` is folded in at a low weight, same treatment as `bonus` -- not
-	// rebalanced to an exact total, since weightedPick normalizes against
-	// the pool's actual sum. It doesn't do anything yet (see config.ts); this
-	// just makes it drawable so the symbol is visible/testable in mock mode.
 	easy: [
 		{ name: 'skull', weight: 66.8504 },
 		{ name: 'bonus', weight: 0.8 },
-		{ name: 'key', weight: 0.5 },
+		{ name: 'key', weight: 0.045 },
 		{ name: 'mult1_5', weight: 14.1968 },
 		{ name: 'mult2', weight: 8.5181 },
 		{ name: 'mult4', weight: 5.6787 },
@@ -43,7 +37,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	medium: [
 		{ name: 'skull', weight: 70 },
 		{ name: 'bonus', weight: 0.6 },
-		{ name: 'key', weight: 0.4 },
+		{ name: 'key', weight: 0.035 },
 		{ name: 'mult1_5', weight: 12 },
 		{ name: 'mult2', weight: 7 },
 		{ name: 'mult5', weight: 4.5 },
@@ -54,7 +48,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 	hard: [
 		{ name: 'skull', weight: 75 },
 		{ name: 'bonus', weight: 0.4 },
-		{ name: 'key', weight: 0.3 },
+		{ name: 'key', weight: 0.025 },
 		{ name: 'mult2', weight: 11 },
 		{ name: 'mult6', weight: 6 },
 		{ name: 'mult9', weight: 4 },
@@ -69,6 +63,38 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 const BONUS_SCATTER_COUNT = 3;
 const FREE_SCRATCHES_AWARDED = 10;
 
+// --- Treasure Meter / Chest / Kraken -- mirrors game_config.py exactly ---
+// (see that file's comments for why these numbers are what they are).
+const TREASURE_METER_THRESHOLD: Record<BetMode, number> = { easy: 4, medium: 3, hard: 3 };
+const TREASURE_METER_POINTS: Record<4 | 5, number> = { 4: 1, 5: 2 };
+
+const CHESTS_PER_TRIGGER = 3;
+const CHEST_PRIZE_TABLE: Array<{ id: string; kind: ChestOutcomeKind; value: number; weight: number }> = [
+	{ id: 'cash_small', kind: 'cash', value: 0.5, weight: 38 },
+	{ id: 'cash_medium', kind: 'cash', value: 1.5, weight: 22 },
+	{ id: 'cash_large', kind: 'cash', value: 4.0, weight: 7 },
+	{ id: 'multiplier_boost', kind: 'multiplier', value: 1.5, weight: 6 },
+	{ id: 'retrigger', kind: 'retrigger', value: 2, weight: 3 },
+	{ id: 'key', kind: 'key', value: 1, weight: 1 },
+];
+const MAX_CHEST_OPENS_PER_ROUND = 60;
+
+const KRAKEN_TRIGGER_CHANCE: Record<BetMode, number> = { easy: 0.018, medium: 0.018, hard: 0.018 };
+const KRAKEN_NUMBER_RANGE = 10;
+const KRAKEN_MATCH_MULT = 10;
+
+// The real math-sdk simulator bundles a whole round (base card + every
+// free-scratch card it awards) into ONE book, so the Treasure Meter's
+// points accumulate across all of them before being checked against the
+// threshold. This front end's mock mode instead calls createMockBet once
+// PER CARD (Game.svelte re-calls it for each free scratch the player taps
+// through individually) -- so to approximate the same "accumulates across
+// the round" behavior here, the running total lives in this module-level
+// variable across calls, and is reset only when a fresh (non-free) round
+// starts. This is a mock-mode-only approximation; the real book's totals
+// come from scratch_sim.py's play_round, which has no such split.
+let meterPointsAcc = 0;
+
 const weightedPick = (betMode: BetMode): SymbolName => {
 	const pool = WEIGHTS[betMode];
 	const total = pool.reduce((sum, w) => sum + w.weight, 0);
@@ -80,17 +106,57 @@ const weightedPick = (betMode: BetMode): SymbolName => {
 	return pool[pool.length - 1].name;
 };
 
+const rollChestPrize = () => {
+	const total = CHEST_PRIZE_TABLE.reduce((sum, row) => sum + row.weight, 0);
+	let r = Math.random() * total;
+	for (const row of CHEST_PRIZE_TABLE) {
+		r -= row.weight;
+		if (r <= 0) return row;
+	}
+	return CHEST_PRIZE_TABLE[CHEST_PRIZE_TABLE.length - 1];
+};
+
+// Mirrors scratch_sim.py's resolve_chest_sequence exactly: cash adds to the
+// running total immediately, multiplier multiplies it, retrigger/key queue
+// more opens (key = a whole extra sequence), all interleaved in resolution
+// order rather than scored as three independent pulls.
+const resolveChestSequence = (
+	numOpens: number,
+	opensBudget: number,
+	currentTotal: number,
+): { outcomes: ChestOutcome[]; total: number; opened: number } => {
+	const outcomes: ChestOutcome[] = [];
+	let total = currentTotal;
+	let queue = numOpens;
+	let opened = 0;
+	while (queue > 0 && opened < opensBudget) {
+		queue -= 1;
+		opened += 1;
+		const { id, kind, value } = rollChestPrize();
+		outcomes.push({ id, kind, value });
+		if (kind === 'cash') total += value;
+		else if (kind === 'multiplier') total *= value;
+		else if (kind === 'retrigger') queue += value;
+		else if (kind === 'key') queue += value * CHESTS_PER_TRIGGER;
+	}
+	return { outcomes, total, opened };
+};
+
 export const createMockBet = (
 	betMode: BetMode,
 	betAmount: number,
+	isFreeRound = false,
 ): { events: BookEvent[]; freeScratches: number } => {
 	const { cols, rows } = config.betModes[betMode];
 	const panelCount = cols * rows;
+
+	if (!isFreeRound) meterPointsAcc = 0;
 
 	const panels: RawSymbol[] = [];
 	const counts: Partial<Record<SymbolName, number>> = {};
 	let winMult = 0;
 	let bonusCount = 0;
+	let keyCount = 0;
 
 	for (let i = 0; i < panelCount; i++) {
 		const name = weightedPick(betMode);
@@ -100,6 +166,10 @@ export const createMockBet = (
 		// but never toward (or against) the regular cash-win matching above.
 		if (name === 'bonus') {
 			bonusCount += 1;
+			continue;
+		}
+		if (name === 'key') {
+			keyCount += 1;
 			continue;
 		}
 
@@ -120,15 +190,59 @@ export const createMockBet = (
 	// scaling happens in bookEventHandlerMap.ts, in one place, for both this
 	// mock path and the real RGS path -- baking the multiply in here too
 	// used to double it for mock mode once that fix landed.
-	const amount = winMult;
+	let amount = winMult;
 	const freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
-	return {
-		events: [
-			{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' },
-			{ index: 1, type: 'setTotalWin', amount },
-			{ index: 2, type: 'finalWin', amount },
-		],
-		freeScratches,
-	};
+	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];
+	let idx = 1;
+
+	if (Math.random() < KRAKEN_TRIGGER_CHANCE[betMode]) {
+		const playerNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
+		const krakenNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
+		const hit = playerNumber === krakenNumber;
+		if (hit) amount += KRAKEN_MATCH_MULT;
+		events.push({
+			index: idx,
+			type: 'krakenResult',
+			playerNumber,
+			krakenNumber,
+			hit,
+			amount: hit ? KRAKEN_MATCH_MULT : 0,
+		});
+		idx += 1;
+	}
+
+	let meterPoints = 0;
+	for (const count of Object.values(counts)) {
+		if (count! >= 5) meterPoints += TREASURE_METER_POINTS[5];
+		else if (count === 4) meterPoints += TREASURE_METER_POINTS[4];
+	}
+	meterPointsAcc += meterPoints;
+
+	let chestTriggers = keyCount;
+	const threshold = TREASURE_METER_THRESHOLD[betMode];
+	while (meterPointsAcc >= threshold) {
+		meterPointsAcc -= threshold;
+		chestTriggers += 1;
+	}
+
+	let chestOpensUsed = 0;
+	for (let t = 0; t < chestTriggers; t++) {
+		if (chestOpensUsed >= MAX_CHEST_OPENS_PER_ROUND) break;
+		const { outcomes, total, opened } = resolveChestSequence(
+			CHESTS_PER_TRIGGER,
+			MAX_CHEST_OPENS_PER_ROUND - chestOpensUsed,
+			amount,
+		);
+		chestOpensUsed += opened;
+		amount = total;
+		events.push({ index: idx, type: 'chestSequence', chests: outcomes });
+		idx += 1;
+	}
+
+	events.push({ index: idx, type: 'setTotalWin', amount });
+	idx += 1;
+	events.push({ index: idx, type: 'finalWin', amount });
+
+	return { events, freeScratches };
 };

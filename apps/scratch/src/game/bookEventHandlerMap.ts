@@ -40,4 +40,22 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 			data: { ...bookEvent, amount: dollarAmount },
 		});
 	},
+	// A `key` symbol landed, or the Treasure Meter popped. Only 'cash'
+	// chests are a per-$1 multiplier needing the same betAmount scaling as
+	// setTotalWin/finalWin above -- 'multiplier' is a multiply-the-running-
+	// total factor (not a dollar amount) and 'retrigger'/'key' are just
+	// counts of extra chest opens queued, so those three pass through as-is.
+	chestSequence: async (bookEvent: BookEventOfType<'chestSequence'>) => {
+		const chests = bookEvent.chests.map((chest) =>
+			chest.kind === 'cash' ? { ...chest, value: chest.value * stateBet.betAmount } : chest,
+		);
+		await eventEmitter.broadcastAsync({ type: 'chestSequence', data: { ...bookEvent, chests } });
+	},
+	krakenResult: async (bookEvent: BookEventOfType<'krakenResult'>) => {
+		const dollarAmount = bookEvent.amount * stateBet.betAmount;
+		await eventEmitter.broadcastAsync({
+			type: 'krakenResult',
+			data: { ...bookEvent, amount: dollarAmount },
+		});
+	},
 };

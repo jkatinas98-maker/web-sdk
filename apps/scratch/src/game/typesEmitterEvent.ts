@@ -10,4 +10,6 @@ export type EmitterEventGame =
 	| { type: 'resumeBet' }
 	| { type: 'revealPanels'; data: BookEventOfType<'revealPanels'> }
 	| { type: 'setTotalWin'; data: BookEventOfType<'setTotalWin'> }
-	| { type: 'finalWin'; data: BookEventOfType<'finalWin'> };
+	| { type: 'finalWin'; data: BookEventOfType<'finalWin'> }
+	| { type: 'chestSequence'; data: BookEventOfType<'chestSequence'> }
+	| { type: 'krakenResult'; data: BookEventOfType<'krakenResult'> };

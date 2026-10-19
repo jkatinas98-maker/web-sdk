@@ -5,7 +5,7 @@
 	import { stateBet, stateUrlDerived } from 'state-shared';
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
-	import type { BookEventOfType } from '../game/typesBookEvent';
+	import type { BookEventOfType, ChestOutcome } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume } from '../game/sound';
@@ -39,6 +39,32 @@
 	let pendingFreeScratches = 0;
 	let freeScratchesRemaining = $state(0);
 	let awardedFreeScratches = $state(0);
+
+	// Treasure Chest / Kraken results: PLACEHOLDER overlays (reused win-modal
+	// styling, no real art/animation yet -- see the artist brief for what
+	// these should actually become). The book events arrive (and this gets
+	// populated) the instant the bet resolves -- same moment pendingWin
+	// does, well before the player has scratched anything -- so, same as
+	// pendingWin/pendingFreeScratches above, this is a plain (non-reactive)
+	// buffer during event processing. It's only copied into the reactive
+	// featureOverlayQueue below once the reveal-complete effect fires
+	// (player has scratched every panel), which is what actually makes the
+	// overlay appear; showing it straight off this buffer would pop it up
+	// before the player had scratched a single cell.
+	let pendingFeatureEvents: Array<
+		{ kind: 'kraken'; data: BookEventOfType<'krakenResult'> } | { kind: 'chest'; data: ChestOutcome[] }
+	> = [];
+	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
+	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
+
+	function advanceFeatureOverlay() {
+		playSound('click');
+		featureOverlayQueue = featureOverlayQueue.slice(1);
+		if (featureOverlayQueue.length === 0 && (totalWin > 0 || awardedFreeScratches > 0)) {
+			showWinModal = true;
+			playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
+		}
+	}
 
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
@@ -86,6 +112,8 @@
 		showWinModal = false;
 		winningSymbol = null;
 		pendingWin = null;
+		pendingFeatureEvents = [];
+		featureOverlayQueue = [];
 		context.stateGameDerived.reset();
 	}
 
@@ -139,6 +167,8 @@
 		pendingWin = null;
 		pendingFreeScratches = 0;
 		awardedFreeScratches = 0;
+		pendingFeatureEvents = [];
+		featureOverlayQueue = [];
 		context.stateGameDerived.reset();
 
 		stateBet.activeBetModeKey = betMode;
@@ -150,7 +180,7 @@
 			} else {
 				mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
 			}
-			const { events, freeScratches } = createMockBet(betMode, betAmount);
+			const { events, freeScratches } = createMockBet(betMode, betAmount, isFreeRound);
 			pendingFreeScratches = freeScratches;
 			playBookEvents(events);
 			return;
@@ -226,11 +256,21 @@
 				}
 				winningSymbol = winner;
 			}
+			// Surface whatever chest/kraken events this round's bet produced
+			// NOW (reveal just completed) rather than when they arrived
+			// (bet resolution, before any scratching) -- see the buffer's
+			// own comment above.
+			featureOverlayQueue = pendingFeatureEvents;
 			if (totalWin > 0 || awardedFreeScratches > 0) {
-				showWinModal = true;
-				// Bonus gets its own fanfare instead of the regular win jingle,
-				// even when it lands alongside a cash win the same round.
-				playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
+				// Feature overlays (if any landed this round) play first; the
+				// win modal follows once the player taps through them --
+				// advanceFeatureOverlay() shows it once the queue is empty.
+				if (featureOverlayQueue.length === 0) {
+					showWinModal = true;
+					// Bonus gets its own fanfare instead of the regular win jingle,
+					// even when it lands alongside a cash win the same round.
+					playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
+				}
 			}
 		}
 	});
@@ -238,6 +278,12 @@
 	context.eventEmitter.subscribeOnMount({
 		finalWin: ({ data }: { data: BookEventOfType<'finalWin'> }) => {
 			pendingWin = data.amount;
+		},
+		chestSequence: ({ data }: { data: BookEventOfType<'chestSequence'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'chest', data: data.chests }];
+		},
+		krakenResult: ({ data }: { data: BookEventOfType<'krakenResult'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'kraken', data }];
 		},
 	});
 </script>
@@ -348,7 +394,7 @@
 	>
 		<div class="paytable-modal" role="dialog" onclick={(e) => e.stopPropagation()}>
 			<div class="paytable-modal-header">
-				<span class="paytable-modal-title">Emoji paytable</span>
+				<span class="paytable-modal-title">Paytable</span>
 				<button class="close-btn" onclick={togglePaytable} aria-label="Close">✕</button>
 			</div>
 			<div class="paytable-modal-list">
@@ -366,6 +412,53 @@
 				{/each}
 			</div>
 		</div>
+	</div>
+{/if}
+
+{#if activeFeatureOverlay}
+	<div
+		class="win-backdrop"
+		role="button"
+		tabindex="0"
+		onclick={advanceFeatureOverlay}
+		onkeydown={(e) => e.key === 'Enter' && advanceFeatureOverlay()}
+	>
+		{#if activeFeatureOverlay.kind === 'kraken'}
+			{@const k = activeFeatureOverlay.data}
+			<div class="feature-modal feature-modal--kraken">
+				<div class="feature-modal-title">The Kraken Rises</div>
+				<div class="kraken-numbers">
+					<div class="kraken-number">{k.playerNumber}</div>
+					<div class="kraken-vs">vs</div>
+					<div class="kraken-number">{k.krakenNumber}</div>
+				</div>
+				<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
+					{k.hit ? `MATCH! +$${k.amount.toFixed(2)}` : 'No match'}
+				</div>
+				<div class="win-modal-hint">Tap anywhere to continue</div>
+			</div>
+		{:else}
+			{@const chests = activeFeatureOverlay.data}
+			<div class="feature-modal feature-modal--chest">
+				<div class="feature-modal-title">Treasure Chests</div>
+				<div class="chest-row">
+					{#each chests as chest, i (i)}
+						<div class={`chest-pill chest-pill--${chest.kind}`}>
+							{#if chest.kind === 'cash'}
+								+${chest.value.toFixed(2)}
+							{:else if chest.kind === 'multiplier'}
+								×{chest.value}
+							{:else if chest.kind === 'retrigger'}
+								+{chest.value} Chests
+							{:else}
+								+{chest.value} Key
+							{/if}
+						</div>
+					{/each}
+				</div>
+				<div class="win-modal-hint">Tap anywhere to continue</div>
+			</div>
+		{/if}
 	</div>
 {/if}
 
