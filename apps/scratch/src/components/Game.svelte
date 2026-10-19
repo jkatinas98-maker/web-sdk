@@ -57,12 +57,37 @@
 	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
 
+	// Kraken is shown in-card (over the ticket), not as a full-screen modal,
+	// and reveals in two taps: the player's own number is visible the moment
+	// it appears, the Kraken's number stays face-down behind a "?" token
+	// until the first tap, which flips it and shows hit/miss. A second tap
+	// (handleCardOverlayTap again, now revealed) advances the queue same as
+	// every other feature overlay. Reset whenever a *new* kraken entry
+	// becomes the active one (covers the back-to-back-krakens edge case,
+	// where the queue advances from one kraken straight into another).
+	let krakenRevealed = $state(false);
+	$effect(() => {
+		if (activeFeatureOverlay?.kind === 'kraken') krakenRevealed = false;
+	});
+
 	function advanceFeatureOverlay() {
 		playSound('click');
 		featureOverlayQueue = featureOverlayQueue.slice(1);
 		if (featureOverlayQueue.length === 0 && (totalWin > 0 || awardedFreeScratches > 0)) {
 			showWinModal = true;
 			playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
+		}
+	}
+
+	// Kraken's own tap handler: first tap flips the hidden number face-up,
+	// second tap dismisses it like any other overlay. Chests (and anything
+	// else) keep using advanceFeatureOverlay directly, single-tap.
+	function handleKrakenTap() {
+		if (!krakenRevealed) {
+			krakenRevealed = true;
+			playSound('click');
+		} else {
+			advanceFeatureOverlay();
 		}
 	}
 
@@ -415,7 +440,44 @@
 	</div>
 {/if}
 
-{#if activeFeatureOverlay}
+{#if activeFeatureOverlay?.kind === 'kraken'}
+	{@const k = activeFeatureOverlay.data}
+	<!-- In-card, not a full-screen modal: sits over the ticket itself (same
+	     top/bottom reserve as <Ticket>, see topReserved/bottomReserved above)
+	     so the header/footer/controls stay visible and undimmed behind it.
+	     Player's number is visible immediately; the Kraken's stays a "?"
+	     until the first tap (handleKrakenTap), which flips it face-up and
+	     shows hit/miss -- a second tap then advances like any other
+	     overlay. -->
+	<div
+		class="kraken-card-overlay"
+		style={`top:${topReserved}px; bottom:${bottomReserved}px;`}
+		role="button"
+		tabindex="0"
+		onclick={handleKrakenTap}
+		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
+	>
+		<div class="feature-modal-title">The Kraken Rises</div>
+		<div class="kraken-numbers">
+			<div class="kraken-number">{k.playerNumber}</div>
+			<div class="kraken-vs">vs</div>
+			<div class="kraken-number" class:kraken-number--hidden={!krakenRevealed}>
+				{krakenRevealed ? k.krakenNumber : '?'}
+			</div>
+		</div>
+		{#if krakenRevealed}
+			<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
+				{k.hit ? `MATCH! +$${k.amount.toFixed(2)}` : 'No match'}
+			</div>
+			<div class="kraken-card-hint">Tap to continue</div>
+		{:else}
+			<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
+		{/if}
+	</div>
+{/if}
+
+{#if activeFeatureOverlay?.kind === 'chest'}
+	{@const chests = activeFeatureOverlay.data}
 	<div
 		class="win-backdrop"
 		role="button"
@@ -423,42 +485,25 @@
 		onclick={advanceFeatureOverlay}
 		onkeydown={(e) => e.key === 'Enter' && advanceFeatureOverlay()}
 	>
-		{#if activeFeatureOverlay.kind === 'kraken'}
-			{@const k = activeFeatureOverlay.data}
-			<div class="feature-modal feature-modal--kraken">
-				<div class="feature-modal-title">The Kraken Rises</div>
-				<div class="kraken-numbers">
-					<div class="kraken-number">{k.playerNumber}</div>
-					<div class="kraken-vs">vs</div>
-					<div class="kraken-number">{k.krakenNumber}</div>
-				</div>
-				<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
-					{k.hit ? `MATCH! +$${k.amount.toFixed(2)}` : 'No match'}
-				</div>
-				<div class="win-modal-hint">Tap anywhere to continue</div>
+		<div class="feature-modal feature-modal--chest">
+			<div class="feature-modal-title">Treasure Chests</div>
+			<div class="chest-row">
+				{#each chests as chest, i (i)}
+					<div class={`chest-pill chest-pill--${chest.kind}`}>
+						{#if chest.kind === 'cash'}
+							+${chest.value.toFixed(2)}
+						{:else if chest.kind === 'multiplier'}
+							×{chest.value}
+						{:else if chest.kind === 'retrigger'}
+							+{chest.value} Chests
+						{:else}
+							+{chest.value} Key
+						{/if}
+					</div>
+				{/each}
 			</div>
-		{:else}
-			{@const chests = activeFeatureOverlay.data}
-			<div class="feature-modal feature-modal--chest">
-				<div class="feature-modal-title">Treasure Chests</div>
-				<div class="chest-row">
-					{#each chests as chest, i (i)}
-						<div class={`chest-pill chest-pill--${chest.kind}`}>
-							{#if chest.kind === 'cash'}
-								+${chest.value.toFixed(2)}
-							{:else if chest.kind === 'multiplier'}
-								×{chest.value}
-							{:else if chest.kind === 'retrigger'}
-								+{chest.value} Chests
-							{:else}
-								+{chest.value} Key
-							{/if}
-						</div>
-					{/each}
-				</div>
-				<div class="win-modal-hint">Tap anywhere to continue</div>
-			</div>
-		{/if}
+			<div class="win-modal-hint">Tap anywhere to continue</div>
+		</div>
 	</div>
 {/if}
 

@@ -607,6 +607,49 @@ button:disabled {
 	color: rgba(255, 255, 255, 0.55);
 }
 
+/* In-card Kraken overlay -- sits over the ticket itself (positioned via
+   inline top/bottom, matching <Ticket>'s own topReserved/bottomReserved)
+   instead of a full-screen dimmed backdrop, so the header/footer/controls
+   stay visible behind it. Same dark-teal Kraken palette as .feature-modal--
+   kraken above, just shaped as a strip across the card instead of a
+   centered pop-up. */
+.kraken-card-overlay {
+	position: fixed;
+	left: 0;
+	right: 0;
+	max-width: 440px;
+	margin: 0 auto;
+	z-index: 15;
+	pointer-events: auto;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 1rem;
+	background: linear-gradient(160deg, rgba(12, 74, 110, 0.92), rgba(14, 116, 144, 0.92));
+	border: 2px solid rgba(94, 211, 255, 0.4);
+	border-radius: 16px;
+	box-shadow: 0 0 36px 6px rgba(14, 116, 144, 0.5);
+	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* The Kraken's own number, before the player taps to reveal it -- dashed,
+   dim, and showing "?" instead of the real value. */
+.kraken-number--hidden {
+	background: rgba(255, 255, 255, 0.06);
+	border-style: dashed;
+	color: rgba(255, 255, 255, 0.5);
+}
+
+.kraken-card-hint {
+	font-size: 0.6rem;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	color: rgba(255, 255, 255, 0.7);
+}
+
 .chest-row {
 	display: flex;
 	flex-wrap: wrap;
