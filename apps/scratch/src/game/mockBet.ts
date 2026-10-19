@@ -105,7 +105,15 @@ export const createMockBet = (
 		}
 	}
 
-	const amount = winMult * betAmount;
+	// Plain per-$1 multiplier, NOT pre-multiplied by betAmount -- this has to
+	// match what the real uploaded math can actually send. A static,
+	// pre-simulated book is bet-size-agnostic (it's generated once, long
+	// before any player picks a bet), so it can only ever encode the
+	// multiplier, same as the top-level payoutMultiplier. The real dollar
+	// scaling happens in bookEventHandlerMap.ts, in one place, for both this
+	// mock path and the real RGS path -- baking the multiply in here too
+	// used to double it for mock mode once that fix landed.
+	const amount = winMult;
 	const freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
 	return {

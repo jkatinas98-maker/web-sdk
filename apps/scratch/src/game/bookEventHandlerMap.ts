@@ -1,4 +1,5 @@
 import type { BookEventHandlerMap } from 'utils-book';
+import { stateBet } from 'state-shared';
 
 import { eventEmitter } from './eventEmitter';
 import { stateGameDerived } from './stateGame.svelte';
@@ -7,16 +8,36 @@ import type { BookEvent, BookEventOfType, BookEventContext } from './typesBookEv
 // Matches the three events scratch_sim.py actually writes to the book: the
 // whole ticket's panels arrive in one event (no reel-by-reel reveal), then
 // the win is totalled and finalized. No bonus/freegame events apply.
+//
+// bookEvent.amount on setTotalWin/finalWin is a plain per-$1 multiplier (same
+// units as the top-level payoutMultiplier), from both the real uploaded math
+// (a static, pre-simulated book can't know a future bet size, so it can only
+// ever send the multiplier) and the local mock generator (mockBet.ts, kept
+// in the same units on purpose). stateBet.betAmount is the real amount
+// staked on this round, set by Game.svelte's playGame() right before this
+// bet fires and locked for the round's duration -- multiplying here, once,
+// is what turns that multiplier into the actual dollar amount for both
+// paths, instead of passing the raw multiplier through as if it already
+// were dollars (which only ever looked right at a $1 bet, by coincidence).
 export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContext> = {
 	revealPanels: async (bookEvent: BookEventOfType<'revealPanels'>) => {
 		stateGameDerived.setPanels(bookEvent.panels);
 		await eventEmitter.broadcastAsync({ type: 'revealPanels', data: bookEvent });
 	},
 	setTotalWin: async (bookEvent: BookEventOfType<'setTotalWin'>) => {
-		stateGameDerived.setTotalWin(bookEvent.amount);
-		await eventEmitter.broadcastAsync({ type: 'setTotalWin', data: bookEvent });
+		const dollarAmount = bookEvent.amount * stateBet.betAmount;
+		stateGameDerived.setTotalWin(dollarAmount);
+		await eventEmitter.broadcastAsync({
+			type: 'setTotalWin',
+			data: { ...bookEvent, amount: dollarAmount },
+		});
 	},
 	finalWin: async (bookEvent: BookEventOfType<'finalWin'>) => {
-		await eventEmitter.broadcastAsync({ type: 'finalWin', data: bookEvent });
+		const dollarAmount = bookEvent.amount * stateBet.betAmount;
+		stateBet.winBookEventAmount = dollarAmount;
+		await eventEmitter.broadcastAsync({
+			type: 'finalWin',
+			data: { ...bookEvent, amount: dollarAmount },
+		});
 	},
 };
