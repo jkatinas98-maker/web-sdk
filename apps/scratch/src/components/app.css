@@ -445,7 +445,10 @@ button:disabled {
 }
 
 .pay-item-icon {
-	font-size: 1.1rem;
+	width: 32px;
+	height: 32px;
+	object-fit: contain;
+	flex: 0 0 auto;
 }
 
 .pay-item-name {

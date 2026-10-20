@@ -29,7 +29,7 @@
 		<Container x={(i - (entries.length - 1) / 2) * itemWidth}>
 			<Circle diameter={34} anchor={0.5} backgroundColor={0x1e1b4b} backgroundAlpha={0.55} />
 			<Container y={-4}>
-				<SymbolIcon {name} size={20} />
+				<SymbolIcon {name} size={28} />
 			</Container>
 			<Text
 				y={17}

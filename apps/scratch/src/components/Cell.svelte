@@ -144,12 +144,12 @@
 
 	{#if revealed && panel}
 		<Container scale={displayScale}>
-			<Container y={-size * 0.1}>
-				<SymbolIcon name={panel.name} size={size * 0.42} />
+			<Container y={-size * 0.08}>
+				<SymbolIcon name={panel.name} size={size * 0.62} />
 			</Container>
 
 			<Text
-				y={size * 0.3}
+				y={size * 0.36}
 				anchor={0.5}
 				text={mult > 0 ? `×${mult}` : isBonus ? 'BONUS' : isKey ? 'KEY' : '—'}
 				style={{

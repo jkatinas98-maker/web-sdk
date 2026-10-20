@@ -9,7 +9,8 @@
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume } from '../game/sound';
-	import { SYMBOL_PLACEHOLDER_GLYPH, SYMBOL_LABEL } from '../game/symbolIcons';
+	import { SYMBOL_LABEL } from '../game/symbolIcons';
+	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -424,13 +425,13 @@
 			</div>
 			<div class="paytable-modal-list">
 				<div class="pay-item bonus-item">
-					<span class="pay-item-icon">{SYMBOL_PLACEHOLDER_GLYPH.bonus}</span>
+					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.bonus} alt={SYMBOL_LABEL.bonus} />
 					<span class="pay-item-name">{SYMBOL_LABEL.bonus} (land 3)</span>
 					<span class="pay-item-mult">10 Free Scratches</span>
 				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">
-						<span class="pay-item-icon">{SYMBOL_PLACEHOLDER_GLYPH[name]}</span>
+						<img class="pay-item-icon" src={SYMBOL_IMAGE_URL[name]} alt={SYMBOL_LABEL[name]} />
 						<span class="pay-item-name">{SYMBOL_LABEL[name]}</span>
 						<span class="pay-item-mult">×{sym.mult}</span>
 					</div>

@@ -1,31 +1,17 @@
 <script lang="ts">
-	import { Text } from 'pixi-svelte';
+	import { Sprite } from 'pixi-svelte';
 
-	import { SYMBOL_PLACEHOLDER_GLYPH, SYMBOL_COLORS } from '../game/symbolIcons';
+	import { symbolAssetKey } from '../game/assets';
 	import type { SymbolName } from '../game/types';
 
 	type Props = {
 		name: SymbolName;
+		// Edge length of the square box the art is fitted into. Every PNG is
+		// square-padded, so width = height keeps its aspect ratio intact.
 		size: number;
 	};
 
 	const { name, size }: Props = $props();
-
-	const glow = $derived(SYMBOL_COLORS[name].glow);
-	const fill = $derived(SYMBOL_COLORS[name].fill);
 </script>
 
-<Text
-	anchor={0.5}
-	text={SYMBOL_PLACEHOLDER_GLYPH[name]}
-	style={{
-		fontSize: size,
-		fill,
-		dropShadow: {
-			color: glow,
-			blur: size * 0.18,
-			distance: 0,
-			alpha: 0.75,
-		},
-	}}
-/>
+<Sprite key={symbolAssetKey(name)} anchor={0.5} width={size} height={size} />
