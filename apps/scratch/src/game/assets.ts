@@ -1,5 +1,4 @@
 import type { SymbolName } from './types';
-import animMeta from '../assets/anim/meta.json';
 
 // Final illustrated symbol art (transparent, square-padded PNGs) — one file
 // per symbol id, under apps/scratch/src/assets/symbols/<id>.png.
@@ -53,42 +52,6 @@ export const SYMBOL_IMAGE_URL = Object.fromEntries(
 
 export const symbolAssetKey = (name: SymbolName) => `symbol_${name}`;
 
-// ---------- Animated symbol frames ----------
-// One WebP atlas per symbol (apps/scratch/src/assets/anim/<id>.webp), a
-// grid of `cell`-sized frames, `cols` wide, holding that symbol's idle,
-// reveal and win sequences back to back; meta.json lists which frame
-// indices belong to each state. Built from the artist's 320px PNG frame
-// pack (downscaled; reveal frames that zoomed past their canvas and showed
-// a hard square edge were dropped).
-export type AnimState = 'idle' | 'reveal' | 'win';
-export const ANIM_META = animMeta as {
-	cell: number;
-	cols: number;
-	// How much of a frame's width the symbol itself fills (the rest is
-	// glow/sparks), so the animated frame can be drawn at the same symbol
-	// size as the static icon.
-	symbolFraction: number;
-	symbols: Record<SymbolName, Record<AnimState, number[]>>;
-};
-
-const animFiles = import.meta.glob('../assets/anim/*.webp', {
-	eager: true,
-	query: '?url',
-	import: 'default',
-}) as Record<string, string>;
-
-export const animAssetKey = (name: SymbolName) => `anim_${name}`;
-
-const animAssets = Object.fromEntries(
-	SYMBOL_NAMES.filter((name) => animFiles[`../assets/anim/${name}.webp`]).map((name) => [
-		animAssetKey(name),
-		// Not preloaded: the atlases are the heaviest assets, so the game
-		// starts on the static icons and switches to the animations as each
-		// sheet arrives.
-		{ type: 'sprite' as const, src: animFiles[`../assets/anim/${name}.webp`], preload: false },
-	]),
-);
-
 // Preloaded so every sprite has its texture before the grid first renders
 // (no empty-texture flash, no "key not found" console noise). Pixi detects
 // the format either from the .png extension (dev) or the data:image/png
@@ -100,5 +63,4 @@ export default {
 			{ type: 'sprite' as const, src: SYMBOL_IMAGE_URL[name], preload: true },
 		]),
 	),
-	...animAssets,
 };
