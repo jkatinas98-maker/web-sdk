@@ -83,7 +83,7 @@
 				const centerFramePx = (-m.m41) / k + CENTER_X;
 				const tile = Math.floor(centerFramePx / PITCH);
 				if (tile !== lastTile) {
-					if (lastTile >= 0) playSound('click');
+					if (lastTile >= 0) playSound('woodTick');
 					lastTile = tile;
 				}
 			}
@@ -96,7 +96,8 @@
 	function handleEnd(e: TransitionEvent) {
 		if (e.propertyName !== 'transform' || landed) return;
 		landed = true;
-		playSound('jackpot');
+		playSound('woodThunk');
+		setTimeout(() => playSound('jackpot'), 120);
 		onLanded();
 	}
 

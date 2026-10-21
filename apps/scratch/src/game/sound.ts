@@ -1,7 +1,16 @@
 // Lightweight synth sound effects via the Web Audio API — no audio files to
 // bundle or host. Every sound is a short oscillator blip, generated on the
 // fly, so this works the moment the page loads with zero assets.
-type SoundType = 'click' | 'scratch' | 'reveal' | 'win' | 'bonus' | 'jackpot' | 'scatterLand';
+type SoundType =
+	| 'click'
+	| 'scratch'
+	| 'reveal'
+	| 'win'
+	| 'bonus'
+	| 'jackpot'
+	| 'scatterLand'
+	| 'woodTick'
+	| 'woodThunk';
 
 let audioCtx: AudioContext | null = null;
 // A single 0-1 volume knob instead of a plain on/off switch — 0 is mute,
@@ -71,6 +80,18 @@ export const getVolume = () => volume;
 export const setSoundEnabled = (value: boolean) => setVolume(value ? 1 : 0);
 export const isSoundEnabled = () => volume > 0;
 
+// Shared white-noise buffer for the wooden knocks (made once, reused).
+let noiseBuffer: AudioBuffer | null = null;
+const getNoise = (ctx: AudioContext) => {
+	if (!noiseBuffer) {
+		const len = Math.floor(ctx.sampleRate * 0.25);
+		noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
+		const data = noiseBuffer.getChannelData(0);
+		for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+	}
+	return noiseBuffer;
+};
+
 export const playSound = (type: SoundType) => {
 	if (volume <= 0) return;
 
@@ -103,7 +124,43 @@ export const playSound = (type: SoundType) => {
 			osc.stop(t0 + duration);
 		};
 
-		if (type === 'click') {
+		// Wooden knock: a short band-passed noise click (the "tock" of the
+		// wood) over a low, fast-falling body tone.
+		const knock = (pitch: number, gainAmt: number, body: number, startAt = 0) => {
+			const t0 = now + startAt;
+			const src = ctx.createBufferSource();
+			src.buffer = getNoise(ctx);
+			const bp = ctx.createBiquadFilter();
+			bp.type = 'bandpass';
+			bp.frequency.value = pitch;
+			bp.Q.value = 6;
+			const g = ctx.createGain();
+			g.gain.setValueAtTime(gainAmt * volume, t0);
+			g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
+			src.connect(bp).connect(g).connect(ctx.destination);
+			src.start(t0);
+			src.stop(t0 + 0.06);
+
+			const osc = ctx.createOscillator();
+			const og = ctx.createGain();
+			osc.type = 'triangle';
+			osc.frequency.setValueAtTime(body, t0);
+			osc.frequency.exponentialRampToValueAtTime(body * 0.55, t0 + 0.07);
+			og.gain.setValueAtTime(gainAmt * 0.9 * volume, t0);
+			og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
+			osc.connect(og).connect(ctx.destination);
+			osc.start(t0);
+			osc.stop(t0 + 0.09);
+		};
+
+		if (type === 'woodTick') {
+			const v = 0.85 + Math.random() * 0.3;
+			knock(1500 * v, 0.55, 320 * v);
+		} else if (type === 'woodThunk') {
+			// Heavy landing: two deep knocks, like a crate lid dropping shut.
+			knock(700, 0.8, 150);
+			knock(1100, 0.45, 210, 0.07);
+		} else if (type === 'click') {
 			tone(520, 0.08, 0.03);
 		} else if (type === 'scratch') {
 			tone(140 + Math.random() * 160, 0.05, 0.03, 'sawtooth');
