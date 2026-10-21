@@ -79,27 +79,35 @@
 		graphics.stroke({ color: borderColor, width: borderWidth, alpha: borderAlpha });
 	};
 
-	// Unscratched: weathered parchment with a darker inset border and a
-	// faint compass-rose mark, like a sealed map square.
+	// Unscratched: aged, tea-stained parchment — warm tan with a burnt edge,
+	// a darker inset border and a compass-rose mark, like a sealed map
+	// square.
 	const drawFoil = (graphics: PIXI.Graphics) => {
 		const h = size / 2;
+		const cy = -size * 0.06;
 		graphics.roundRect(-h, -h, size, size, radius);
-		graphics.fill({ color: 0xd8c39a });
-		graphics.roundRect(-h, -h, size, size * 0.5, radius);
-		graphics.fill({ color: 0xf2e4c0, alpha: 0.35 });
-		graphics.roundRect(-h + 5, -h + 5, size - 10, size - 10, radius * 0.7);
-		graphics.stroke({ color: 0xa8875a, width: 1.2, alpha: 0.7 });
+		graphics.fill({ color: 0xc09a62 });
+		// soft lighter center
+		graphics.circle(0, cy, size * 0.42);
+		graphics.fill({ color: 0xd9bb84, alpha: 0.55 });
+		// burnt edge
+		graphics.roundRect(-h + 2, -h + 2, size - 4, size - 4, radius);
+		graphics.stroke({ color: 0x6b4524, width: 5, alpha: 0.35 });
+		graphics.roundRect(-h + 6, -h + 6, size - 12, size - 12, radius * 0.7);
+		graphics.stroke({ color: 0x6b4524, width: 1.4, alpha: 0.75 });
 
 		const r = size * 0.2;
-		graphics.circle(0, -size * 0.06, r);
-		graphics.stroke({ color: 0x9a7a4c, width: 1.2, alpha: 0.6 });
-		graphics.poly([0, -size * 0.06 - r * 1.25, r * 0.22, -size * 0.06, 0, -size * 0.06 + r * 1.25, -r * 0.22, -size * 0.06]);
-		graphics.fill({ color: 0x8a6a3e, alpha: 0.55 });
-		graphics.poly([-r * 1.25, -size * 0.06, 0, -size * 0.06 - r * 0.22, r * 1.25, -size * 0.06, 0, -size * 0.06 + r * 0.22]);
-		graphics.fill({ color: 0x8a6a3e, alpha: 0.4 });
+		graphics.circle(0, cy, r);
+		graphics.stroke({ color: 0x5c3a1c, width: 1.6, alpha: 0.8 });
+		graphics.poly([0, cy - r * 1.3, r * 0.24, cy, 0, cy + r * 1.3, -r * 0.24, cy]);
+		graphics.fill({ color: 0x5c3a1c, alpha: 0.8 });
+		graphics.poly([-r * 1.3, cy, 0, cy - r * 0.24, r * 1.3, cy, 0, cy + r * 0.24]);
+		graphics.fill({ color: 0x5c3a1c, alpha: 0.6 });
+		graphics.circle(0, cy - r * 1.3, size * 0.018);
+		graphics.fill({ color: 0x9a2a1a, alpha: 0.85 });
 
 		graphics.roundRect(-h, -h, size, size, radius);
-		graphics.stroke({ color: 0x5c3a21, width: 2 });
+		graphics.stroke({ color: 0x3d2614, width: 2 });
 	};
 
 	// Invisible but hit-testable — keeps the tap target the full tile even
@@ -196,10 +204,10 @@
 				text="SCRATCH"
 				style={{
 					fontFamily: 'Cinzel, Georgia, serif',
-					fontWeight: '700',
-					fontSize: size * 0.085,
-					letterSpacing: 1,
-					fill: 0x6b4524,
+					fontWeight: '900',
+					fontSize: size * 0.095,
+					letterSpacing: 1.5,
+					fill: 0x3d2614,
 				}}
 			/>
 		</Container>

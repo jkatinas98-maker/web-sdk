@@ -166,10 +166,9 @@
 		// narrow (portrait phone) screens.
 		viewX0: 140,
 		viewX1: 1396,
-		// Vertical extent of the art, including the action label printed
-		// under the anchor (the rest is transparent padding).
+		// Vertical extent of the actual art (rest is transparent padding).
 		contentY0: 5,
-		contentY1: 1014,
+		contentY1: 984,
 		// The transparent window the scratch grid shows through.
 		win: { x0: 264, y0: 205, x1: 1271, y1: 757 },
 	};
@@ -439,13 +438,6 @@
 				: 'Play card'}
 		onclick={handleMainAction}
 	></button>
-	<div class="frame-text frame-anchor-label" style={at(1041, 990, 220, 44)}>
-		{viewState === 'playing'
-			? 'Reveal all'
-			: freeScratchesRemaining > 0
-				? `Free (${freeScratchesRemaining})`
-				: 'Play'}
-	</div>
 
 	<button
 		class="frame-btn"

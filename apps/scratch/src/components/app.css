@@ -357,15 +357,6 @@ button:disabled {
 	font-size: 0.66em;
 }
 
-.frame-anchor-label {
-	font-family: var(--font-display);
-	font-size: 0.85em;
-	color: var(--gold);
-	text-shadow:
-		0 2px 0 #1a0f07,
-		0 0 6px rgba(0, 0, 0, 0.8);
-	white-space: nowrap;
-}
 
 /* ---------- Controls stack (above the footer bar) ---------- */
 
