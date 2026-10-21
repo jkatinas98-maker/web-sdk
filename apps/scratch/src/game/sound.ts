@@ -13,7 +13,72 @@ type SoundType =
 	| 'woodThunk' // reel lands
 	| 'chestOpen' // treasure chest: creak, lid thunk, coins
 	| 'cannon' // big win: cannon boom
-	| 'splash'; // Kraken / Shark: sea splash
+	| 'splash' // Kraken / Shark: sea splash
+	| 'pirateArr' // voice: pirate "Arrr!" (recorded sample only)
+	| 'pirateCheer' // voice: crew cheering (recorded sample only)
+	| 'parrot'; // parrot squawk (recorded sample only)
+
+// ---------- Recorded samples ----------
+// Drop audio files into src/assets/sfx/ named after a sound type, with
+// optional variants: win.mp3, win_2.mp3, pirateArr.mp3, pirateArr_2.mp3,
+// parrot.mp3, cannon.mp3, ... Any type that has a file plays the file
+// (a random variant each time); types without one fall back to the synth
+// below. Voice-only types (pirateArr, pirateCheer, parrot) stay silent
+// until their files exist.
+const SAMPLE_FILES = import.meta.glob('../assets/sfx/*.{mp3,ogg,wav,webm}', {
+	eager: true,
+	query: '?url',
+	import: 'default',
+}) as Record<string, string>;
+
+const sampleUrls: Partial<Record<SoundType, string[]>> = {};
+for (const [path, url] of Object.entries(SAMPLE_FILES)) {
+	const base = path.split('/').pop()!.replace(/\.[^.]+$/, '');
+	const type = base.replace(/_\d+$/, '') as SoundType;
+	(sampleUrls[type] ??= []).push(url);
+}
+
+const sampleBuffers = new Map<string, AudioBuffer | null>();
+const loadSamples = (ctx: AudioContext) => {
+	for (const urls of Object.values(sampleUrls)) {
+		for (const url of urls ?? []) {
+			if (sampleBuffers.has(url)) continue;
+			sampleBuffers.set(url, null);
+			fetch(url)
+				.then((r) => r.arrayBuffer())
+				.then((data) => ctx.decodeAudioData(data))
+				.then((buf) => sampleBuffers.set(url, buf))
+				.catch((e) => console.warn('sfx load failed', url, e));
+		}
+	}
+};
+
+// Per-type loudness for samples (tweak by ear).
+const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
+	pirateArr: 0.9,
+	pirateCheer: 0.8,
+	parrot: 0.7,
+	cannon: 0.9,
+};
+
+// Returns true if a recorded sample was played.
+const playSample = (ctx: AudioContext, type: SoundType, delay = 0): boolean => {
+	const urls = sampleUrls[type];
+	if (!urls?.length) return false;
+	const ready = urls.map((u) => sampleBuffers.get(u)).filter((b): b is AudioBuffer => !!b);
+	if (!ready.length) return true; // still loading: stay quiet rather than double up with synth
+	const buf = ready[Math.floor(Math.random() * ready.length)];
+	const src = ctx.createBufferSource();
+	src.buffer = buf;
+	const g = ctx.createGain();
+	g.gain.value = (SAMPLE_GAIN[type] ?? 0.8) * volume;
+	src.connect(g).connect(ctx.destination);
+	src.start(ctx.currentTime + delay);
+	return true;
+};
+
+const hasSample = (type: SoundType) => !!sampleUrls[type]?.length;
+
 
 let audioCtx: AudioContext | null = null;
 // A single 0-1 volume knob instead of a plain on/off switch — 0 is mute,
@@ -102,6 +167,8 @@ export const playSound = (type: SoundType) => {
 		const ctx = getContext();
 		if (!ctx) return;
 		if (ctx.state === 'suspended') ctx.resume();
+		loadSamples(ctx);
+		if (playSample(ctx, type)) return;
 
 		const now = ctx.currentTime;
 
@@ -242,8 +309,10 @@ export const playSound = (type: SoundType) => {
 			coinShower(14, 0.6, 0.14);
 			bell(1175, 0.08, 0.05, 1);
 		} else if (type === 'win') {
-			coinShower(8, 0.35, 0.12);
-			bell(784, 0.11, 0.1, 1.2);
+			// Coins, then a pirate "Arrr!" or the parrot (if those samples exist).
+			coinShower(10, 0.45, 0.11);
+			const voice: SoundType = Math.random() < 0.6 ? 'pirateArr' : 'parrot';
+			if (hasSample(voice)) playSample(ctx, voice, 0.25);
 		} else if (type === 'bonus') {
 			bell(659, 0.11, 0, 1);
 			bell(659, 0.11, 0.28, 1);
@@ -252,6 +321,7 @@ export const playSound = (type: SoundType) => {
 			horn(262, 0.09, 1.1, 0.3);
 			horn(392, 0.1, 1.4, 0.8);
 			coinShower(12, 0.8, 0.1, 1.4);
+			if (hasSample('pirateArr')) playSample(ctx, 'pirateArr', 1.9);
 		} else if (type === 'chestOpen') {
 			// Hinge creak (wobbling saw through a resonant band-pass)...
 			const t0 = now;
@@ -274,6 +344,10 @@ export const playSound = (type: SoundType) => {
 			// ...lid thunk, then the gold.
 			knock(600, 0.7, 130, 0.36);
 			coinShower(16, 0.7, 0.13, 0.42);
+			if (hasSample('parrot') && Math.random() < 0.5) playSample(ctx, 'parrot', 0.9);
+		} else if (type === 'pirateArr' || type === 'pirateCheer' || type === 'parrot') {
+			// Voices need recordings (no synth version) -- silent until the
+			// files are added.
 		} else if (type === 'cannon') {
 			tone(90, 0.6, 0.6, 'sine', 0, 35);
 			noise('lowpass', 900, 0.7, 0.6, 0.9, 0, 120, 0.005);

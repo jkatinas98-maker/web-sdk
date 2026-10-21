@@ -260,7 +260,10 @@
 	let shownWin = $state(0);
 	$effect(() => {
 		if (!showWinModal) return;
-		if (untrack(() => winTier !== null && awardedFreeScratches === 0)) playSound('cannon');
+		if (untrack(() => winTier !== null && awardedFreeScratches === 0)) {
+			playSound('cannon');
+			setTimeout(() => playSound('pirateCheer'), 450);
+		}
 		const target = untrack(() => totalWin);
 		const start = performance.now();
 		const dur = 1800;
