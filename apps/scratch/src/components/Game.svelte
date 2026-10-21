@@ -14,6 +14,8 @@
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
 	import frameUrl from '../assets/frame.webp';
+	import krakenPanelUrl from '../assets/kraken_panel.webp';
+	import krakenSceneUrl from '../assets/kraken_scene.webp';
 	import bgPosterUrl from '../assets/background.jpg';
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
@@ -223,6 +225,18 @@
 		left: frameLeft + FRAME.win.x0 * frameScale,
 		right: vw - (frameLeft + FRAME.win.x1 * frameScale),
 	});
+
+	// "The Kraken Rises" panel art (1672x941) fitted inside the frame window,
+	// plus where its two number plaques sit, in panel fractions.
+	const KRAKEN_PANEL = { w: 1672, h: 941, player: { x: 543, y: 632 }, kraken: { x: 1122, y: 632 } };
+	const krakenPanel = $derived.by(() => {
+		const winW = vw - gridRect.left - gridRect.right;
+		const winH = vh - gridRect.top - gridRect.bottom;
+		const w = Math.min(winW, (winH * KRAKEN_PANEL.w) / KRAKEN_PANEL.h);
+		return { w, h: (w * KRAKEN_PANEL.h) / KRAKEN_PANEL.w };
+	});
+	const plaqueAt = (p: { x: number; y: number }) =>
+		`left:${(p.x / KRAKEN_PANEL.w) * 100}%;top:${(p.y / KRAKEN_PANEL.h) * 100}%;`;
 
 	// Absolutely position an overlay (hit area / text) on the frame art by
 	// its center + size in source-image pixels.
@@ -592,39 +606,49 @@
 	     overlay. -->
 	<div
 		class="kraken-card-overlay"
-		style={`top:${gridRect.top}px; bottom:${gridRect.bottom}px; left:${gridRect.left}px; right:${gridRect.right}px;`}
+		style={`top:${gridRect.top}px; bottom:${gridRect.bottom}px; left:${gridRect.left}px; right:${gridRect.right}px; --kraken-scene:url(${krakenSceneUrl});`}
 		role="button"
 		tabindex="0"
 		onclick={handleKrakenTap}
 		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
 	>
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
-			<div class="feature-modal-title">The Kraken's Treasure</div>
-			<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
-			{#if krakenStage === 'landed'}
-				<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +${k.amount.toFixed(2)}</div>
-				<div class="kraken-card-hint">Tap to continue</div>
-			{:else}
-				<div class="kraken-card-hint">Opening...</div>
-			{/if}
+			<div class="kraken-case" style={`width:${krakenPanel.w}px;`}>
+				<div class="feature-modal-title kraken-case-title">The Kraken's Treasure</div>
+				<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
+				{#if krakenStage === 'landed'}
+					<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +${k.amount.toFixed(2)}</div>
+					<div class="kraken-card-hint">Tap to continue</div>
+				{:else}
+					<div class="kraken-card-hint">Opening...</div>
+				{/if}
+			</div>
 		{:else}
-			<img class="kraken-art" src={SYMBOL_IMAGE_URL.kraken} alt="" />
-			<div class="feature-modal-title">The Kraken Rises</div>
-			<div class="kraken-numbers">
-				<div class="kraken-number">{k.playerNumber}</div>
-				<div class="kraken-vs">vs</div>
-				<div class="kraken-number" class:kraken-number--hidden={!krakenRevealed}>
+			<div
+				class="kraken-panel"
+				style={`width:${krakenPanel.w}px;height:${krakenPanel.h}px;font-size:${krakenPanel.w * 0.085}px;`}
+			>
+				<img class="kraken-panel-img" src={krakenPanelUrl} alt="The Kraken Rises" draggable="false" />
+				<div class="kraken-plaque-num" style={plaqueAt(KRAKEN_PANEL.player)}>{k.playerNumber}</div>
+				<div
+					class="kraken-plaque-num"
+					class:hidden={!krakenRevealed}
+					class:hit={krakenRevealed && k.hit}
+					style={plaqueAt(KRAKEN_PANEL.kraken)}
+				>
 					{krakenRevealed ? k.krakenNumber : '?'}
 				</div>
-			</div>
-			{#if krakenRevealed}
-				<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
-					{k.hit ? 'MATCH!' : 'No match'}
+				<div class="kraken-panel-foot">
+					{#if krakenRevealed}
+						<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
+							{k.hit ? 'MATCH!' : 'No match'}
+						</div>
+						<div class="kraken-card-hint">{k.hit ? "Tap to open the Kraken's treasure" : 'Tap to continue'}</div>
+					{:else}
+						<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
+					{/if}
 				</div>
-				<div class="kraken-card-hint">{k.hit ? "Tap to open the Kraken's treasure" : 'Tap to continue'}</div>
-			{:else}
-				<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
-			{/if}
+			</div>
 		{/if}
 	</div>
 {/if}

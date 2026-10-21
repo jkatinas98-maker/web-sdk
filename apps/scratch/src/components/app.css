@@ -919,15 +919,14 @@ button:disabled {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 0.6rem;
-	padding: 1rem;
+	overflow: hidden;
+	border-radius: 6px;
+	/* Stormy Kraken night scene behind the panel / reel. */
 	background:
-		radial-gradient(ellipse at 50% 30%, rgba(14, 116, 144, 0.55), transparent 70%),
-		linear-gradient(180deg, rgba(6, 24, 31, 0.95), rgba(3, 16, 22, 0.97));
-	border: 2px solid rgba(111, 209, 224, 0.45);
-	border-radius: 16px;
-	box-shadow: 0 0 36px 6px rgba(14, 116, 144, 0.5);
-	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+		linear-gradient(180deg, rgba(2, 8, 16, 0.25), rgba(2, 8, 16, 0.55)),
+		var(--kraken-scene) center 40% / cover no-repeat,
+		#04101a;
+	animation: win-fade-in 0.25s ease-out;
 }
 
 .kraken-card-overlay .feature-modal-title {
@@ -1018,26 +1017,6 @@ button:disabled {
 
 /* ---------- Kraken extras ---------- */
 
-.kraken-art {
-	width: 22%;
-	max-width: 110px;
-	min-width: 56px;
-	height: auto;
-	filter: drop-shadow(0 4px 10px rgba(14, 116, 144, 0.7));
-	animation: kraken-rise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes kraken-rise {
-	from {
-		transform: translateY(40%) scale(0.6);
-		opacity: 0;
-	}
-	to {
-		transform: none;
-		opacity: 1;
-	}
-}
-
 .pay-item.kraken-item {
 	border-color: rgba(34, 211, 238, 0.6);
 	background: rgba(14, 116, 144, 0.25);
@@ -1048,49 +1027,52 @@ button:disabled {
 	font-size: 0.75rem;
 }
 
-/* ---------- CS2-style case reel ---------- */
+/* ---------- CS2-style case reel (inside the illustrated reel frame) ---------- */
 
 .case-reel {
 	position: relative;
 	width: 100%;
-	height: 104px;
 	overflow: hidden;
-	border-radius: 10px;
-	background: linear-gradient(180deg, #120c07, #1f150c);
-	border: 2px solid var(--brass-dark);
-	box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+/* Dark backing visible through the frame windows. */
+.case-reel::before {
+	content: '';
+	position: absolute;
+	left: 8%;
+	right: 8%;
+	top: 12%;
+	bottom: 22%;
+	background: linear-gradient(180deg, #071018, #0d1a24);
 }
 
 .case-strip {
 	position: absolute;
-	top: 9px;
 	left: 0;
 	display: flex;
-	gap: 6px;
 	will-change: transform;
 }
 
 .case-tile {
 	flex: 0 0 auto;
-	height: 82px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	border-radius: 6px;
-	border-bottom: 5px solid var(--rarity);
+	border-bottom: 0.18em solid var(--rarity);
 	background:
-		radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--rarity) 55%, transparent), transparent 70%),
-		linear-gradient(180deg, #2a1d12, #150e08);
+		radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--rarity) 60%, transparent), transparent 70%),
+		linear-gradient(180deg, #1c2a36, #0b141c);
 	transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .case-tile-mult {
 	font-family: var(--font-display);
-	font-size: 1.5rem;
+	font-size: 1em;
 	color: #fff;
 	text-shadow:
 		0 2px 0 #000,
-		0 0 10px var(--rarity);
+		0 0 12px var(--rarity);
 }
 
 .case-tile--blue {
@@ -1110,58 +1092,116 @@ button:disabled {
 }
 
 .case-tile.won {
-	transform: scale(1.08);
+	transform: scale(1.06);
 	box-shadow:
 		0 0 0 2px var(--rarity),
-		0 0 22px 4px var(--rarity);
+		0 0 26px 6px var(--rarity);
 }
 
-/* Fixed center marker the strip settles under. */
-.case-marker {
+/* The illustrated frame sits over the strip; its windows show the tiles. */
+.case-frame {
 	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 50%;
-	width: 3px;
-	margin-left: -1.5px;
-	background: var(--gold);
-	box-shadow: 0 0 10px 2px rgba(242, 199, 68, 0.8);
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
+}
+
+/* "The Kraken Rises" illustrated panel with live numbers in its plaques. */
+.kraken-panel {
+	position: relative;
+	flex: 0 0 auto;
+	animation: win-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kraken-panel-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
 	pointer-events: none;
 }
 
-.case-marker::before,
-.case-marker::after {
-	content: '';
+.kraken-plaque-num {
 	position: absolute;
-	left: 50%;
-	margin-left: -7px;
-	border: 7px solid transparent;
+	transform: translate(-50%, -52%);
+	font-family: var(--font-display);
+	font-size: 1.3em;
+	line-height: 1;
+	color: #ffd75e;
+	background: linear-gradient(180deg, #fff1b8 0%, #f2c744 45%, #b8860b 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 3px 0 #3a1f08) drop-shadow(0 0 8px rgba(242, 199, 68, 0.5));
 }
 
-.case-marker::before {
-	top: 0;
-	border-top-color: var(--gold);
+/* Kraken's number before the reveal: glowing cyan "?". */
+.kraken-plaque-num.hidden {
+	background: none;
+	-webkit-text-fill-color: #8ff3ff;
+	color: #8ff3ff;
+	filter: drop-shadow(0 0 6px #22d3ee) drop-shadow(0 0 14px #0891b2);
+	animation: kraken-q-pulse 1.4s ease-in-out infinite;
 }
 
-.case-marker::after {
-	bottom: 0;
-	border-bottom-color: var(--gold);
+.kraken-plaque-num.hit {
+	animation: kraken-hit 0.9s ease-in-out infinite;
 }
 
-.case-fade {
+@keyframes kraken-q-pulse {
+	0%,
+	100% {
+		opacity: 0.75;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+@keyframes kraken-hit {
+	0%,
+	100% {
+		transform: translate(-50%, -52%) scale(1);
+	}
+	50% {
+		transform: translate(-50%, -52%) scale(1.15);
+	}
+}
+
+.kraken-panel-foot {
 	position: absolute;
-	top: 0;
-	bottom: 0;
-	width: 18%;
-	pointer-events: none;
-}
-
-.case-fade--left {
 	left: 0;
-	background: linear-gradient(90deg, #120c07, transparent);
+	right: 0;
+	top: 83%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.05em;
+	font-size: max(0.24em, 10px);
 }
 
-.case-fade--right {
-	right: 0;
-	background: linear-gradient(270deg, #120c07, transparent);
+.kraken-panel-foot .kraken-result {
+	font-size: 1.5em;
+}
+
+.kraken-panel-foot .kraken-card-hint {
+	font-size: 0.75em;
+}
+
+.kraken-case {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	max-width: 100%;
+	animation: win-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.kraken-case-title {
+	color: #9fe8f0;
+	text-shadow:
+		0 2px 10px rgba(14, 116, 144, 0.8),
+		0 2px 0 #06181f;
 }
