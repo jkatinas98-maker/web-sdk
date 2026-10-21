@@ -35,13 +35,29 @@
 		len: 0.06 + rand(i + 40) * 0.06,
 		white: rand(i + 60) > 0.6,
 	}));
-	const EMBERS = Array.from({ length: 9 }, (_, i) => ({
+	const EMBERS = Array.from({ length: 16 }, (_, i) => ({
 		x: (rand(i + 80) - 0.5) * 0.9,
 		phase: rand(i + 100),
 		speed: 0.55 + rand(i + 120) * 0.45,
 		r: 0.018 + rand(i + 140) * 0.022,
 		sway: 0.03 + rand(i + 160) * 0.05,
 		coin: rand(i + 180) > 0.55,
+	}));
+
+	// Win fire: flame tongues ringed around the symbol, biased upward.
+	const FLAMES = Array.from({ length: 16 }, (_, i) => ({
+		angle: (i / 16) * TAU + (rand(i + 200) - 0.5) * 0.2,
+		phase: rand(i + 220) * TAU,
+		len: 0.75 + rand(i + 240) * 0.5,
+	}));
+	// Multicolor twinkles scattered around a winning symbol.
+	const TWINKLE_COLORS = [0xffd75e, 0xff4fd8, 0x5ee7ff, 0xffffff, 0x9cff5e, 0xff6a3d];
+	const TWINKLES = Array.from({ length: 14 }, (_, i) => ({
+		a: rand(i + 300) * TAU,
+		r: 0.35 + rand(i + 320) * 0.45,
+		phase: rand(i + 340),
+		speed: 0.9 + rand(i + 360) * 0.9,
+		color: TWINKLE_COLORS[i % TWINKLE_COLORS.length],
 	}));
 
 	// Seconds since this symbol appeared (tw below: since it started winning).
@@ -76,20 +92,23 @@
 	const revealP = $derived(clamp01(t / REVEAL_S));
 	const revealing = $derived(revealP < 1);
 	const isWin = $derived(tw >= 0);
+	// 1 at the moment a win lands, easing to 0 over half a second: drives
+	// the initial flame splash and symbol punch.
+	const winSplash = $derived(isWin ? Math.max(0, 1 - tw / 0.5) : 0);
 
 	const symbolScale = $derived.by(() => {
 		if (revealing) return Math.max(0.01, elastic(revealP));
-		if (isWin) return 1.04 + 0.09 * Math.abs(Math.sin(tw * 4.2));
+		if (isWin) return winSplash * 0.25 + 1.08 + 0.12 * Math.abs(Math.sin(tw * 5));
 		return 1 + 0.025 * Math.sin(t * 2.3 + seed);
 	});
 	const symbolRotation = $derived.by(() => {
 		if (revealing) return 0.22 * (1 - revealP) * Math.sin(revealP * 16);
-		if (isWin) return 0.05 * Math.sin(tw * 8.4);
+		if (isWin) return 0.07 * Math.sin(tw * 9);
 		return 0.025 * Math.sin(t * 1.4 + seed);
 	});
 	const symbolY = $derived.by(() => {
 		if (revealing) return 0;
-		if (isWin) return -Math.abs(Math.sin(tw * 4.2)) * size * 0.06;
+		if (isWin) return -Math.abs(Math.sin(tw * 5)) * size * 0.08;
 		return Math.sin(t * 2 + seed) * size * 0.025;
 	});
 
@@ -106,10 +125,11 @@
 		}
 	};
 
-	const star = (g: PIXI.Graphics, x: number, y: number, r: number, alpha: number) => {
+	const star = (g: PIXI.Graphics, x: number, y: number, r: number, alpha: number, color = 0xfff6d8) => {
+		if (r <= 0.2) return;
 		const k = r * 0.22;
 		g.poly([x, y - r, x + k, y - k, x + r, y, x + k, y + k, x, y + r, x - k, y + k, x - r, y, x - k, y - k]);
-		g.fill({ color: 0xfff6d8, alpha });
+		g.fill({ color, alpha });
 	};
 
 	// One shared burst (reveal, and again when a win starts), p in 0..1.
@@ -134,17 +154,84 @@
 		}
 	};
 
-	// Behind the symbol: reveal rays, win sunburst + glow.
+	// One flame tongue: a teardrop from a base arc on a ring of radius r0
+	// out to a tip, curling upward like fire.
+	const tongue = (
+		g: PIXI.Graphics,
+		angle: number,
+		r0: number,
+		length: number,
+		halfW: number,
+		color: number,
+		alpha: number,
+		sway: number,
+	) => {
+		const dx = Math.cos(angle);
+		const dy = Math.sin(angle);
+		// tip direction: outward, bent strongly toward "up" (fire rises)
+		let tx = dx * 0.55 + sway;
+		let ty = dy * 0.55 - 0.85;
+		const n = Math.hypot(tx, ty) || 1;
+		tx /= n;
+		ty /= n;
+		const bx = dx * r0;
+		const by = dy * r0;
+		const px = -dy * halfW;
+		const py = dx * halfW;
+		const tipX = bx + tx * length;
+		const tipY = by + ty * length;
+		g.moveTo(bx + px, by + py);
+		g.quadraticCurveTo(bx + px * 1.6 + tx * length * 0.45, by + py * 1.6 + ty * length * 0.45, tipX, tipY);
+		g.quadraticCurveTo(bx - px * 1.6 + tx * length * 0.45, by - py * 1.6 + ty * length * 0.45, bx - px, by - py);
+		g.closePath();
+		g.fill({ color, alpha });
+	};
+
+	// Layered fire: red outer, orange middle, yellow-white core.
+	const FIRE_LAYERS = [
+		{ color: 0xff2a00, scale: 1, width: 1, alpha: 0.75 },
+		{ color: 0xff8a00, scale: 0.72, width: 0.7, alpha: 0.85 },
+		{ color: 0xffe866, scale: 0.42, width: 0.45, alpha: 0.9 },
+	];
+
+	const fire = (g: PIXI.Graphics) => {
+		const splashBoost = 1 + winSplash * 1.4;
+		for (const layer of FIRE_LAYERS) {
+			for (let i = 0; i < FLAMES.length; i++) {
+				const f = FLAMES[i];
+				const flicker =
+					0.72 + 0.22 * Math.sin(tw * 13 + f.phase) + 0.12 * Math.sin(tw * 23 + f.phase * 2.3);
+				// taller where the flame faces up/out the top
+				const upBias = 1 + 0.7 * Math.max(0, -Math.sin(f.angle));
+				const length = size * 0.42 * f.len * flicker * upBias * layer.scale * splashBoost;
+				tongue(
+					g,
+					f.angle,
+					size * 0.34,
+					length,
+					size * 0.07 * layer.width,
+					layer.color,
+					layer.alpha,
+					0.25 * Math.sin(tw * 3 + f.phase),
+				);
+			}
+		}
+	};
+
+	// Behind the symbol: reveal rays; on a win, glow, sunburst and fire.
 	const drawBack = (g: PIXI.Graphics) => {
 		if (revealing) {
 			rays(g, 10, size * 0.15, size * (0.55 + 0.25 * revealP), t * 2.5, 0xffe08a, 0.55 * (1 - revealP));
 		}
 		if (isWin) {
-			const pulse = 0.5 + 0.5 * Math.sin(tw * 4.2);
-			g.circle(0, 0, size * (0.5 + 0.06 * pulse));
-			g.fill({ color: 0xff9a1f, alpha: 0.28 + 0.18 * pulse });
-			rays(g, 12, size * 0.2, size * 0.78, tw * 0.9, 0xffd75e, 0.32 + 0.15 * pulse);
-			rays(g, 12, size * 0.15, size * 0.6, -tw * 0.6 + 0.26, 0xfff1c2, 0.18);
+			const pulse = 0.5 + 0.5 * Math.sin(tw * 5);
+			// hot core glow, cycling red -> orange -> gold
+			const hue = [0xff3b1f, 0xff8a00, 0xffc93d][Math.floor(tw * 6) % 3];
+			g.circle(0, 0, size * (0.62 + 0.08 * pulse + winSplash * 0.4));
+			g.fill({ color: hue, alpha: 0.3 + 0.2 * pulse });
+			rays(g, 14, size * 0.25, size * (0.95 + winSplash * 0.5), tw * 1.2, 0xffd75e, 0.35 + 0.15 * pulse);
+			rays(g, 14, size * 0.2, size * 0.7, -tw * 0.8 + 0.22, 0xff6a3d, 0.25);
+			fire(g);
 		}
 	};
 
@@ -153,6 +240,18 @@
 		burst(g, revealP < 1 ? revealP : 0);
 		if (isWin) {
 			burst(g, tw / 0.7);
+			// second, wider fire-colored splash ring
+			const sp = tw / 0.9;
+			if (sp < 1) {
+				g.circle(0, 0, size * (0.4 + 1.1 * sp));
+				g.stroke({ color: 0xff6a1a, width: Math.max(1, size * 0.08 * (1 - sp)), alpha: 1 - sp });
+			}
+			for (const tk of TWINKLES) {
+				const p = (tw * tk.speed + tk.phase) % 1;
+				const a = Math.sin(p * Math.PI);
+				const ang = tk.a + tw * 0.4;
+				star(g, Math.cos(ang) * tk.r * size, Math.sin(ang) * tk.r * size, size * 0.075 * a, a, tk.color);
+			}
 			for (const e of EMBERS) {
 				const p = (tw * e.speed + e.phase) % 1;
 				const x = (e.x + Math.sin((p + e.phase) * TAU) * e.sway) * size;
