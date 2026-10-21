@@ -17,7 +17,7 @@
 // keep bigger wins feeling rare — same "not certified math" caveat applies
 // to them as to easy's original numbers.
 import type { SymbolName, RawSymbol, BetMode } from './types';
-import type { BookEvent, ChestOutcome, ChestOutcomeKind } from './typesBookEvent';
+import type { BookEvent, ChestOutcome, ChestOutcomeKind, OctopusCard, SharkOutcome } from './typesBookEvent';
 import config from './config';
 import { KRAKEN_NUMBER_RANGE, rollKrakenPrize } from './kraken';
 
@@ -31,6 +31,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'bonus', weight: 0.8 },
 		{ name: 'key', weight: 0.045 },
 		{ name: 'kraken', weight: 1.5686 },
+		{ name: 'shark', weight: 0.746 },
 		{ name: 'mult1_5', weight: 14.1097 },
 		{ name: 'mult2', weight: 8.4658 },
 		{ name: 'mult4', weight: 5.6438 },
@@ -43,6 +44,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'bonus', weight: 0.6 },
 		{ name: 'key', weight: 0.035 },
 		{ name: 'kraken', weight: 2.1922 },
+		{ name: 'shark', weight: 1.049 },
 		{ name: 'mult1_5', weight: 17.5225 },
 		{ name: 'mult2', weight: 10.2215 },
 		{ name: 'mult5', weight: 6.5709 },
@@ -55,6 +57,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'bonus', weight: 0.4 },
 		{ name: 'key', weight: 0.025 },
 		{ name: 'kraken', weight: 3.0888 },
+		{ name: 'shark', weight: 1.485 },
 		{ name: 'mult2', weight: 20.6734 },
 		{ name: 'mult6', weight: 11.2764 },
 		{ name: 'mult9', weight: 7.5176 },
@@ -97,6 +100,55 @@ const MAX_CHEST_OPENS_PER_ROUND = 60;
 // starts. This is a mock-mode-only approximation; the real book's totals
 // come from scratch_sim.py's play_round, which has no such split.
 let meterPointsAcc = 0;
+
+// --- Shark Bite (PLACEHOLDER numbers -- the real math comes later) ---
+// `shark` weights above are set for ~1 in 10 cards showing at least one
+// (q = 1 - 0.9^(1/panels), weight = q * total / (1 - q)). One roll per
+// card no matter how many sharks landed.
+const SHARK_OUTCOMES: Array<{ outcome: SharkOutcome; weight: number }> = [
+	{ outcome: 'kraken', weight: 40 },
+	{ outcome: 'octopus', weight: 20 },
+	{ outcome: 'pirate', weight: 15 },
+	{ outcome: 'key', weight: 15 },
+	{ outcome: 'bonus', weight: 10 },
+];
+const OCTOPUS_EXTRA_CARDS = 3;
+
+const rollSharkOutcome = (): SharkOutcome => {
+	const total = SHARK_OUTCOMES.reduce((s, o) => s + o.weight, 0);
+	let r = Math.random() * total;
+	for (const { outcome, weight } of SHARK_OUTCOMES) {
+		r -= weight;
+		if (r <= 0) return outcome;
+	}
+	return SHARK_OUTCOMES[0].outcome;
+};
+
+// First paying symbol to reach 3 on the card, same rule as the main card.
+const cardWinMult = (panels: RawSymbol[]): number => {
+	const counts: Partial<Record<SymbolName, number>> = {};
+	for (const { name } of panels) {
+		const mult = config.symbols[name].mult;
+		if (mult <= 0) continue;
+		counts[name] = (counts[name] ?? 0) + 1;
+		if (counts[name] === 3) return mult;
+	}
+	return 0;
+};
+
+// Octopus bonus card: plain skull + multiplier symbols only (no features
+// inside a feature).
+const FEATURE_SYMBOLS: SymbolName[] = ['bonus', 'key', 'kraken', 'shark'];
+const dealPlainCard = (betMode: BetMode): OctopusCard => {
+	const { cols, rows } = config.betModes[betMode];
+	const panels: RawSymbol[] = [];
+	for (let i = 0; i < cols * rows; i++) {
+		let name = weightedPick(betMode);
+		while (FEATURE_SYMBOLS.includes(name)) name = weightedPick(betMode);
+		panels.push({ name });
+	}
+	return { panels, win: cardWinMult(panels) };
+};
 
 const weightedPick = (betMode: BetMode): SymbolName => {
 	const pool = WEIGHTS[betMode];
@@ -161,6 +213,7 @@ export const createMockBet = (
 	let bonusCount = 0;
 	let keyCount = 0;
 	let krakenCount = 0;
+	let sharkCount = 0;
 
 	for (let i = 0; i < panelCount; i++) {
 		const name = weightedPick(betMode);
@@ -178,6 +231,10 @@ export const createMockBet = (
 		}
 		if (name === 'kraken') {
 			krakenCount += 1;
+			continue;
+		}
+		if (name === 'shark') {
+			sharkCount += 1;
 			continue;
 		}
 
@@ -199,7 +256,7 @@ export const createMockBet = (
 	// mock path and the real RGS path -- baking the multiply in here too
 	// used to double it for mock mode once that fix landed.
 	let amount = winMult;
-	const freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
+	let freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
 	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];
 	let idx = 1;
@@ -224,6 +281,33 @@ export const createMockBet = (
 		idx += 1;
 	}
 
+	// Landing >= 1 shark rolls the Shark Bite bar once.
+	let sharkChestTriggers = 0;
+	if (sharkCount > 0) {
+		const outcome = rollSharkOutcome();
+		events.push({ index: idx, type: 'sharkBite', outcome });
+		idx += 1;
+		if (outcome === 'kraken') {
+			const playerNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
+			const krakenNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
+			const hit = playerNumber === krakenNumber;
+			const prize = hit ? rollKrakenPrize(betMode) : 0;
+			amount += prize;
+			events.push({ index: idx, type: 'krakenResult', playerNumber, krakenNumber, hit, multiplier: prize, amount: prize });
+			idx += 1;
+		} else if (outcome === 'octopus') {
+			const cards = Array.from({ length: OCTOPUS_EXTRA_CARDS }, () => dealPlainCard(betMode));
+			for (const card of cards) amount += card.win;
+			events.push({ index: idx, type: 'octopusCards', cards });
+			idx += 1;
+		} else if (outcome === 'key') {
+			sharkChestTriggers = 1;
+		} else if (outcome === 'bonus') {
+			freeScratches += FREE_SCRATCHES_AWARDED;
+		}
+		// 'pirate': placeholder, no payout yet.
+	}
+
 	let meterPoints = 0;
 	for (const count of Object.values(counts)) {
 		if (count! >= 5) meterPoints += TREASURE_METER_POINTS[5];
@@ -231,7 +315,7 @@ export const createMockBet = (
 	}
 	meterPointsAcc += meterPoints;
 
-	let chestTriggers = keyCount;
+	let chestTriggers = keyCount + sharkChestTriggers;
 	const threshold = TREASURE_METER_THRESHOLD[betMode];
 	while (meterPointsAcc >= threshold) {
 		meterPointsAcc -= threshold;

@@ -1,11 +1,12 @@
 <script lang="ts">
 	import './app.css';
+	import { untrack } from 'svelte';
 	import { App } from 'pixi-svelte';
 	import { getContext } from '../game/context';
 	import { stateBet, stateUrlDerived } from 'state-shared';
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
-	import type { BookEventOfType, ChestOutcome } from '../game/typesBookEvent';
+	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
@@ -19,10 +20,12 @@
 	import bgPosterUrl from '../assets/background.jpg';
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
+	import octopusIconUrl from '../assets/symbols/octopus.png';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
 	import CaseReel from './CaseReel.svelte';
+	import SharkBiteBar from './SharkBiteBar.svelte';
 
 	const context = getContext();
 
@@ -62,7 +65,10 @@
 	// overlay appear; showing it straight off this buffer would pop it up
 	// before the player had scratched a single cell.
 	let pendingFeatureEvents: Array<
-		{ kind: 'kraken'; data: BookEventOfType<'krakenResult'> } | { kind: 'chest'; data: ChestOutcome[] }
+		| { kind: 'kraken'; data: BookEventOfType<'krakenResult'> }
+		| { kind: 'chest'; data: ChestOutcome[] }
+		| { kind: 'shark'; data: SharkOutcome }
+		| { kind: 'octopus'; data: OctopusCard[] }
 	> = [];
 	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
@@ -85,7 +91,7 @@
 		playSound('click');
 		featureOverlayQueue = featureOverlayQueue.slice(1);
 		if (featureOverlayQueue.length === 0 && (totalWin > 0 || awardedFreeScratches > 0)) {
-			showWinModal = true;
+			showWinModal = isBigWin();
 			playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
 		}
 	}
@@ -107,6 +113,116 @@
 		} else if (krakenStage === 'landed') {
 			advanceFeatureOverlay();
 		}
+	}
+
+	// --- Shark Bite -----------------------------------------------------
+	// A 'shark' queue entry rolls the bar (not a modal: the card stays
+	// visible); once it lands, the outcome's own entry (kraken / chest /
+	// octopus) follows in the queue. Pirate and bonus have no entry of their
+	// own (bonus free scratches are already in pendingFreeScratches).
+	let sharkRollId = $state(0);
+	let sharkOutcome: SharkOutcome | null = $state(null);
+	let sharkRollCounter = 0;
+	let featureTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const active = activeFeatureOverlay;
+		untrack(() => {
+			if (active?.kind === 'shark') {
+				sharkOutcome = active.data;
+				sharkRollCounter += 1;
+				sharkRollId = sharkRollCounter;
+				playSound('scatterLand');
+			} else if (sharkOutcome !== null) {
+				sharkOutcome = null;
+			}
+		});
+	});
+
+	function handleSharkLanded(outcome: SharkOutcome) {
+		clearTimeout(featureTimer);
+		// Let the landed icon + label sit for a beat; the pirate placeholder
+		// a little longer so "coming soon" can be read.
+		featureTimer = setTimeout(advanceFeatureOverlay, outcome === 'pirate' ? 2400 : 1600);
+	}
+
+	// --- Octopus: 3 bonus cards dealt into the same grid -----------------
+	// octoIndex -1 = intro banner, 0..2 = which bonus card is up.
+	let octoCards: OctopusCard[] = $state([]);
+	let octoIndex = $state(-1);
+	let octoCardDone = $state(false);
+	let octoWinSum = $state(0);
+	const octoActive = $derived(activeFeatureOverlay?.kind === 'octopus');
+	// The player scratches bonus cards just like a normal card.
+	const octoScratching = $derived(octoActive && octoIndex >= 0 && !octoCardDone);
+
+	$effect(() => {
+		const active = activeFeatureOverlay;
+		if (active?.kind !== 'octopus') return;
+		untrack(() => {
+			octoCards = active.data;
+			octoIndex = -1;
+			octoCardDone = false;
+			octoWinSum = 0;
+			playSound('bonus');
+			clearTimeout(featureTimer);
+			featureTimer = setTimeout(() => dealOctoCard(0), 1800);
+		});
+	});
+
+	function dealOctoCard(i: number) {
+		octoIndex = i;
+		octoCardDone = false;
+		winningSymbol = null;
+		context.stateGameDerived.setPanels(octoCards[i].panels);
+		playSound('click');
+	}
+
+	// Bonus card fully scratched -> show its win, then deal the next one
+	// (or finish the feature).
+	$effect(() => {
+		const { panels, revealed } = context.stateGame;
+		if (!octoScratching || panels.length === 0 || revealed.size < panels.length) return;
+		untrack(() => {
+			const card = octoCards[octoIndex];
+			octoCardDone = true;
+			octoWinSum += card.win;
+			winningSymbol = findWinningSymbol(card.panels);
+			playSound(card.win > 0 ? 'win' : 'click');
+			clearTimeout(featureTimer);
+			featureTimer = setTimeout(() => {
+				if (octoIndex + 1 < octoCards.length) {
+					dealOctoCard(octoIndex + 1);
+				} else {
+					octoIndex = -1;
+					octoCardDone = false;
+					advanceFeatureOverlay();
+				}
+			}, 1700);
+		});
+	});
+
+	// First paying symbol to reach 3 on a card -- the same rule the book
+	// resolves wins by.
+	function findWinningSymbol(panels: Array<{ name: SymbolName } | undefined>): SymbolName | null {
+		const counts: Partial<Record<SymbolName, number>> = {};
+		for (const panel of panels) {
+			if (!panel || config.symbols[panel.name].mult <= 0) continue;
+			counts[panel.name] = (counts[panel.name] ?? 0) + 1;
+			if (counts[panel.name]! >= 3) return panel.name;
+		}
+		return null;
+	}
+
+	// The win pop-up only shows for big wins: at least the mode's
+	// second-highest symbol multiplier (easy 16x, medium 41x, hard 130x),
+	// or when free scratches were awarded. Smaller wins just show in the
+	// Win plaque, with the win sound.
+	function isBigWin(): boolean {
+		if (awardedFreeScratches > 0) return true;
+		const mults = (config.betModes[betMode].symbols as SymbolName[])
+			.map((name) => config.symbols[name].mult)
+			.sort((a, b) => b - a);
+		return betAmount > 0 && totalWin / betAmount >= mults[1];
 	}
 
 	// Local demo wallet, used only while there's no RGS backend to talk to
@@ -164,6 +280,7 @@
 		pendingWin = null;
 		pendingFeatureEvents = [];
 		featureOverlayQueue = [];
+		clearTimeout(featureTimer);
 		context.stateGameDerived.reset();
 	}
 
@@ -198,8 +315,16 @@
 	let vw = $state(typeof window === 'undefined' ? 390 : window.innerWidth);
 	let vh = $state(typeof window === 'undefined' ? 844 : window.innerHeight);
 
-	// Everything above the frame (logo, ribbon, tabs) plus a little air.
-	const TOP_AREA = HEADER_H + DIFF_H + 6;
+	// Shark Bite bar art (1983x793 source; y0..y1 is the painted band),
+	// stacked under the difficulty tabs.
+	const SHARK_BAR = { w: 1983, y0: 80, y1: 745 };
+	const sharkBarW = $derived(Math.min(vw * 0.94, 520, Math.max(300, vh * 0.45)));
+	const sharkBarH = $derived((sharkBarW * (SHARK_BAR.y1 - SHARK_BAR.y0)) / SHARK_BAR.w);
+	const SHARK_TOP = HEADER_H + DIFF_H + 2;
+
+	// Everything above the frame (logo, ribbon, tabs, Shark Bite bar) plus a
+	// little air.
+	const TOP_AREA = $derived(SHARK_TOP + sharkBarH + 4);
 	const contentH = FRAME.contentY1 - FRAME.contentY0;
 	const widthScale = $derived(vw / (FRAME.viewX1 - FRAME.viewX0));
 	// Truly centered needs the same free band below as the header takes
@@ -248,7 +373,7 @@
 	// Difficulty and bet amount lock while a round is live AND while free
 	// scratches are owed — a free scratch replays at whatever mode/bet
 	// triggered it, so they have to be used up before either can change.
-	const locked = $derived(viewState === 'playing' || freeScratchesRemaining > 0);
+	const locked = $derived(viewState === 'playing' || freeScratchesRemaining > 0 || featureOverlayQueue.length > 0);
 
 	const maxWin = $derived(config.betModes[betMode].max_win);
 
@@ -262,7 +387,7 @@
 	);
 
 	function playGame() {
-		if (isProcessing) return;
+		if (isProcessing || featureOverlayQueue.length > 0) return;
 		const isFreeRound = freeScratchesRemaining > 0;
 		if (!isFreeRound && isMockMode && mockBalance < betAmount) return;
 
@@ -277,6 +402,7 @@
 		awardedFreeScratches = 0;
 		pendingFeatureEvents = [];
 		featureOverlayQueue = [];
+		clearTimeout(featureTimer);
 		context.stateGameDerived.reset();
 
 		stateBet.activeBetModeKey = betMode;
@@ -319,7 +445,7 @@
 	// One main action button, like the reference: it plays a round while
 	// idle/done, and becomes "Reveal all" while a round is in progress.
 	function handleMainAction() {
-		if (viewState === 'playing') {
+		if (viewState === 'playing' || octoScratching) {
 			revealEverything();
 		} else {
 			playGame();
@@ -355,14 +481,7 @@
 				// ambiguous: several ids are shared across difficulties, e.g.
 				// mult2 is "2x" in every mode, so a win amount alone can't
 				// tell you which actual symbol hit.)
-				const counts: Partial<Record<SymbolName, number>> = {};
-				let winner: SymbolName | null = null;
-				for (const panel of panels) {
-					if (!panel || config.symbols[panel.name].mult <= 0) continue;
-					counts[panel.name] = (counts[panel.name] ?? 0) + 1;
-					if (!winner && counts[panel.name]! >= 3) winner = panel.name;
-				}
-				winningSymbol = winner;
+				winningSymbol = findWinningSymbol(panels);
 			}
 			// Surface whatever chest/kraken events this round's bet produced
 			// NOW (reveal just completed) rather than when they arrived
@@ -374,7 +493,7 @@
 				// win modal follows once the player taps through them --
 				// advanceFeatureOverlay() shows it once the queue is empty.
 				if (featureOverlayQueue.length === 0) {
-					showWinModal = true;
+					showWinModal = isBigWin();
 					// Bonus gets its own fanfare instead of the regular win jingle,
 					// even when it lands alongside a cash win the same round.
 					playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
@@ -392,6 +511,12 @@
 		},
 		krakenResult: ({ data }: { data: BookEventOfType<'krakenResult'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'kraken', data }];
+		},
+		sharkBite: ({ data }: { data: BookEventOfType<'sharkBite'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'shark', data: data.outcome }];
+		},
+		octopusCards: ({ data }: { data: BookEventOfType<'octopusCards'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'octopus', data: data.cards }];
 		},
 	});
 </script>
@@ -423,7 +548,7 @@
 			left={gridRect.left}
 			right={gridRect.right}
 			frameless
-			interactive={viewState === 'playing'}
+			interactive={viewState === 'playing' || octoScratching}
 			{winningSymbol}
 			onRevealIndex={revealPanel}
 		/>
@@ -472,7 +597,7 @@
 
 	<button
 		class="frame-btn frame-btn--anchor"
-		class:ready={viewState !== 'playing' && !isProcessing && freeScratchesRemaining === 0}
+		class:ready={(viewState !== 'playing' && !isProcessing && freeScratchesRemaining === 0 && featureOverlayQueue.length === 0) || octoScratching}
 		class:free={viewState !== 'playing' && freeScratchesRemaining > 0}
 		style={at(1041, 875, 184, 184)}
 		disabled={viewState !== 'playing' && isProcessing}
@@ -487,7 +612,7 @@
 	<button
 		class="frame-btn"
 		style={at(1210, 875, 100, 100)}
-		disabled={viewState !== 'playing'}
+		disabled={viewState !== 'playing' && !octoScratching}
 		aria-label="Reveal all"
 		onclick={revealEverything}
 	></button>
@@ -558,7 +683,38 @@
 			{/each}
 		</div>
 	</div>
+
+	<!-- SHARK BITE bar (under the tabs, above the frame) -->
+	<div class="shark-bar-slot" style={`top:${SHARK_TOP}px;`}>
+		<SharkBiteBar width={sharkBarW} rollId={sharkRollId} outcome={sharkOutcome} onLanded={handleSharkLanded} />
+	</div>
 </div>
+
+{#if octoActive}
+	<!-- Octopus bonus cards: banner over the frame window, the cards
+	     themselves are dealt into the normal grid underneath. -->
+	<div
+		class="octo-banner"
+		style={`top:${gridRect.top + 6}px;left:${gridRect.left}px;right:${gridRect.right}px;`}
+	>
+		<img class="octo-banner-icon" src={octopusIconUrl} alt="" />
+		<div class="octo-banner-text">
+			{#if octoIndex < 0}
+				<div class="octo-banner-title">Octopus bonus!</div>
+				<div class="octo-banner-sub">3 bonus cards — every win adds up</div>
+			{:else}
+				<div class="octo-banner-title">Bonus card {octoIndex + 1} / {octoCards.length}</div>
+				<div class="octo-banner-sub">
+					{#if octoCardDone}
+						{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'} · bonus total ${octoWinSum.toFixed(2)}
+					{:else}
+						Scratch it! · bonus total ${octoWinSum.toFixed(2)}
+					{/if}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 {#if showPaytable}
 	<div
@@ -583,6 +739,11 @@
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.kraken} alt={SYMBOL_LABEL.kraken} />
 					<span class="pay-item-name">{SYMBOL_LABEL.kraken} (match its number)</span>
 					<span class="pay-item-mult">×2 – ×{maxWin}</span>
+				</div>
+				<div class="pay-item shark-item">
+					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />
+					<span class="pay-item-name">{SYMBOL_LABEL.shark} (rolls the bar)</span>
+					<span class="pay-item-mult">Kraken · Octopus · Key · Bonus</span>
 				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">

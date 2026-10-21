@@ -28,8 +28,9 @@
 	const isBonus = $derived(panel?.name === 'bonus');
 	const isKey = $derived(panel?.name === 'key');
 	const isKraken = $derived(panel?.name === 'kraken');
+	const isShark = $derived(panel?.name === 'shark');
 	// Every "special" tile kind gets the glow+blink treatment.
-	const special = $derived(jackpot || isBonus || isKey || isKraken);
+	const special = $derived(jackpot || isBonus || isKey || isKraken || isShark);
 
 	// Fast alpha flicker, special tiles only — the "blink" half of "glow and
 	// blink" (declared before the color derivations below so they can use
@@ -58,7 +59,7 @@
 	// out — stacks with the winning-tile breathing pulse rather than
 	// replacing it, so a jackpot/bonus symbol that's ALSO part of the win
 	// still reads as a win first, just a sparklier one.
-	const specialColor = $derived(jackpot ? 0xffd75e : isKey ? 0xe0b13a : isKraken ? 0x22d3ee : 0xd23a2a);
+	const specialColor = $derived(jackpot ? 0xffd75e : isKey ? 0xe0b13a : isKraken ? 0x22d3ee : isShark ? 0x3b82f6 : 0xd23a2a);
 	const borderColor = $derived(winning ? 0xf2c744 : special ? specialColor : revealed ? 0x8a6a3e : 0x5c3a21);
 	const baseBorderAlpha = $derived(winning ? 1 : special ? 0.95 : revealed ? 0.8 : 1);
 	const borderWidth = $derived(winning ? 3 : special ? 2.5 : revealed ? 1.5 : 2);
@@ -147,7 +148,7 @@
 			// their own distinct chime instead of the plain reveal blip. Key
 			// reuses the scatter chime for now (TODO: a dedicated "keyLand"
 			// synth once the feature it triggers is built).
-			playSound(jackpot ? 'jackpot' : isBonus || isKey || isKraken ? 'scatterLand' : 'reveal');
+			playSound(jackpot ? 'jackpot' : isBonus || isKey || isKraken || isShark ? 'scatterLand' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 
@@ -184,12 +185,12 @@
 			<Text
 				y={size * 0.36}
 				anchor={0.5}
-				text={mult > 0 ? `×${mult}` : isBonus ? 'BONUS' : isKey ? 'KEY' : isKraken ? 'KRAKEN' : '—'}
+				text={mult > 0 ? `×${mult}` : isBonus ? 'BONUS' : isKey ? 'KEY' : isKraken ? 'KRAKEN' : isShark ? 'SHARK' : '—'}
 				style={{
 					fontFamily: 'Cinzel, Georgia, serif',
 					fontWeight: '700',
-					fontSize: isBonus || isKey || isKraken ? size * 0.1 : size * 0.13,
-					fill: mult > 0 ? 0xf2c744 : isBonus ? 0xff8a7a : isKey ? 0xf2c744 : isKraken ? 0x67e8f9 : 0x8a7a66,
+					fontSize: isBonus || isKey || isKraken || isShark ? size * 0.1 : size * 0.13,
+					fill: mult > 0 ? 0xf2c744 : isBonus ? 0xff8a7a : isKey ? 0xf2c744 : isKraken ? 0x67e8f9 : isShark ? 0x93c5fd : 0x8a7a66,
 					dropShadow: { color: 0x000000, alpha: 0.8, blur: 2, distance: 1 },
 				}}
 			/>

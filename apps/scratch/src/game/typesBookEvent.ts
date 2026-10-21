@@ -58,12 +58,40 @@ type BookEventKrakenResult = {
 	amount: number;
 };
 
+// A `shark` symbol landed: the Shark Bite bar rolls and lands on one
+// outcome. What it leads to arrives as its own event right after:
+//   kraken  -> krakenResult (number match -> case reel)
+//   octopus -> octopusCards (3 bonus cards, all wins summed)
+//   key     -> chestSequence
+//   bonus   -> free scratches (counted like the 3-scatter award)
+//   pirate  -> nothing yet (placeholder, "coming soon")
+export type SharkOutcome = 'kraken' | 'octopus' | 'pirate' | 'key' | 'bonus';
+
+type BookEventSharkBite = {
+	index: number;
+	type: 'sharkBite';
+	outcome: SharkOutcome;
+};
+
+// Octopus outcome: three extra cards dealt in the same round. `win` is each
+// card's per-$1 multiplier (scaled to dollars in bookEventHandlerMap); the
+// round total already includes them.
+export type OctopusCard = { panels: RawSymbol[]; win: number };
+
+type BookEventOctopusCards = {
+	index: number;
+	type: 'octopusCards';
+	cards: OctopusCard[];
+};
+
 export type BookEvent =
 	| BookEventRevealPanels
 	| BookEventSetTotalWin
 	| BookEventFinalWin
 	| BookEventChestSequence
-	| BookEventKrakenResult;
+	| BookEventKrakenResult
+	| BookEventSharkBite
+	| BookEventOctopusCards;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;

@@ -12,4 +12,6 @@ export type EmitterEventGame =
 	| { type: 'setTotalWin'; data: BookEventOfType<'setTotalWin'> }
 	| { type: 'finalWin'; data: BookEventOfType<'finalWin'> }
 	| { type: 'chestSequence'; data: BookEventOfType<'chestSequence'> }
-	| { type: 'krakenResult'; data: BookEventOfType<'krakenResult'> };
+	| { type: 'krakenResult'; data: BookEventOfType<'krakenResult'> }
+	| { type: 'sharkBite'; data: BookEventOfType<'sharkBite'> }
+	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> };

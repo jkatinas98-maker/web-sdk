@@ -14,6 +14,7 @@ export const SYMBOL_PLACEHOLDER_GLYPH: Record<SymbolName, string> = {
 	bonus: '▣', // scatter -- small closed treasure chest
 	key: '◈', // feature symbol -- ornate key
 	kraken: '✺', // feature symbol -- kraken
+	shark: '▶', // feature symbol -- shark bite
 	mult1_5: '●', // flintlock pistol
 	mult2: '◆', // crab
 	mult4: '▲', // rum barrel
@@ -37,6 +38,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	bonus: 'Treasure Chest',
 	key: 'Golden Key',
 	kraken: 'Kraken',
+	shark: 'Shark Bite',
 	mult1_5: 'Flintlock Pistol',
 	mult2: 'Crab',
 	mult4: 'Rum Barrel',
@@ -64,6 +66,7 @@ export const SYMBOL_COLORS: Record<SymbolName, { fill: number; glow: number }> =
 	bonus: { fill: 0x8b5a2b, glow: 0xd2a679 }, // wood/iron scatter chest
 	key: { fill: 0xca8a04, glow: 0xfde68a },
 	kraken: { fill: 0x0e7490, glow: 0x67e8f9 },
+	shark: { fill: 0x1d4ed8, glow: 0x60a5fa },
 	mult1_5: { fill: 0x475569, glow: 0xcbd5e1 }, // gunmetal pistol
 	mult2: { fill: 0xea580c, glow: 0xfdba74 }, // crab
 	mult4: { fill: 0x92400e, glow: 0xd97706 }, // rum barrel
