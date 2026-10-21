@@ -94,6 +94,15 @@ type BookEventChestPick = {
 	missed: [number, number];
 };
 
+// Free-scratch bonus: a winning free card adds its multiplier to the
+// bonus multiplier (`added`), and that card pays bet x the new `total`.
+type BookEventBonusMultiplier = {
+	index: number;
+	type: 'bonusMultiplier';
+	added: number;
+	total: number;
+};
+
 export type BookEvent =
 	| BookEventRevealPanels
 	| BookEventSetTotalWin
@@ -102,7 +111,8 @@ export type BookEvent =
 	| BookEventKrakenResult
 	| BookEventSharkBite
 	| BookEventOctopusCards
-	| BookEventChestPick;
+	| BookEventChestPick
+	| BookEventBonusMultiplier;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;

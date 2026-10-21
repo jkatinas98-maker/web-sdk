@@ -123,6 +123,9 @@ const rollMissed = (betMode: BetMode): number => {
 // starts. This is a mock-mode-only approximation; the real book's totals
 // come from scratch_sim.py's play_round, which has no such split.
 let meterPointsAcc = 0;
+// Free-scratch bonus multiplier, carried across the free cards of a bonus
+// (same per-call approximation as meterPointsAcc above).
+let bonusMultAcc = 0;
 
 // --- Shark Bite (PLACEHOLDER numbers -- the real math comes later) ---
 // `shark` weights above are set for ~1 in 10 cards showing at least one
@@ -228,7 +231,10 @@ export const createMockBet = (
 	const { cols, rows } = config.betModes[betMode];
 	const panelCount = cols * rows;
 
-	if (!isFreeRound) meterPointsAcc = 0;
+	if (!isFreeRound) {
+		meterPointsAcc = 0;
+		bonusMultAcc = 0;
+	}
 
 	const panels: RawSymbol[] = [];
 	const counts: Partial<Record<SymbolName, number>> = {};
@@ -356,6 +362,17 @@ export const createMockBet = (
 		const win = rollChestPick(betMode);
 		amount += win;
 		events.push({ index: idx, type: 'chestPick', win, missed: [rollMissed(betMode), rollMissed(betMode)] });
+		idx += 1;
+	}
+
+	// Bonus: a winning free card adds its multiplier to the running bonus
+	// multiplier and pays bet x that total instead (x10 so far + a x2 card
+	// -> this card pays x12; another x2 -> x14, ...).
+	if (isFreeRound && amount > 0) {
+		const added = Math.round(amount * 100) / 100;
+		bonusMultAcc = Math.round((bonusMultAcc + added) * 100) / 100;
+		amount = bonusMultAcc;
+		events.push({ index: idx, type: 'bonusMultiplier', added, total: bonusMultAcc });
 		idx += 1;
 	}
 

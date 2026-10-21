@@ -69,6 +69,9 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 			},
 		});
 	},
+	bonusMultiplier: async (bookEvent: BookEventOfType<'bonusMultiplier'>) => {
+		await eventEmitter.broadcastAsync({ type: 'bonusMultiplier', data: bookEvent });
+	},
 	krakenResult: async (bookEvent: BookEventOfType<'krakenResult'>) => {
 		const dollarAmount = bookEvent.amount * stateBet.betAmount;
 		await eventEmitter.broadcastAsync({

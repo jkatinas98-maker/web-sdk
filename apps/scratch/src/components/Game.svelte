@@ -272,10 +272,12 @@
 	});
 
 	// --- Free-scratch bonus ----------------------------------------------
-	// Awarded free scratches play back to back automatically. Every free
-	// card's win multiplier adds onto the bonus multiplier shown on the
-	// medallion over the anchor (x2, then a x4 card makes it x6, ...); when
-	// the last one is done, a summary shows the bonus total.
+	// Awarded free scratches play back to back automatically. A winning free
+	// card adds its multiplier to the bonus multiplier on the medallion over
+	// the anchor, and pays bet x that whole multiplier (x10 so far + a x2
+	// card -> pays x12; next x2 -> pays x14, ...). The book carries the
+	// multiplier (bonusMultiplier event); a summary shows the total at the
+	// end.
 	let bonusActive = $state(false);
 	let bonusMult = $state(0);
 	let bonusPlayed = $state(0);
@@ -283,6 +285,9 @@
 	let pendingBonusSummary = $state(false);
 	let showBonusSummary = $state(false);
 	let roundIsFree = false;
+	let bonusWinSum = $state(0);
+	// Arrives with the book; shown once the card is scratched.
+	let pendingBonusMult: number | null = null;
 	const fmtMult = (m: number) => `x${+m.toFixed(2)}`;
 
 	// Summary once nothing else is on screen.
@@ -504,6 +509,7 @@
 		if (isProcessing || featureOverlayQueue.length > 0) return;
 		const isFreeRound = freeScratchesRemaining > 0;
 		roundIsFree = isFreeRound;
+		pendingBonusMult = null;
 		if (!isFreeRound && isMockMode && mockBalance < betAmount) return;
 
 		playSound('click');
@@ -584,9 +590,10 @@
 				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
 				mockLastWin = totalWin;
 			}
-			if (roundIsFree && betAmount > 0) {
-				bonusMult = Math.round((bonusMult + totalWin / betAmount) * 100) / 100;
+			if (roundIsFree) {
 				bonusPlayed += 1;
+				bonusWinSum += totalWin;
+				if (pendingBonusMult !== null) bonusMult = pendingBonusMult;
 			}
 			if (pendingFreeScratches > 0) {
 				freeScratchesRemaining += pendingFreeScratches;
@@ -594,6 +601,7 @@
 				if (!bonusActive) {
 					bonusActive = true;
 					bonusMult = 0;
+					bonusWinSum = 0;
 					bonusPlayed = 0;
 					bonusSpins = pendingFreeScratches;
 				} else {
@@ -644,6 +652,9 @@
 		},
 		sharkBite: ({ data }: { data: BookEventOfType<'sharkBite'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'shark', data: data.outcome }];
+		},
+		bonusMultiplier: ({ data }: { data: BookEventOfType<'bonusMultiplier'> }) => {
+			pendingBonusMult = data.total;
 		},
 		chestPick: ({ data }: { data: BookEventOfType<'chestPick'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'chestPick', data }];
@@ -1082,7 +1093,7 @@
 			<div class="bigwin-rays"></div>
 			<div class="bonus-summary-title">Bonus complete!</div>
 			<div class="bonus-summary-medal">{fmtMult(bonusMult)}</div>
-			<div class="bigwin-amount">${(bonusMult * betAmount).toFixed(2)}</div>
+			<div class="bigwin-amount">${bonusWinSum.toFixed(2)}</div>
 			<div class="bigwin-mult">{bonusSpins} free scratches</div>
 			<div class="win-modal-hint">Tap anywhere to continue</div>
 		</div>
