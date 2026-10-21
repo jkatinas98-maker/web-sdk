@@ -1857,3 +1857,32 @@ button:disabled {
 	width: 88%;
 	flex: none;
 }
+
+/* "=" between the Kraken plaques. */
+.kraken-equals {
+	position: absolute;
+	transform: translate(-50%, -54%);
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+	font-size: 1.5em;
+	line-height: 1;
+	color: #fff1b8;
+	-webkit-text-fill-color: #fff1b8;
+	text-shadow: 0 3px 0 #3a1f08;
+	filter: drop-shadow(0 0 6px #22d3ee) drop-shadow(0 0 16px #0891b2);
+	animation: kraken-q-pulse 1.4s ease-in-out infinite;
+}
+
+.kraken-equals.hit {
+	color: #ffd75e;
+	-webkit-text-fill-color: #ffd75e;
+	filter: drop-shadow(0 0 8px #f2c744) drop-shadow(0 0 20px #f59e0b);
+	animation: none;
+}
+
+.kraken-equals.miss {
+	color: #ff8a7a;
+	-webkit-text-fill-color: #ff8a7a;
+	filter: drop-shadow(0 0 8px #dc2626);
+	animation: none;
+}

@@ -870,6 +870,16 @@
 			>
 				<img class="kraken-panel-img" src={krakenPanelUrl} alt="The Kraken Rises" draggable="false" />
 				<div class="kraken-plaque-num" style={plaqueAt(KRAKEN_PANEL.player)}>{k.playerNumber}</div>
+				<!-- "=" between the plaques (the art's baked "VS" was removed);
+				     turns into a red "≠" on a miss. -->
+				<div
+					class="kraken-equals"
+					class:miss={krakenRevealed && !k.hit}
+					class:hit={krakenRevealed && k.hit}
+					style={plaqueAt({ x: 833, y: 613 })}
+				>
+					{krakenRevealed && !k.hit ? '≠' : '='}
+				</div>
 				<div
 					class="kraken-plaque-num"
 					class:hidden={!krakenRevealed}
