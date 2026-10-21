@@ -16,6 +16,10 @@
 		left?: number;
 		right?: number;
 		interactive: boolean;
+		// Illustrated frame mode: the DOM frame art supplies the border, so
+		// skip the drawn wood card/glows, fill the frame's window with a dark
+		// backing, and center the grid inside it (no 400px width cap).
+		frameless?: boolean;
 		// The symbol id that won this round (null before resolution / on a
 		// loss) — cells matching it get the green pulsing "winning" treatment.
 		winningSymbol?: SymbolName | null;
@@ -29,6 +33,7 @@
 		left = 0,
 		right = 0,
 		interactive,
+		frameless = false,
 		winningSymbol = null,
 		onRevealIndex,
 	}: Props = $props();
@@ -59,7 +64,7 @@
 
 	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
 	const availableWidth = $derived(canvas.width - left - right);
-	const cardWidth = $derived(Math.min(availableWidth - 24, 400));
+	const cardWidth = $derived(frameless ? availableWidth - 8 : Math.min(availableWidth - 24, 400));
 	const cardX = $derived(left + (availableWidth - cardWidth) / 2);
 	const pad = 12;
 
@@ -81,6 +86,15 @@
 	const gridOffsetX = $derived(pad + (gridWidth - gridActualWidth) / 2);
 
 	const cardHeight = $derived(pad * 2 + gridActualHeight);
+	const windowHeight = $derived(canvas.height - top - bottom);
+	const cardY = $derived(frameless ? top + Math.max(0, (windowHeight - cardHeight) / 2) : top);
+
+	// Dark sea-wood backing for the frame's (transparent) window so the
+	// tiles don't float over the background painting.
+	const drawWindowBacking = (graphics: PIXI.Graphics, width: number, height: number) => {
+		graphics.rect(0, 0, width, height);
+		graphics.fill({ color: 0x0c0905, alpha: 0.86 });
+	};
 
 	// Carved wooden frame: dark plank fill, near-black outer edge, an inset
 	// brass trim line, a lighter plank edge inside that, and brass rivets in
@@ -126,7 +140,14 @@
 	);
 </script>
 
-<Container x={cardX} y={top}>
+{#if frameless}
+	<Container x={left} y={top}>
+		<Graphics draw={(graphics) => drawWindowBacking(graphics, availableWidth, windowHeight)} />
+	</Container>
+{/if}
+
+<Container x={cardX} y={cardY}>
+	{#if !frameless}
 	<!-- Soft ambient glow blob behind/around the card (layered low-alpha
 	     circles fake a blur without a filter dependency), echoing the
 	     reference's .glow-bg radial gradient. -->
@@ -148,6 +169,7 @@
 	/>
 
 	<Graphics draw={(graphics) => drawCardBackground(graphics, cardWidth, cardHeight)} />
+	{/if}
 
 	{#each cellPositions as cell (cell.index)}
 		<Cell

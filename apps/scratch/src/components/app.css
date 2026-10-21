@@ -197,6 +197,156 @@ button:disabled {
 	height: 18px;
 }
 
+/* ---------- Difficulty tabs (under the logo) ---------- */
+
+.diff-bar {
+	position: fixed;
+	top: var(--header-h);
+	left: 0;
+	right: 0;
+	max-width: 440px;
+	margin: 0 auto;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	padding: 0 0.75rem;
+	pointer-events: auto;
+}
+
+.diff-bar .diff-row {
+	width: 100%;
+}
+
+/* ---------- Illustrated frame + its baked control bar ---------- */
+
+.frame-layer {
+	position: fixed;
+	z-index: 5;
+	pointer-events: none;
+	user-select: none;
+}
+
+.frame-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+}
+
+/* Invisible hit area over a baked button: only light/dark overlays for
+   hover / pressed / disabled, so the art itself carries the look. */
+.frame-btn {
+	position: absolute;
+	padding: 0;
+	font-size: inherit;
+	border-radius: 50%;
+	background: transparent;
+	pointer-events: auto;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.frame-btn:hover:not(:disabled) {
+	background: radial-gradient(circle, rgba(255, 230, 160, 0.28), rgba(255, 230, 160, 0) 70%);
+}
+
+.frame-btn:active:not(:disabled) {
+	transform: none;
+	background: radial-gradient(circle, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.15) 70%);
+}
+
+.frame-btn:disabled {
+	opacity: 1;
+	background: radial-gradient(circle, rgba(8, 5, 2, 0.6), rgba(8, 5, 2, 0.45) 70%);
+}
+
+/* Idle anchor breathes gold to say "press me"; red when a free scratch is
+   owed. */
+.frame-btn--anchor.ready {
+	animation: anchor-glow 1.8s ease-in-out infinite;
+}
+
+.frame-btn--anchor.free {
+	animation: anchor-glow-free 1.4s ease-in-out infinite;
+}
+
+@keyframes anchor-glow {
+	0%,
+	100% {
+		box-shadow: 0 0 0.3em 0.05em rgba(242, 199, 68, 0.35);
+	}
+	50% {
+		box-shadow: 0 0 1.1em 0.35em rgba(242, 199, 68, 0.75);
+	}
+}
+
+@keyframes anchor-glow-free {
+	0%,
+	100% {
+		box-shadow: 0 0 0.3em 0.05em rgba(210, 58, 42, 0.4);
+	}
+	50% {
+		box-shadow: 0 0 1.1em 0.35em rgba(210, 58, 42, 0.85);
+	}
+}
+
+/* Text printed into the frame's dark plaques. Sized in em off the
+   frame-layer's font-size (scaled with the frame). */
+.frame-text {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	font-family: var(--font-ui);
+	line-height: 1.05;
+	text-align: center;
+}
+
+.frame-label {
+	font-size: 0.5em;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--brass);
+}
+
+.frame-value {
+	font-size: 0.95em;
+	font-weight: 700;
+	color: var(--txt-1);
+	text-shadow: 0 1px 2px #000;
+	white-space: nowrap;
+}
+
+.frame-value.win {
+	color: #9fe39a;
+}
+
+.frame-plaque {
+	gap: 0.15em;
+}
+
+.frame-plaque-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5em;
+	width: 82%;
+}
+
+.frame-anchor-label {
+	font-family: var(--font-display);
+	font-size: 0.85em;
+	color: var(--gold);
+	text-shadow:
+		0 2px 0 #1a0f07,
+		0 0 6px rgba(0, 0, 0, 0.8);
+	white-space: nowrap;
+}
+
 /* ---------- Controls stack (above the footer bar) ---------- */
 
 .controls-stack {
@@ -713,10 +863,6 @@ button:disabled {
    stay visible behind it. */
 .kraken-card-overlay {
 	position: fixed;
-	left: 0;
-	right: 0;
-	max-width: 440px;
-	margin: 0 auto;
 	z-index: 15;
 	pointer-events: auto;
 	cursor: pointer;

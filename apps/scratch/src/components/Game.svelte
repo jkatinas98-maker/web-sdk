@@ -12,6 +12,7 @@
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
+	import frameUrl from '../assets/frame.webp';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -148,21 +149,61 @@
 		showPaytable = !showPaytable;
 	}
 
-	// Single-column mobile layout, always — no separate desktop panels. The
-	// board frame (ticket) fills whatever space is left between the header
-	// pill/banner at the top and the controls stack + footer bar at the
-	// bottom, same as the reference layout.
+	// Layout: logo header, difficulty tabs under it, then the illustrated
+	// frame (grid window + its own control bar) filling the rest. The frame
+	// art's coordinates below are in its source-image pixels (1536x1024);
+	// everything is placed proportionally from them, so any export size of
+	// the same art lines up.
 	// Tall enough for the illustrated logo plaque plus the max-win ribbon.
 	const HEADER_H = 112;
-	const FOOTER_H = 52;
-	// Difficulty row + bet stepper (amount line + quick-button line) + play
-	// button, each an .option-card with its own padding/gap — taller than it
-	// looks added up in a glance, so this is measured against the actual
-	// rendered controls-stack height rather than guessed.
-	const CONTROLS_H = 238;
+	const DIFF_H = 44;
+	const FRAME = {
+		w: 1536,
+		h: 1024,
+		// Horizontal span that must stay on screen: both wooden pillars and
+		// every baked button. Lanterns/cannons/palms outside it may crop on
+		// narrow (portrait phone) screens.
+		viewX0: 140,
+		viewX1: 1396,
+		// Vertical extent of the actual art (rest is transparent padding).
+		contentY0: 5,
+		contentY1: 984,
+		// The transparent window the scratch grid shows through.
+		win: { x0: 264, y0: 205, x1: 1271, y1: 757 },
+	};
 
-	const topReserved = HEADER_H + 10;
-	const bottomReserved = FOOTER_H + CONTROLS_H;
+	let vw = $state(typeof window === 'undefined' ? 390 : window.innerWidth);
+	let vh = $state(typeof window === 'undefined' ? 844 : window.innerHeight);
+
+	const frameAreaTop = HEADER_H + DIFF_H;
+	const frameAreaH = $derived(Math.max(120, vh - frameAreaTop - 8));
+	const frameScale = $derived(
+		Math.min(
+			vw / (FRAME.viewX1 - FRAME.viewX0),
+			frameAreaH / (FRAME.contentY1 - FRAME.contentY0),
+			0.8,
+		),
+	);
+	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
+	const frameTop = $derived(
+		frameAreaTop -
+			FRAME.contentY0 * frameScale +
+			Math.max(0, (frameAreaH - (FRAME.contentY1 - FRAME.contentY0) * frameScale) / 2),
+	);
+	// The frame window in screen pixels, as insets from each viewport edge —
+	// the pixi grid and the in-card Kraken overlay both fill exactly this.
+	const gridRect = $derived({
+		top: frameTop + FRAME.win.y0 * frameScale,
+		bottom: vh - (frameTop + FRAME.win.y1 * frameScale),
+		left: frameLeft + FRAME.win.x0 * frameScale,
+		right: vw - (frameLeft + FRAME.win.x1 * frameScale),
+	});
+
+	// Absolutely position an overlay (hit area / text) on the frame art by
+	// its center + size in source-image pixels.
+	const at = (cx: number, cy: number, w: number, h: number) =>
+		`left:${((cx - w / 2) / FRAME.w) * 100}%;top:${((cy - h / 2) / FRAME.h) * 100}%;` +
+		`width:${(w / FRAME.w) * 100}%;height:${(h / FRAME.h) * 100}%;`;
 
 	// Difficulty and bet amount lock while a round is live AND while free
 	// scratches are owed — a free scratch replays at whatever mode/bet
@@ -315,18 +356,99 @@
 	});
 </script>
 
+<svelte:window bind:innerWidth={vw} bind:innerHeight={vh} />
+
 <div class="pixi-layer">
 	<App>
 		<EnableGameActor />
 		<Ticket
 			{betMode}
-			top={topReserved}
-			bottom={bottomReserved}
+			top={gridRect.top}
+			bottom={gridRect.bottom}
+			left={gridRect.left}
+			right={gridRect.right}
+			frameless
 			interactive={viewState === 'playing'}
 			{winningSymbol}
 			onRevealIndex={revealPanel}
 		/>
 	</App>
+</div>
+
+<!-- Illustrated frame: the art itself plus invisible hit areas / text laid
+     over its baked-in controls (bet -/+ and readout, balance/win plaque,
+     anchor = play / reveal all, refresh = reveal all, menu = paytable). The
+     window is transparent, so the pixi grid underneath shows through. -->
+<div
+	class="frame-layer"
+	style={`left:${frameLeft}px;top:${frameTop}px;width:${FRAME.w * frameScale}px;height:${FRAME.h * frameScale}px;font-size:${frameScale * 40}px;`}
+>
+	<img class="frame-img" src={frameUrl} alt="" draggable="false" />
+
+	<button
+		class="frame-btn"
+		style={at(222, 880, 88, 88)}
+		disabled={locked}
+		aria-label="Decrease bet"
+		onclick={() => setBetAmount(betAmount - BET_STEP)}
+	></button>
+	<div class="frame-text frame-bet" style={at(356, 884, 172, 76)}>
+		<span class="frame-label">Bet</span>
+		<span class="frame-value">${betAmount.toFixed(2)}</span>
+	</div>
+	<button
+		class="frame-btn"
+		style={at(490, 878, 88, 88)}
+		disabled={locked}
+		aria-label="Increase bet"
+		onclick={() => setBetAmount(betAmount + BET_STEP)}
+	></button>
+
+	<div class="frame-text frame-plaque" style={at(768, 818, 290, 104)}>
+		<div class="frame-plaque-row">
+			<span class="frame-label">Balance</span>
+			<span class="frame-value">${displayBalance.toFixed(2)}</span>
+		</div>
+		<div class="frame-plaque-row">
+			<span class="frame-label">Win</span>
+			<span class="frame-value win">${displayLastWin.toFixed(2)}</span>
+		</div>
+	</div>
+
+	<button
+		class="frame-btn frame-btn--anchor"
+		class:ready={viewState !== 'playing' && !isProcessing && freeScratchesRemaining === 0}
+		class:free={viewState !== 'playing' && freeScratchesRemaining > 0}
+		style={at(1041, 875, 184, 184)}
+		disabled={viewState !== 'playing' && isProcessing}
+		aria-label={viewState === 'playing'
+			? 'Reveal all'
+			: freeScratchesRemaining > 0
+				? 'Free scratch'
+				: 'Play card'}
+		onclick={handleMainAction}
+	></button>
+	<div class="frame-text frame-anchor-label" style={at(1041, 990, 220, 44)}>
+		{viewState === 'playing'
+			? 'Reveal all'
+			: freeScratchesRemaining > 0
+				? `Free (${freeScratchesRemaining})`
+				: 'Play'}
+	</div>
+
+	<button
+		class="frame-btn"
+		style={at(1210, 875, 100, 100)}
+		disabled={viewState !== 'playing'}
+		aria-label="Reveal all"
+		onclick={revealEverything}
+	></button>
+	<button
+		class="frame-btn"
+		style={at(1334, 875, 100, 100)}
+		aria-label="Paytable"
+		onclick={togglePaytable}
+	></button>
 </div>
 
 <div class="ui-layer">
@@ -357,69 +479,22 @@
 		</button>
 	</header>
 
-	<!-- CONTROLS STACK (above the footer bar) -->
-	<div class="controls-stack">
-		<div class="option-card">
-			<span class="option-title">Difficulty</span>
-			<div class="diff-row">
-				{#each Object.keys(config.betModes) as mode}
-					{@const m = config.betModes[mode as BetMode]}
-					<button
-						class="diff-btn"
-						class:active={betMode === mode}
-						disabled={locked}
-						onclick={() => selectMode(mode as BetMode)}
-					>
-						{mode} {m.rows}×{m.cols}
-					</button>
-				{/each}
-			</div>
+	<!-- DIFFICULTY TABS (between logo and frame) -->
+	<div class="diff-bar">
+		<div class="diff-row">
+			{#each Object.keys(config.betModes) as mode}
+				{@const m = config.betModes[mode as BetMode]}
+				<button
+					class="diff-btn"
+					class:active={betMode === mode}
+					disabled={locked}
+					onclick={() => selectMode(mode as BetMode)}
+				>
+					{mode} {m.rows}×{m.cols}
+				</button>
+			{/each}
 		</div>
-
-		<div class="option-card">
-			<span class="option-title">Bet amount</span>
-			<div class="bet-stepper">
-				<button class="step-btn" disabled={locked} onclick={() => setBetAmount(betAmount - BET_STEP)}>−</button>
-				<div class="bet-display">${betAmount.toFixed(2)}</div>
-				<button class="step-btn" disabled={locked} onclick={() => setBetAmount(betAmount + BET_STEP)}>+</button>
-				<div class="quick-row">
-					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(betAmount / 2)}>½</button>
-					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(betAmount * 2)}>2×</button>
-					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(MIN_BET)}>Min</button>
-					<button class="q-btn" disabled={locked} onclick={() => setBetAmount(100)}>Max</button>
-				</div>
-			</div>
-		</div>
-
-		<button
-			class="main-btn"
-			class:reveal-mode={viewState === 'playing'}
-			class:bonus-mode={viewState !== 'playing' && freeScratchesRemaining > 0}
-			onclick={handleMainAction}
-			disabled={viewState !== 'playing' && isProcessing}
-		>
-			{viewState === 'playing'
-				? 'Reveal all'
-				: freeScratchesRemaining > 0
-					? `Free scratch (${freeScratchesRemaining} left)`
-					: `Play card ($${betAmount.toFixed(2)})`}
-		</button>
 	</div>
-
-	<!-- FOOTER STAT BAR -->
-	<footer class="footer-bar">
-		<div class="footer-stat">
-			<span class="footer-stat-label">Balance</span>
-			<span class="footer-stat-value balance">${displayBalance.toFixed(2)}</span>
-		</div>
-		<div class="footer-stat">
-			<span class="footer-stat-label">Last win</span>
-			<span class="footer-stat-value win">${displayLastWin.toFixed(2)}</span>
-		</div>
-		<div class="icon-actions">
-			<button class="icon-btn paytable-btn" onclick={togglePaytable}>PAYTABLE</button>
-		</div>
-	</footer>
 </div>
 
 {#if showPaytable}
@@ -456,7 +531,7 @@
 {#if activeFeatureOverlay?.kind === 'kraken'}
 	{@const k = activeFeatureOverlay.data}
 	<!-- In-card, not a full-screen modal: sits over the ticket itself (same
-	     top/bottom reserve as <Ticket>, see topReserved/bottomReserved above)
+	     window rect as <Ticket>, see gridRect above)
 	     so the header/footer/controls stay visible and undimmed behind it.
 	     Player's number is visible immediately; the Kraken's stays a "?"
 	     until the first tap (handleKrakenTap), which flips it face-up and
@@ -464,7 +539,7 @@
 	     overlay. -->
 	<div
 		class="kraken-card-overlay"
-		style={`top:${topReserved}px; bottom:${bottomReserved}px;`}
+		style={`top:${gridRect.top}px; bottom:${gridRect.bottom}px; left:${gridRect.left}px; right:${gridRect.right}px;`}
 		role="button"
 		tabindex="0"
 		onclick={handleKrakenTap}
