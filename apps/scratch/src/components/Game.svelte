@@ -330,6 +330,37 @@
 		return () => clearTimeout(t);
 	});
 
+	// Win tally over the grid when the winning symbol landed more than 3
+	// times: starts at the symbol's multiplier and steps up by the mode's
+	// extra-match bonus in time with each extra tile's "+0.25x" burst.
+	let tally: { name: SymbolName; value: number; step: number } | null = $state(null);
+	$effect(() => {
+		const ws = winningSymbol;
+		const panels = context.stateGame.panels;
+		const step = EXTRA_MATCH_BONUS[betMode];
+		if (!ws) {
+			tally = null;
+			return;
+		}
+		const count = panels.filter((p) => p?.name === ws).length;
+		const extras = Math.max(0, count - 3);
+		if (extras === 0) {
+			tally = null;
+			return;
+		}
+		const base = config.symbols[ws].mult;
+		tally = { name: ws, value: base, step: 0 };
+		const timers: ReturnType<typeof setTimeout>[] = [];
+		for (let k = 1; k <= extras; k++) {
+			timers.push(
+				setTimeout(() => {
+					tally = { name: ws, value: Math.round((base + k * step) * 100) / 100, step: k };
+				}, 600 + (k - 1) * 550 + 150),
+			);
+		}
+		return () => timers.forEach(clearTimeout);
+	});
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet
@@ -733,6 +764,7 @@
 			frameless
 			interactive={viewState === 'playing' || octoScratching}
 			{winningSymbol}
+			extraStep={EXTRA_MATCH_BONUS[betMode]}
 			onRevealIndex={revealPanel}
 		/>
 	</App>
@@ -891,6 +923,19 @@
 		<SharkBiteBar width={sharkBarW} rollId={sharkRollId} outcome={sharkOutcome} onLanded={handleSharkLanded} />
 	</div>
 </div>
+
+{#if tally}
+	<!-- Extra-match tally: "Crab x2 -> x2.25 -> x2.5" -->
+	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
+		<div class="win-tally-pill">
+			<img src={SYMBOL_IMAGE_URL[tally.name]} alt="" />
+			<span class="win-tally-label">{SYMBOL_LABEL[tally.name]}</span>
+			{#key tally.value}
+				<span class="win-tally-value" class:bumped={tally.step > 0}>x{tally.value}</span>
+			{/key}
+		</div>
+	</div>
+{/if}
 
 {#if octoActive}
 	<!-- Octopus bonus cards: banner in the Shark Bite bar's tube, so the

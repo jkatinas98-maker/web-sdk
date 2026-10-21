@@ -23,6 +23,8 @@
 		// The symbol id that won this round (null before resolution / on a
 		// loss) — cells matching it get the green pulsing "winning" treatment.
 		winningSymbol?: SymbolName | null;
+		// Win-multiplier bonus each extra match (4th, 5th, ...) adds.
+		extraStep?: number;
 		onRevealIndex: (index: number) => void;
 	};
 
@@ -35,6 +37,7 @@
 		interactive,
 		frameless = false,
 		winningSymbol = null,
+		extraStep = 0,
 		onRevealIndex,
 	}: Props = $props();
 
@@ -127,6 +130,20 @@
 	const panels = $derived(context.stateGame.panels);
 	const revealed = $derived(context.stateGame.revealed);
 
+	// Reading order of the winning symbol's tiles: 4th onward are extras
+	// (1 = first extra, 2 = second, ...).
+	const extraOrder = $derived.by(() => {
+		const m = new Map<number, number>();
+		if (!winningSymbol) return m;
+		let n = 0;
+		panels.forEach((p, i) => {
+			if (p?.name !== winningSymbol) return;
+			n += 1;
+			if (n > 3) m.set(i, n - 3);
+		});
+		return m;
+	});
+
 	const cellPositions = $derived(
 		Array.from({ length: cols * rows }, (_, index) => {
 			const col = index % displayCols;
@@ -181,6 +198,8 @@
 			winning={revealed.has(cell.index) && panels[cell.index]?.name === winningSymbol}
 			jackpot={revealed.has(cell.index) && panels[cell.index]?.name === jackpotSymbol}
 			interactive={interactive && !revealed.has(cell.index)}
+			extraIndex={extraOrder.get(cell.index) ?? 0}
+			{extraStep}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>
 	{/each}

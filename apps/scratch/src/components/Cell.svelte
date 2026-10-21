@@ -19,10 +19,41 @@
 		// landing a scratcher's jackpot icon before you know if it's a win).
 		jackpot: boolean;
 		interactive: boolean;
+		// 1, 2, ... if this tile is the 4th, 5th, ... of the winning symbol
+		// (0 otherwise); extraStep is the bonus it adds (+0.25x etc).
+		extraIndex?: number;
+		extraStep?: number;
 		onReveal: () => void;
 	};
 
-	const { x, y, size, panel, revealed, winning, jackpot, interactive, onReveal }: Props = $props();
+	const { x, y, size, panel, revealed, winning, jackpot, interactive, extraIndex = 0, extraStep = 0, onReveal }: Props = $props();
+
+	// Extra-match animation: each extra tile, in turn, bursts a gold ring
+	// and fires a "+0.25x" that floats up and away, then keeps a small
+	// "+0.25x" badge. Timed to match the win-tally pill in Game.svelte.
+	let extraT = $state(-1);
+	$effect(() => {
+		if (!(winning && extraIndex > 0)) {
+			extraT = -1;
+			return;
+		}
+		const start = performance.now() + 600 + (extraIndex - 1) * 550;
+		let sounded = false;
+		let raf = 0;
+		const loop = (now: number) => {
+			const t = (now - start) / 1300;
+			if (t >= 0 && !sounded) {
+				sounded = true;
+				playSound('scatterLand');
+			}
+			extraT = t < 0 ? -1 : Math.min(1, t);
+			if (t < 1) raf = requestAnimationFrame(loop);
+		};
+		raf = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(raf);
+	});
+	const extraLabel = $derived(`+${+extraStep.toFixed(2)}x`);
+	const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 	const mult = $derived(panel ? config.symbols[panel.name].mult : 0);
 	const isBonus = $derived(panel?.name === 'bonus');
@@ -195,6 +226,50 @@
 				}}
 			/>
 		</Container>
+		{#if extraT >= 0}
+			{@const ringT = Math.min(1, extraT / 0.45)}
+			<Graphics
+				draw={(g) => {
+					g.clear();
+					if (ringT < 1) {
+						g.circle(0, -size * 0.06, size * (0.25 + 0.5 * easeOut(ringT)));
+						g.stroke({ color: 0xffd75e, width: size * 0.06 * (1 - ringT), alpha: 1 - ringT });
+						g.roundRect(-size / 2, -size / 2, size, size, radius);
+						g.stroke({ color: 0xfff1b8, width: 3, alpha: 0.9 * (1 - ringT) });
+					}
+				}}
+			/>
+			<!-- floating "+0.25x" -->
+			<Text
+				anchor={0.5}
+				y={-size * 0.05 - size * 0.75 * easeOut(extraT)}
+				alpha={extraT < 0.6 ? 1 : 1 - (extraT - 0.6) / 0.4}
+				scale={0.6 + 0.8 * easeOut(Math.min(1, extraT / 0.25)) - 0.2 * extraT}
+				text={extraLabel}
+				style={{
+					fontFamily: 'Pirata One, Cinzel, serif',
+					fontSize: size * 0.3,
+					fill: 0xffd75e,
+					stroke: { color: 0x3a1f08, width: 4 },
+					dropShadow: { color: 0xff8a00, alpha: 0.9, blur: 6, distance: 0 },
+				}}
+			/>
+			<!-- badge that stays in the tile's corner -->
+			<Text
+				anchor={0.5}
+				x={size * 0.3}
+				y={-size * 0.4}
+				alpha={Math.min(1, extraT / 0.3)}
+				text={extraLabel}
+				style={{
+					fontFamily: 'Cinzel, Georgia, serif',
+					fontWeight: '900',
+					fontSize: size * 0.13,
+					fill: 0xffd75e,
+					stroke: { color: 0x2a1505, width: 3 },
+				}}
+			/>
+		{/if}
 	{:else}
 		<Container
 			eventMode={interactive ? 'static' : 'none'}
