@@ -46,20 +46,26 @@ body {
 	overflow: hidden;
 }
 
-/* Night sea under torchlight: warm glow from above, deep teal fading to
-   near-black, a faint wave shimmer band across the middle. */
+/* Painted ship-deck scene, covering the viewport. On a tall phone screen
+   `cover` crops the sides, so it's anchored on the ship/horizon. A light
+   overall dim plus darker top/bottom bands keeps the header, card and
+   controls readable without hiding the art. */
 body {
 	font-family: var(--font-ui);
 	color: var(--txt-1);
 	background-color: var(--sea-900);
 	background-image:
-		radial-gradient(ellipse 70% 40% at 50% 0%, rgba(232, 163, 61, 0.28), transparent 70%),
-		repeating-linear-gradient(
-			100deg,
-			rgba(255, 255, 255, 0.025) 0 2px,
-			transparent 2px 28px
+		linear-gradient(
+			180deg,
+			rgba(4, 12, 16, 0.55) 0%,
+			rgba(4, 12, 16, 0.15) 22%,
+			rgba(4, 12, 16, 0.2) 55%,
+			rgba(4, 12, 16, 0.7) 100%
 		),
-		linear-gradient(180deg, var(--sea-800) 0%, var(--sea-700) 40%, #0a3342 65%, var(--sea-900) 100%);
+		url('../assets/background.jpg');
+	background-size: cover, cover;
+	background-position: center, 42% 55%;
+	background-repeat: no-repeat;
 }
 
 button {
