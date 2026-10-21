@@ -1,7 +1,11 @@
 import type { SymbolName } from './types';
 
 // Final illustrated symbol art (transparent, square-padded PNGs) — one file
-// per symbol id, under apps/scratch/assets/symbols/<id>.png.
+// per symbol id, under apps/scratch/src/assets/symbols/<id>.png.
+//
+// Must live inside src/: SvelteKit restricts Vite's dev server (fs.allow)
+// to src/, static/ and node_modules, so an app-root assets/ folder 403s in
+// `dev` even though `build` happily bundles it.
 //
 // Pulled in through Vite's import.meta.glob (eager, as URLs) rather than
 // `new URL(path, import.meta.url)`: the glob is a real module import, so
@@ -9,14 +13,14 @@ import type { SymbolName } from './types';
 // in `build` (assetsInlineLimit is Infinity in config-vite, so production
 // gets data: URIs — no extra requests, and no absolute paths that would
 // break when Stake Engine serves the game from a sub-path).
-const files = import.meta.glob('../../assets/symbols/*.png', {
+const files = import.meta.glob('../assets/symbols/*.png', {
 	eager: true,
 	query: '?url',
 	import: 'default',
 }) as Record<string, string>;
 
 const urlFor = (name: SymbolName): string => {
-	const url = files[`../../assets/symbols/${name}.png`];
+	const url = files[`../assets/symbols/${name}.png`];
 	if (!url) console.error(`Missing symbol art: assets/symbols/${name}.png`);
 	return url;
 };
