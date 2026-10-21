@@ -381,7 +381,7 @@
      window is transparent, so the pixi grid underneath shows through. -->
 <div
 	class="frame-layer"
-	style={`left:${frameLeft}px;top:${frameTop}px;width:${FRAME.w * frameScale}px;height:${FRAME.h * frameScale}px;font-size:${frameScale * 40}px;`}
+	style={`left:${frameLeft}px;top:${frameTop}px;width:${FRAME.w * frameScale}px;height:${FRAME.h * frameScale}px;font-size:${Math.max(13, frameScale * 44)}px;`}
 >
 	<img class="frame-img" src={frameUrl} alt="" draggable="false" />
 
