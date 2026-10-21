@@ -8,7 +8,8 @@
 	import type { BookEventOfType, ChestOutcome } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume } from '../game/sound';
+	import { playSound, setVolume, startMusic } from '../game/sound';
+	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
@@ -356,7 +357,12 @@
 	});
 </script>
 
-<svelte:window bind:innerWidth={vw} bind:innerHeight={vh} />
+<svelte:window
+	bind:innerWidth={vw}
+	bind:innerHeight={vh}
+	onpointerdown={() => startMusic(musicUrl)}
+	onkeydown={() => startMusic(musicUrl)}
+/>
 
 <div class="pixi-layer">
 	<App>

@@ -333,8 +333,18 @@ button:disabled {
 	display: flex;
 	align-items: baseline;
 	justify-content: space-between;
-	gap: 0.5em;
-	width: 82%;
+	gap: 0.4em;
+	width: 84%;
+}
+
+/* The center plaque holds two label/value rows side by side, so it runs
+   smaller than the single bet readout to fit big balances. */
+.frame-plaque .frame-label {
+	font-size: 0.46em;
+}
+
+.frame-plaque .frame-value {
+	font-size: 0.66em;
 }
 
 .frame-anchor-label {

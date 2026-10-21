@@ -19,8 +19,39 @@ const getContext = (): AudioContext | null => {
 	return audioCtx;
 };
 
+// ---------- Background music ----------
+// Looping soundtrack, sitting UNDER the effects. The track is mastered loud
+// (about -17 dB average) while the synth effects average roughly -24 dB, so
+// matching "30% quieter than the effects" (~-3 dB below them, ~-27 dB)
+// means scaling the track by ~0.33 on top of the shared volume knob.
+// Tweak MUSIC_GAIN if the balance needs adjusting by ear.
+const MUSIC_GAIN = 0.33;
+let music: HTMLAudioElement | null = null;
+let musicStarted = false;
+
+const applyMusicVolume = () => {
+	if (!music) return;
+	music.volume = Math.min(1, MUSIC_GAIN * volume);
+	if (volume <= 0) music.pause();
+	else if (musicStarted && music.paused) music.play().catch(() => {});
+};
+
+// Browsers block audio until the player interacts with the page, so this
+// is called from the first pointer/key event (see Game.svelte). Safe to
+// call repeatedly — only the first call does anything.
+export const startMusic = (src: string) => {
+	if (musicStarted || typeof window === 'undefined') return;
+	musicStarted = true;
+	music = new Audio(src);
+	music.loop = true;
+	music.preload = 'auto';
+	applyMusicVolume();
+	if (volume > 0) music.play().catch(() => (musicStarted = false));
+};
+
 export const setVolume = (value: number) => {
 	volume = Math.min(1, Math.max(0, value));
+	applyMusicVolume();
 };
 
 export const getVolume = () => volume;
