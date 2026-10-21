@@ -2,15 +2,18 @@
 // bundle or host. Every sound is a short oscillator blip, generated on the
 // fly, so this works the moment the page loads with zero assets.
 type SoundType =
-	| 'click'
-	| 'scratch'
-	| 'reveal'
-	| 'win'
-	| 'bonus'
-	| 'jackpot'
-	| 'scatterLand'
-	| 'woodTick'
-	| 'woodThunk';
+	| 'click' // UI button: small wooden knock
+	| 'scratch' // scraping a cell: parchment/sand scrape
+	| 'reveal' // a cell opens: paper flip + soft wood tap
+	| 'win' // regular win: coin jingle + ship's bell
+	| 'bonus' // free scratches: ship's bell x3 + brass horn
+	| 'jackpot' // top symbol / prize lands: coin cascade
+	| 'scatterLand' // special tile lands: single ship's bell
+	| 'woodTick' // reel ticks
+	| 'woodThunk' // reel lands
+	| 'chestOpen' // treasure chest: creak, lid thunk, coins
+	| 'cannon' // big win: cannon boom
+	| 'splash'; // Kraken / Shark: sea splash
 
 let audioCtx: AudioContext | null = null;
 // A single 0-1 volume knob instead of a plain on/off switch — 0 is mute,
@@ -102,6 +105,8 @@ export const playSound = (type: SoundType) => {
 
 		const now = ctx.currentTime;
 
+		const out = ctx.destination;
+
 		const tone = (
 			freq: number,
 			peakGain: number,
@@ -109,85 +114,173 @@ export const playSound = (type: SoundType) => {
 			shape: OscillatorType = 'sine',
 			startAt = 0,
 			sweepTo?: number,
+			attack = 0.002,
 		) => {
 			const osc = ctx.createOscillator();
 			const gain = ctx.createGain();
 			osc.connect(gain);
-			gain.connect(ctx.destination);
+			gain.connect(out);
 			osc.type = shape;
 			const t0 = now + startAt;
 			osc.frequency.setValueAtTime(freq, t0);
 			if (sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t0 + duration);
-			gain.gain.setValueAtTime(peakGain * volume, t0);
-			gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+			gain.gain.setValueAtTime(0.0001, t0);
+			gain.gain.exponentialRampToValueAtTime(peakGain * volume, t0 + attack);
+			gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
 			osc.start(t0);
-			osc.stop(t0 + duration);
+			osc.stop(t0 + duration + 0.02);
 		};
 
-		// Wooden knock: a short band-passed noise click (the "tock" of the
-		// wood) over a low, fast-falling body tone.
-		const knock = (pitch: number, gainAmt: number, body: number, startAt = 0) => {
+		// Filtered noise burst (filter frequency can sweep).
+		const noise = (
+			filter: BiquadFilterType,
+			freq: number,
+			q: number,
+			gainAmt: number,
+			duration: number,
+			startAt = 0,
+			freqTo?: number,
+			attack = 0.003,
+		) => {
 			const t0 = now + startAt;
 			const src = ctx.createBufferSource();
 			src.buffer = getNoise(ctx);
-			const bp = ctx.createBiquadFilter();
-			bp.type = 'bandpass';
-			bp.frequency.value = pitch;
-			bp.Q.value = 6;
+			src.loop = true;
+			const f = ctx.createBiquadFilter();
+			f.type = filter;
+			f.frequency.setValueAtTime(freq, t0);
+			if (freqTo) f.frequency.exponentialRampToValueAtTime(freqTo, t0 + duration);
+			f.Q.value = q;
 			const g = ctx.createGain();
-			g.gain.setValueAtTime(gainAmt * volume, t0);
-			g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
-			src.connect(bp).connect(g).connect(ctx.destination);
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(gainAmt * volume, t0 + attack);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+			src.connect(f).connect(g).connect(out);
 			src.start(t0);
-			src.stop(t0 + 0.06);
-
-			const osc = ctx.createOscillator();
-			const og = ctx.createGain();
-			osc.type = 'triangle';
-			osc.frequency.setValueAtTime(body, t0);
-			osc.frequency.exponentialRampToValueAtTime(body * 0.55, t0 + 0.07);
-			og.gain.setValueAtTime(gainAmt * 0.9 * volume, t0);
-			og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
-			osc.connect(og).connect(ctx.destination);
-			osc.start(t0);
-			osc.stop(t0 + 0.09);
+			src.stop(t0 + duration + 0.02);
 		};
 
-		if (type === 'woodTick') {
-			const v = 0.85 + Math.random() * 0.3;
-			knock(1500 * v, 0.55, 320 * v);
+		// Wooden knock: band-passed noise "tock" over a falling body tone.
+		const knock = (pitch: number, gainAmt: number, body: number, startAt = 0) => {
+			noise('bandpass', pitch, 6, gainAmt, 0.05, startAt);
+			tone(body, gainAmt * 0.9, 0.08, 'triangle', startAt, body * 0.55);
+		};
+
+		// Metallic coin clink: inharmonic partials, very short.
+		const clink = (freq: number, gainAmt: number, startAt = 0) => {
+			tone(freq, gainAmt, 0.12, 'sine', startAt);
+			tone(freq * 2.76, gainAmt * 0.6, 0.08, 'sine', startAt);
+			tone(freq * 5.4, gainAmt * 0.35, 0.05, 'sine', startAt);
+			noise('highpass', 6000, 0.7, gainAmt * 0.4, 0.02, startAt);
+		};
+
+		// Ship's bell: long ringing inharmonic partials.
+		const bell = (freq: number, gainAmt: number, startAt = 0, length = 1.4) => {
+			const partials: Array<[number, number]> = [
+				[0.5, 0.35],
+				[1, 1],
+				[2, 0.5],
+				[2.4, 0.45],
+				[3, 0.3],
+				[4.2, 0.2],
+			];
+			for (const [r, a] of partials) tone(freq * r, gainAmt * a, length / Math.sqrt(r), 'sine', startAt);
+			noise('bandpass', freq * 4, 2, gainAmt * 0.3, 0.03, startAt);
+		};
+
+		// Brass horn note: sawtooth through a low-pass that opens up.
+		const horn = (freq: number, gainAmt: number, startAt: number, duration: number) => {
+			const t0 = now + startAt;
+			const lp = ctx.createBiquadFilter();
+			lp.type = 'lowpass';
+			lp.Q.value = 2;
+			lp.frequency.setValueAtTime(freq * 1.5, t0);
+			lp.frequency.exponentialRampToValueAtTime(freq * 5, t0 + 0.08);
+			lp.frequency.exponentialRampToValueAtTime(freq * 2, t0 + duration);
+			const g = ctx.createGain();
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(gainAmt * volume, t0 + 0.04);
+			g.gain.setValueAtTime(gainAmt * volume * 0.8, t0 + duration * 0.7);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+			lp.connect(g).connect(out);
+			for (const detune of [-6, 6]) {
+				const o = ctx.createOscillator();
+				o.type = 'sawtooth';
+				o.frequency.setValueAtTime(freq, t0);
+				o.detune.value = detune;
+				o.connect(lp);
+				o.start(t0);
+				o.stop(t0 + duration + 0.02);
+			}
+		};
+
+		const coinShower = (count: number, spread: number, gainAmt: number, startAt = 0) => {
+			for (let i = 0; i < count; i++) {
+				const t = startAt + (i / count) * spread + Math.random() * 0.03;
+				clink(2200 + Math.random() * 1800, gainAmt * (0.6 + Math.random() * 0.4), t);
+			}
+		};
+
+		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
+
+		if (type === 'click') {
+			knock(1900 * r, 0.35, 420 * r);
+		} else if (type === 'scratch') {
+			noise('bandpass', 2600 * r, 1.2, 0.18, 0.07, 0, 1400);
+		} else if (type === 'reveal') {
+			// Parchment flip + soft wood tap (replaces the old bubbly sweep).
+			noise('highpass', 1800, 0.8, 0.22, 0.09, 0, 5000);
+			knock(1200 * r, 0.3, 260 * r, 0.03);
+		} else if (type === 'woodTick') {
+			knock(1500 * r, 0.55, 320 * r);
 		} else if (type === 'woodThunk') {
-			// Heavy landing: two deep knocks, like a crate lid dropping shut.
 			knock(700, 0.8, 150);
 			knock(1100, 0.45, 210, 0.07);
-		} else if (type === 'click') {
-			tone(520, 0.08, 0.03);
-		} else if (type === 'scratch') {
-			tone(140 + Math.random() * 160, 0.05, 0.03, 'sawtooth');
-		} else if (type === 'reveal') {
-			tone(420, 0.1, 0.1, 'sine', 0, 820);
-		} else if (type === 'win') {
-			tone(420, 0.18, 0.12, 'triangle');
-			tone(630, 0.18, 0.12, 'triangle', 0.1);
-			tone(840, 0.18, 0.3, 'triangle', 0.25);
-		} else if (type === 'jackpot') {
-			// A brighter, more sparkly chime than a plain reveal — marks the
-			// instant a mode's top symbol lands, win or not.
-			tone(660, 0.14, 0.1, 'sine', 0);
-			tone(990, 0.14, 0.12, 'sine', 0.06);
-			tone(1320, 0.16, 0.2, 'sine', 0.12);
 		} else if (type === 'scatterLand') {
-			// A quick magic-sparkle "ding" for landing an individual 🎁 tile —
-			// separate from the 4-note fanfare that plays once 3 have landed.
-			tone(1200, 0.14, 0.05, 'sine', 0);
-			tone(1800, 0.14, 0.09, 'sine', 0.04);
+			bell(880 * r, 0.12);
+		} else if (type === 'jackpot') {
+			coinShower(14, 0.6, 0.14);
+			bell(1175, 0.08, 0.05, 1);
+		} else if (type === 'win') {
+			coinShower(8, 0.35, 0.12);
+			bell(784, 0.11, 0.1, 1.2);
 		} else if (type === 'bonus') {
-			// A 4-note ascending fanfare for the 🎁 scatter trigger — meant
-			// to stand well apart from the regular win jingle.
-			tone(523, 0.16, 0.12, 'square', 0);
-			tone(659, 0.16, 0.12, 'square', 0.1);
-			tone(784, 0.16, 0.12, 'square', 0.2);
-			tone(1047, 0.2, 0.35, 'square', 0.3);
+			bell(659, 0.11, 0, 1);
+			bell(659, 0.11, 0.28, 1);
+			bell(659, 0.12, 0.56, 1.2);
+			horn(196, 0.09, 0.8, 0.3);
+			horn(262, 0.09, 1.1, 0.3);
+			horn(392, 0.1, 1.4, 0.8);
+			coinShower(12, 0.8, 0.1, 1.4);
+		} else if (type === 'chestOpen') {
+			// Hinge creak (wobbling saw through a resonant band-pass)...
+			const t0 = now;
+			const o = ctx.createOscillator();
+			o.type = 'sawtooth';
+			o.frequency.setValueAtTime(70, t0);
+			o.frequency.linearRampToValueAtTime(110, t0 + 0.18);
+			o.frequency.linearRampToValueAtTime(60, t0 + 0.35);
+			const bp = ctx.createBiquadFilter();
+			bp.type = 'bandpass';
+			bp.frequency.value = 900;
+			bp.Q.value = 8;
+			const g = ctx.createGain();
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(0.35 * volume, t0 + 0.05);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.38);
+			o.connect(bp).connect(g).connect(out);
+			o.start(t0);
+			o.stop(t0 + 0.4);
+			// ...lid thunk, then the gold.
+			knock(600, 0.7, 130, 0.36);
+			coinShower(16, 0.7, 0.13, 0.42);
+		} else if (type === 'cannon') {
+			tone(90, 0.6, 0.6, 'sine', 0, 35);
+			noise('lowpass', 900, 0.7, 0.6, 0.9, 0, 120, 0.005);
+			noise('bandpass', 2500, 1, 0.15, 0.08);
+		} else if (type === 'splash') {
+			noise('lowpass', 600, 0.8, 0.35, 0.9, 0, 3500, 0.12);
+			noise('highpass', 3000, 0.7, 0.12, 0.6, 0.1, 8000, 0.05);
 		}
 	} catch (error) {
 		console.error('playSound failed:', error);

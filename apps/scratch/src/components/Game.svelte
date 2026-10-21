@@ -94,7 +94,10 @@
 	type KrakenStage = 'numbers' | 'revealed' | 'case' | 'landed';
 	let krakenStage: KrakenStage = $state('numbers');
 	$effect(() => {
-		if (activeFeatureOverlay?.kind === 'kraken') krakenStage = 'numbers';
+		if (activeFeatureOverlay?.kind === 'kraken') {
+			krakenStage = 'numbers';
+			playSound('splash');
+		}
 	});
 	const krakenRevealed = $derived(krakenStage !== 'numbers');
 
@@ -142,7 +145,7 @@
 				sharkOutcome = active.data;
 				sharkRollCounter += 1;
 				sharkRollId = sharkRollCounter;
-				playSound('scatterLand');
+				playSound('splash');
 			} else if (sharkOutcome !== null) {
 				sharkOutcome = null;
 			}
@@ -253,10 +256,11 @@
 		return null;
 	});
 
-	// Count the amount up when the pop-up opens.
+	// Count the amount up when the pop-up opens (cannon boom for Big+).
 	let shownWin = $state(0);
 	$effect(() => {
 		if (!showWinModal) return;
+		if (untrack(() => winTier !== null && awardedFreeScratches === 0)) playSound('cannon');
 		const target = untrack(() => totalWin);
 		const start = performance.now();
 		const dur = 1800;

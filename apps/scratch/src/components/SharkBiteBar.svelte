@@ -114,7 +114,7 @@
 				const x = (centerInTube - m.m41 / k) / PITCH;
 				const tile = Math.floor(x);
 				if (tile !== lastTile) {
-					if (lastTile >= 0) playSound('click');
+					if (lastTile >= 0) playSound('woodTick');
 					lastTile = tile;
 				}
 			}
@@ -127,7 +127,9 @@
 		if (e.propertyName !== 'transform' || landed || !outcome) return;
 		landed = true;
 		cancelAnimationFrame(raf);
-		playSound(outcome === 'pirate' ? 'scatterLand' : 'jackpot');
+		playSound('woodThunk');
+		const landed_ = outcome;
+		setTimeout(() => playSound(landed_ === 'pirate' ? 'scatterLand' : 'jackpot'), 120);
 		onLanded(outcome);
 	}
 

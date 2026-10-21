@@ -50,12 +50,12 @@
 		timers.push(
 			setTimeout(() => {
 				opened = opened.map((o, j) => o || j === i);
-				playSound('jackpot');
+				playSound('chestOpen');
 			}, 650),
 			setTimeout(() => {
 				stage = 'revealOthers';
 				opened = [true, true, true];
-				playSound('reveal');
+				playSound('woodThunk');
 			}, 2100),
 			setTimeout(() => (stage = 'done'), 2700),
 		);
