@@ -289,14 +289,16 @@
 		showPaytable = !showPaytable;
 	}
 
-	// Layout: the illustrated frame (grid window + its own control bar) sits
-	// centered vertically on screen; the logo header and difficulty tabs
-	// stack in the space above it. The frame art's coordinates below are in
-	// its source-image pixels (1536x1024); everything is placed
-	// proportionally from them, so any export size of the same art lines up.
-	// Logo + max-win ribbon.
-	const HEADER_H = 150;
-	const DIFF_H = 34;
+	// Layout: the Shark Bite bar sits directly on top of the illustrated
+	// frame, both the same width (pillar to pillar), as big as the screen
+	// allows. Coordinates below are in each art's source pixels; everything
+	// is placed proportionally from them.
+	//
+	// Two arrangements:
+	//   wide   (desktop / landscape): logo + mode tabs in a column on the
+	//          left, sound buttons top-right, bar + frame use the full height.
+	//   narrow (portrait phones): compact logo, ribbon and tabs stacked
+	//          above the bar.
 	const FRAME = {
 		w: 1536,
 		h: 1024,
@@ -311,37 +313,50 @@
 		// The transparent window the scratch grid shows through.
 		win: { x0: 264, y0: 205, x1: 1271, y1: 757 },
 	};
+	// Shark Bite bar art (1983x793 source; y0..y1 is the painted band).
+	const SHARK_BAR = { w: 1983, y0: 80, y1: 745, tube: { x0: 318, x1: 1668, y0: 450, y1: 650 } };
 
 	let vw = $state(typeof window === 'undefined' ? 390 : window.innerWidth);
 	let vh = $state(typeof window === 'undefined' ? 844 : window.innerHeight);
 
-	// Shark Bite bar art (1983x793 source; y0..y1 is the painted band),
-	// stacked under the difficulty tabs.
-	const SHARK_BAR = { w: 1983, y0: 80, y1: 745 };
-	const sharkBarW = $derived(Math.min(vw * 0.94, 520, Math.max(300, vh * 0.45)));
-	const sharkBarH = $derived((sharkBarW * (SHARK_BAR.y1 - SHARK_BAR.y0)) / SHARK_BAR.w);
-	const SHARK_TOP = HEADER_H + DIFF_H + 2;
-
-	// Everything above the frame (logo, ribbon, tabs, Shark Bite bar) plus a
-	// little air.
-	const TOP_AREA = $derived(SHARK_TOP + sharkBarH + 4);
+	const VIEW_W = FRAME.viewX1 - FRAME.viewX0;
 	const contentH = FRAME.contentY1 - FRAME.contentY0;
-	const widthScale = $derived(vw / (FRAME.viewX1 - FRAME.viewX0));
-	// Truly centered needs the same free band below as the header takes
-	// above. On short screens (landscape phones) that would shrink the frame
-	// too far, so there it falls back to simply filling the space under the
-	// tabs.
-	const centeredScale = $derived(Math.min(widthScale, (vh - 2 * TOP_AREA) / contentH, 0.8));
-	const fillScale = $derived(Math.min(widthScale, (vh - TOP_AREA - 8) / contentH, 0.8));
-	const centered = $derived(centeredScale >= fillScale * 0.6);
-	const frameScale = $derived(Math.max(0.12, centered ? centeredScale : fillScale));
-	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
-	const frameTop = $derived(
+	// Bar height per unit of frame scale, when the bar is VIEW_W wide.
+	const BAR_H_PER_S = (VIEW_W * (SHARK_BAR.y1 - SHARK_BAR.y0)) / SHARK_BAR.w;
+	const STACK_H_PER_S = BAR_H_PER_S + contentH;
+	const MAX_SCALE = 0.9;
+	// Narrow mode: logo + ribbon + tabs band above the bar.
+	const NARROW_HEADER_H = 140;
+	const SIDE_MIN = 190;
+
+	const wideScale = $derived(Math.min(vw / VIEW_W, (vh - 14) / STACK_H_PER_S, MAX_SCALE));
+	const wide = $derived((vw - VIEW_W * wideScale) / 2 >= SIDE_MIN);
+	const frameScale = $derived(
 		Math.max(
-			TOP_AREA - FRAME.contentY0 * frameScale,
-			vh / 2 - ((FRAME.contentY0 + FRAME.contentY1) / 2) * frameScale,
+			0.12,
+			wide ? wideScale : Math.min(vw / VIEW_W, (vh - NARROW_HEADER_H - 14) / STACK_H_PER_S, MAX_SCALE),
 		),
 	);
+	const sharkBarW = $derived(VIEW_W * frameScale);
+	const sharkBarH = $derived(BAR_H_PER_S * frameScale);
+	const stackH = $derived(STACK_H_PER_S * frameScale + 4);
+	// Wide: center the bar+frame stack vertically. Narrow: right under the
+	// header band.
+	const sharkTop = $derived(wide ? Math.max(6, (vh - stackH) / 2) : NARROW_HEADER_H);
+	// Side column width for the logo + tabs in wide mode.
+	const sideW = $derived(Math.min(280, (vw - sharkBarW) / 2 - 24));
+	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
+	const frameTop = $derived(sharkTop + sharkBarH + 4 - FRAME.contentY0 * frameScale);
+	// Shark bar's glass tube on screen (the Octopus banner sits there).
+	const sharkTube = $derived.by(() => {
+		const k = sharkBarW / SHARK_BAR.w;
+		return {
+			left: vw / 2 - sharkBarW / 2 + SHARK_BAR.tube.x0 * k,
+			width: (SHARK_BAR.tube.x1 - SHARK_BAR.tube.x0) * k,
+			top: sharkTop + (SHARK_BAR.tube.y0 - SHARK_BAR.y0) * k,
+			height: (SHARK_BAR.tube.y1 - SHARK_BAR.tube.y0) * k,
+		};
+	});
 	// The frame window in screen pixels, as insets from each viewport edge —
 	// the pixi grid and the in-card Kraken overlay both fill exactly this.
 	const gridRect = $derived({
@@ -624,15 +639,36 @@
 	></button>
 </div>
 
-<div class="ui-layer">
-	<!-- HEADER: logo pill + max-win banner, centered -->
-	<header class="header-bar">
+<div class="ui-layer" class:wide>
+	<!-- Logo + max-win ribbon + mode tabs: a column on the left in wide
+	     layouts, a compact band above the Shark Bite bar on phones. -->
+	<header
+		class="header-bar"
+		class:wide
+		style={wide ? `width:${sideW}px;top:${Math.max(10, sharkTop)}px;` : `height:${NARROW_HEADER_H}px;`}
+	>
 		<img class="logo" src={logoUrl} alt="Pirate Scratch" />
 		<div class="max-win-banner" class:free={freeScratchesRemaining > 0}>
 			{freeScratchesRemaining > 0
 				? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
 				: `Win up to ${maxWin}x bet`}
 		</div>
+		<div class="diff-row">
+			{#each Object.keys(config.betModes) as mode}
+				{@const m = config.betModes[mode as BetMode]}
+				<button
+					class="diff-btn"
+					class:active={betMode === mode}
+					disabled={locked}
+					onclick={() => selectMode(mode as BetMode)}
+				>
+					{mode} {m.rows}×{m.cols}
+				</button>
+			{/each}
+		</div>
+	</header>
+
+	<div class="sound-group">
 		<button
 			class="sound-toggle music-toggle"
 			class:off={!musicOn}
@@ -665,37 +701,20 @@
 				{/if}
 			</svg>
 		</button>
-	</header>
-
-	<!-- DIFFICULTY TABS (between logo and frame) -->
-	<div class="diff-bar">
-		<div class="diff-row">
-			{#each Object.keys(config.betModes) as mode}
-				{@const m = config.betModes[mode as BetMode]}
-				<button
-					class="diff-btn"
-					class:active={betMode === mode}
-					disabled={locked}
-					onclick={() => selectMode(mode as BetMode)}
-				>
-					{mode} {m.rows}×{m.cols}
-				</button>
-			{/each}
-		</div>
 	</div>
 
-	<!-- SHARK BITE bar (under the tabs, above the frame) -->
-	<div class="shark-bar-slot" style={`top:${SHARK_TOP}px;`}>
+	<!-- SHARK BITE bar: same width as the frame, sitting right on top of it -->
+	<div class="shark-bar-slot" style={`top:${sharkTop}px;`}>
 		<SharkBiteBar width={sharkBarW} rollId={sharkRollId} outcome={sharkOutcome} onLanded={handleSharkLanded} />
 	</div>
 </div>
 
 {#if octoActive}
-	<!-- Octopus bonus cards: banner over the frame window, the cards
-	     themselves are dealt into the normal grid underneath. -->
+	<!-- Octopus bonus cards: banner in the Shark Bite bar's tube, so the
+	     grid stays fully visible; the cards are dealt into the normal grid. -->
 	<div
 		class="octo-banner"
-		style={`top:${gridRect.top + 6}px;left:${gridRect.left}px;right:${gridRect.right}px;`}
+		style={`top:${sharkTube.top}px;left:${sharkTube.left}px;width:${sharkTube.width}px;height:${sharkTube.height}px;font-size:${Math.max(10, sharkTube.height * 0.2)}px;`}
 	>
 		<img class="octo-banner-icon" src={octopusIconUrl} alt="" />
 		<div class="octo-banner-text">
