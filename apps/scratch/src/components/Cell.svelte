@@ -57,7 +57,7 @@
 		raf = requestAnimationFrame(loop);
 		return () => cancelAnimationFrame(raf);
 	});
-	// Regular match (the 3 tiles that win): quicker, cool silver-blue
+	// Regular match (the 3 tiles that win): quicker, dark green
 	// "ting" chain -- ring + numbered seal (1, 2, 3), the 3rd also lifts the
 	// symbol's "x2". Extras (gold "+0.25x") follow after it.
 	let matchT = $state(-1);
@@ -263,16 +263,16 @@
 					g.clear();
 					if (mRing < 1) {
 						g.circle(0, -size * 0.06, size * (0.2 + 0.42 * easeOut(mRing)));
-						g.stroke({ color: 0x9be7ff, width: size * 0.05 * (1 - mRing), alpha: 1 - mRing });
+						g.stroke({ color: 0x86efac, width: size * 0.05 * (1 - mRing), alpha: 1 - mRing });
 					}
 					// numbered seal, top-left corner
 					const sx = -size * 0.33;
 					const sy = -size * 0.33;
 					const pop = Math.min(1, matchT / 0.2);
 					g.circle(sx, sy, size * 0.11 * (0.5 + 0.5 * easeOut(pop)));
-					g.fill({ color: 0x0c4a6e, alpha: 0.95 });
+					g.fill({ color: 0x14532d, alpha: 0.95 });
 					g.circle(sx, sy, size * 0.11 * (0.5 + 0.5 * easeOut(pop)));
-					g.stroke({ color: 0xbfefff, width: 2 });
+					g.stroke({ color: 0xd4af37, width: 2 });
 				}}
 			/>
 			<Text
@@ -281,7 +281,7 @@
 				y={-size * 0.33}
 				alpha={Math.min(1, matchT / 0.2)}
 				text={`${matchIndex}`}
-				style={{ fontFamily: 'Cinzel, Georgia, serif', fontWeight: '900', fontSize: size * 0.13, fill: 0xe0f7ff }}
+				style={{ fontFamily: 'Cinzel, Georgia, serif', fontWeight: '900', fontSize: size * 0.13, fill: 0xf0fdf4 }}
 			/>
 			{#if matchIndex === 3}
 				<Text
@@ -293,9 +293,9 @@
 					style={{
 						fontFamily: 'Pirata One, Cinzel, serif',
 						fontSize: size * 0.32,
-						fill: 0xf0fbff,
-						stroke: { color: 0x0c3a5a, width: 4 },
-						dropShadow: { color: 0x38bdf8, alpha: 0.9, blur: 6, distance: 0 },
+						fill: 0xecfdf5,
+						stroke: { color: 0x052e16, width: 4 },
+						dropShadow: { color: 0x22c55e, alpha: 0.9, blur: 6, distance: 0 },
 					}}
 				/>
 			{/if}

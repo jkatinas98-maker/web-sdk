@@ -2046,16 +2046,16 @@ button:disabled {
 	100% { transform: scale(1); }
 }
 
-/* Regular 3-match tally: cool silver-blue. Turns gold once extras kick in. */
+/* Regular 3-match tally: dark sea-green. Turns gold once extras kick in. */
 .win-tally-pill {
-	background: linear-gradient(180deg, rgba(12, 52, 80, 0.94), rgba(6, 22, 36, 0.94));
-	border-color: #9be7ff;
-	box-shadow: 0 0 16px rgba(56, 189, 248, 0.55), 0 4px 10px rgba(0, 0, 0, 0.6);
+	background: linear-gradient(180deg, rgba(20, 70, 38, 0.95), rgba(6, 30, 16, 0.95));
+	border-color: #c9a227;
+	box-shadow: 0 0 16px rgba(34, 197, 94, 0.45), 0 4px 10px rgba(0, 0, 0, 0.6);
 	transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .win-tally-pill .win-tally-value {
-	color: #f0fbff;
-	text-shadow: 0 2px 0 #0c3a5a, 0 0 10px rgba(56, 189, 248, 0.8);
+	color: #ecfdf5;
+	text-shadow: 0 2px 0 #052e16, 0 0 10px rgba(34, 197, 94, 0.8);
 }
 .win-tally-pill.extra {
 	background: linear-gradient(180deg, rgba(60, 36, 12, 0.94), rgba(24, 14, 4, 0.94));
