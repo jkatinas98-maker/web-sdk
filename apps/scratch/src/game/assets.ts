@@ -1,34 +1,59 @@
 import type { SymbolName } from './types';
 
 // Final illustrated symbol art (transparent, square-padded PNGs) — one file
-// per symbol id, under apps/scratch/assets/symbols/<id>.png. The same URL
-// feeds both the Pixi sprite (via stateApp's asset loader) and the DOM
-// paytable <img>, so there's exactly one source of truth per symbol.
-export const SYMBOL_IMAGE_URL: Record<SymbolName, string> = {
-	skull: new URL('../../assets/symbols/skull.png', import.meta.url).href,
-	bonus: new URL('../../assets/symbols/bonus.png', import.meta.url).href,
-	key: new URL('../../assets/symbols/key.png', import.meta.url).href,
-	mult1_5: new URL('../../assets/symbols/mult1_5.png', import.meta.url).href,
-	mult2: new URL('../../assets/symbols/mult2.png', import.meta.url).href,
-	mult4: new URL('../../assets/symbols/mult4.png', import.meta.url).href,
-	mult5: new URL('../../assets/symbols/mult5.png', import.meta.url).href,
-	mult6: new URL('../../assets/symbols/mult6.png', import.meta.url).href,
-	mult9: new URL('../../assets/symbols/mult9.png', import.meta.url).href,
-	mult16: new URL('../../assets/symbols/mult16.png', import.meta.url).href,
-	mult36: new URL('../../assets/symbols/mult36.png', import.meta.url).href,
-	mult41: new URL('../../assets/symbols/mult41.png', import.meta.url).href,
-	mult45: new URL('../../assets/symbols/mult45.png', import.meta.url).href,
-	mult110: new URL('../../assets/symbols/mult110.png', import.meta.url).href,
-	mult130: new URL('../../assets/symbols/mult130.png', import.meta.url).href,
-	mult1000: new URL('../../assets/symbols/mult1000.png', import.meta.url).href,
+// per symbol id, under apps/scratch/assets/symbols/<id>.png.
+//
+// Pulled in through Vite's import.meta.glob (eager, as URLs) rather than
+// `new URL(path, import.meta.url)`: the glob is a real module import, so
+// Vite resolves/serves it correctly in `dev` and fingerprints or inlines it
+// in `build` (assetsInlineLimit is Infinity in config-vite, so production
+// gets data: URIs — no extra requests, and no absolute paths that would
+// break when Stake Engine serves the game from a sub-path).
+const files = import.meta.glob('../../assets/symbols/*.png', {
+	eager: true,
+	query: '?url',
+	import: 'default',
+}) as Record<string, string>;
+
+const urlFor = (name: SymbolName): string => {
+	const url = files[`../../assets/symbols/${name}.png`];
+	if (!url) console.error(`Missing symbol art: assets/symbols/${name}.png`);
+	return url;
 };
+
+const SYMBOL_NAMES: SymbolName[] = [
+	'skull',
+	'bonus',
+	'key',
+	'mult1_5',
+	'mult2',
+	'mult4',
+	'mult5',
+	'mult6',
+	'mult9',
+	'mult16',
+	'mult36',
+	'mult41',
+	'mult45',
+	'mult110',
+	'mult130',
+	'mult1000',
+];
+
+// Same URL feeds both the Pixi sprite (via stateApp's asset loader) and the
+// DOM paytable <img>, so there's exactly one source of truth per symbol.
+export const SYMBOL_IMAGE_URL = Object.fromEntries(
+	SYMBOL_NAMES.map((name) => [name, urlFor(name)]),
+) as Record<SymbolName, string>;
 
 export const symbolAssetKey = (name: SymbolName) => `symbol_${name}`;
 
 // Preloaded so every sprite has its texture before the grid first renders
-// (no empty-texture flash, no "key not found" console noise).
+// (no empty-texture flash, no "key not found" console noise). Pixi detects
+// the format either from the .png extension (dev) or the data:image/png
+// mime prefix (inlined production build).
 export default Object.fromEntries(
-	(Object.keys(SYMBOL_IMAGE_URL) as SymbolName[]).map((name) => [
+	SYMBOL_NAMES.map((name) => [
 		symbolAssetKey(name),
 		{ type: 'sprite' as const, src: SYMBOL_IMAGE_URL[name], preload: true },
 	]),
