@@ -11,6 +11,7 @@
 	import { playSound, setVolume } from '../game/sound';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
+	import logoUrl from '../assets/logo.png';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -151,7 +152,8 @@
 	// board frame (ticket) fills whatever space is left between the header
 	// pill/banner at the top and the controls stack + footer bar at the
 	// bottom, same as the reference layout.
-	const HEADER_H = 64;
+	// Tall enough for the illustrated logo plaque plus the max-win ribbon.
+	const HEADER_H = 112;
 	const FOOTER_H = 52;
 	// Difficulty row + bet stepper (amount line + quick-button line) + play
 	// button, each an .option-card with its own padding/gap — taller than it
@@ -330,10 +332,7 @@
 <div class="ui-layer">
 	<!-- HEADER: logo pill + max-win banner, centered -->
 	<header class="header-bar">
-		<div class="logo-pill">
-			<img class="logo-icon" src={SYMBOL_IMAGE_URL.skull} alt="" />
-			<span class="logo-title">Pirate Scratch</span>
-		</div>
+		<img class="logo" src={logoUrl} alt="Pirate Scratch" />
 		<div class="max-win-banner" class:free={freeScratchesRemaining > 0}>
 			{freeScratchesRemaining > 0
 				? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
