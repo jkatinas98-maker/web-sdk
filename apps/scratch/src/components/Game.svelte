@@ -23,6 +23,7 @@
 	import octopusIconUrl from '../assets/symbols/octopus.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
 	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
+	import bonusBgUrl from '../assets/bonus_bg.webp';
 	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
 	import modeMediumUrl from '../assets/signs/mode_medium.webp';
@@ -668,6 +669,13 @@
 	<source src={bgWebmUrl} type="video/webm" />
 	<source src={bgMp4Url} type="video/mp4" />
 </video>
+<!-- Sunny beach cove while the free-scratch bonus runs (cross-fades). -->
+<div
+	class="bonus-bg"
+	class:on={bonusActive}
+	style={`background-image:url(${bonusBgUrl});`}
+	aria-hidden="true"
+></div>
 <div class="bg-dim" aria-hidden="true"></div>
 
 <div class="pixi-layer">
