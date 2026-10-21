@@ -21,6 +21,9 @@
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
+	import bigWinUrl from '../assets/winpop/big_win.webp';
+	import megaWinUrl from '../assets/winpop/mega_win.webp';
+	import epicWinUrl from '../assets/winpop/epic_win.webp';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -226,6 +229,41 @@
 			.sort((a, b) => b - a);
 		return betAmount > 0 && totalWin / betAmount >= mults[1];
 	}
+
+	// Big / Mega / Epic tier for the win pop-up, by multiple of the bet:
+	// Big from the mode's second-highest symbol, Epic at its top symbol
+	// (= the mode's max win), Mega in between (geometric midpoint).
+	type WinTier = 'big' | 'mega' | 'epic';
+	const WIN_TIER_ART: Record<WinTier, string> = { big: bigWinUrl, mega: megaWinUrl, epic: epicWinUrl };
+	const winTier = $derived.by((): WinTier | null => {
+		if (totalWin <= 0 || betAmount <= 0) return null;
+		const mults = (config.betModes[betMode].symbols as SymbolName[])
+			.map((name) => config.symbols[name].mult)
+			.sort((a, b) => b - a);
+		const x = totalWin / betAmount;
+		if (x >= mults[0]) return 'epic';
+		if (x >= Math.sqrt(mults[0] * mults[1])) return 'mega';
+		if (x >= mults[1]) return 'big';
+		return null;
+	});
+
+	// Count the amount up when the pop-up opens.
+	let shownWin = $state(0);
+	$effect(() => {
+		if (!showWinModal) return;
+		const target = untrack(() => totalWin);
+		const start = performance.now();
+		const dur = 1800;
+		let raf = 0;
+		const step = (now: number) => {
+			const t = Math.min(1, (now - start) / dur);
+			shownWin = target * (1 - Math.pow(1 - t, 3));
+			if (t < 1) raf = requestAnimationFrame(step);
+		};
+		shownWin = 0;
+		raf = requestAnimationFrame(step);
+		return () => cancelAnimationFrame(raf);
+	});
 
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
@@ -880,21 +918,35 @@
 {#if showWinModal}
 	<div
 		class="win-backdrop"
+		class:bigwin-backdrop={winTier !== null}
 		role="button"
 		tabindex="0"
 		onclick={() => (showWinModal = false)}
 		onkeydown={(e) => e.key === 'Enter' && (showWinModal = false)}
 	>
-		<div class="win-modal">
-			<div class="win-modal-title">{totalWin > 0 ? 'Treasure won!' : 'Bonus!'}</div>
-			{#if totalWin > 0}
-				<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
-				<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
-			{/if}
-			{#if awardedFreeScratches > 0}
-				<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
-			{/if}
-			<div class="win-modal-hint">Tap anywhere to continue</div>
-		</div>
+		{#if winTier}
+			<div class={`bigwin bigwin--${winTier}`}>
+				<div class="bigwin-rays"></div>
+				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
+				<div class="bigwin-amount">${shownWin.toFixed(2)}</div>
+				<div class="bigwin-mult">{(totalWin / betAmount).toFixed(1)}x bet</div>
+				{#if awardedFreeScratches > 0}
+					<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
+				{/if}
+				<div class="win-modal-hint">Tap anywhere to continue</div>
+			</div>
+		{:else}
+			<div class="win-modal">
+				<div class="win-modal-title">{totalWin > 0 ? 'Treasure won!' : 'Bonus!'}</div>
+				{#if totalWin > 0}
+					<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
+					<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
+				{/if}
+				{#if awardedFreeScratches > 0}
+					<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
+				{/if}
+				<div class="win-modal-hint">Tap anywhere to continue</div>
+			</div>
+		{/if}
 	</div>
 {/if}

@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 
 	import reelFrameUrl from '../assets/reel_frame.webp';
-	import { KRAKEN_PRIZE_TABLE, krakenPrizeRarity } from '../game/kraken';
+	import { KRAKEN_PRIZE_TABLE, krakenPrizeRarity, krakenPrizeSymbol } from '../game/kraken';
+	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import { playSound } from '../game/sound';
 	import type { BetMode } from '../game/types';
 
@@ -113,8 +114,9 @@
 			<div
 				class={`case-tile case-tile--${krakenPrizeRarity(betMode, m)}`}
 				class:won={landed && i === WIN_INDEX}
-				style={`width:${TILE_W * k}px; height:${TILE_H * k}px; font-size:${TILE_H * k * 0.34}px;`}
+				style={`width:${TILE_W * k}px; height:${TILE_H * k}px; font-size:${TILE_H * k * 0.22}px;`}
 			>
+				<img class="case-tile-icon" src={SYMBOL_IMAGE_URL[krakenPrizeSymbol(betMode, m)]} alt="" draggable="false" />
 				<span class="case-tile-mult">×{m}</span>
 			</div>
 		{/each}

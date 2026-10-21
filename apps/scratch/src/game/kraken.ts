@@ -1,4 +1,5 @@
-import type { BetMode } from './types';
+import config from './config';
+import type { BetMode, SymbolName } from './types';
 
 // Kraken feature tables -- mirror game_config.py (math-sdk) exactly.
 // Landing >= 1 `kraken` symbol on a card opens the number match (player's
@@ -61,4 +62,17 @@ export const krakenPrizeRarity = (betMode: BetMode, mult: number): Rarity => {
 	if (fromTop === 2) return 'pink';
 	if (fromTop === 3) return 'purple';
 	return 'blue';
+};
+
+// Symbol art shown on each case-reel tile: the prize's tier within the
+// table mapped onto the mode's own symbols, low to high (so the top prize
+// shows the mode's top symbol, the 2x shows its lowest).
+export const krakenPrizeSymbol = (betMode: BetMode, mult: number): SymbolName => {
+	const table = KRAKEN_PRIZE_TABLE[betMode];
+	const symbols = [...(config.betModes[betMode].symbols as SymbolName[])].sort(
+		(a, b) => config.symbols[a].mult - config.symbols[b].mult,
+	);
+	const i = Math.max(0, table.findIndex(([m]) => m === mult));
+	const j = table.length > 1 ? Math.round((i * (symbols.length - 1)) / (table.length - 1)) : 0;
+	return symbols[j];
 };
