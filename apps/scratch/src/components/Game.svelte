@@ -335,8 +335,27 @@
 	const displayBalance = $derived(isMockMode ? mockBalance : stateBet.balanceAmount);
 	const displayLastWin = $derived(isMockMode ? mockLastWin : stateBet.winBookEventAmount);
 
-	const MIN_BET = 0.5;
-	const BET_STEP = 0.5;
+	// Bet ladder: 0.25 steps to 2, 0.5 to 5, 1 to 15, 5 to 50, 10 to 200,
+	// 50 to 1000. The -/+ buttons move one rung.
+	const BET_LADDER: number[] = (() => {
+		const bands: Array<[upTo: number, step: number]> = [
+			[2, 0.25],
+			[5, 0.5],
+			[15, 1],
+			[50, 5],
+			[200, 10],
+			[1000, 50],
+		];
+		const out = [0.25];
+		for (const [upTo, step] of bands) {
+			let v = out[out.length - 1];
+			while (v + step <= upTo + 1e-9) {
+				v = Math.round((v + step) * 100) / 100;
+				out.push(v);
+			}
+		}
+		return out;
+	})();
 
 	// Cycle through 4 volume steps on each tap (mute / low / mid / full)
 	// instead of a plain on-off mute — "max" alone was still too quiet, so
@@ -357,11 +376,17 @@
 		if (VOLUME_LEVELS[volumeLevel] > 0) playSound('click');
 	}
 
-	function setBetAmount(value: number) {
-		const maxBet = Math.min(100, displayBalance || 100);
-		betAmount = Math.min(maxBet, Math.max(MIN_BET, Math.round(value * 100) / 100));
+	// Step one rung up/down the ladder; in demo mode never above the balance.
+	function stepBet(dir: 1 | -1) {
+		const i = BET_LADDER.findIndex((v) => v >= betAmount - 1e-9);
+		const cur = i === -1 ? BET_LADDER.length - 1 : i;
+		let next = Math.min(BET_LADDER.length - 1, Math.max(0, cur + dir));
+		const cap = isMockMode ? displayBalance : Infinity;
+		while (next > 0 && BET_LADDER[next] > cap) next -= 1;
+		betAmount = BET_LADDER[next];
 		playSound('click');
 	}
+
 
 	function selectMode(mode: BetMode) {
 		if (mode === betMode || freeScratchesRemaining > 0) return;
@@ -721,7 +746,7 @@
 		style={at(222, 880, 88, 88)}
 		disabled={locked}
 		aria-label="Decrease bet"
-		onclick={() => setBetAmount(betAmount - BET_STEP)}
+		onclick={() => stepBet(-1)}
 	></button>
 	<div class="frame-text frame-bet" style={at(356, 884, 172, 76)}>
 		<span class="frame-label">Bet</span>
@@ -732,7 +757,7 @@
 		style={at(490, 878, 88, 88)}
 		disabled={locked}
 		aria-label="Increase bet"
-		onclick={() => setBetAmount(betAmount + BET_STEP)}
+		onclick={() => stepBet(1)}
 	></button>
 
 	<div class="frame-text frame-plaque" style={at(768, 818, 290, 104)}>
