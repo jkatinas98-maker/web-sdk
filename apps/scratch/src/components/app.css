@@ -1508,6 +1508,8 @@ button:disabled {
 
 .chest-pick-chest:disabled {
 	cursor: default;
+	/* The global button:disabled fade must not touch the chests. */
+	opacity: 1;
 }
 
 .chest-pick-chest img {
@@ -1560,8 +1562,8 @@ button:disabled {
 
 .chest-pick-chest.missed {
 	animation: none;
-	filter: grayscale(0.55) brightness(0.6);
-	transform: scale(0.88);
+	filter: grayscale(0.25) brightness(0.85);
+	transform: scale(0.9);
 }
 
 .chest-pick-chest.shaking img {
@@ -1833,6 +1835,7 @@ button:disabled {
 
 .mode-sign:disabled {
 	cursor: not-allowed;
+	opacity: 1;
 }
 
 .mode-sign:disabled:not(.active) {
