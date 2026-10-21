@@ -4,18 +4,34 @@
 	box-sizing: border-box;
 }
 
+/* ---------- Pirate palette ----------
+   Weathered wood browns, aged brass/gold, parchment, deep teal sea,
+   torchlight amber, with parrot-green / blood-red accents. */
 :root {
-	--txt-1: #f1f5f9;
-	--txt-dim: #94a3b8;
-	--bg-1: #06080d;
-	--bg-2: rgba(19, 23, 34, 0.92);
-	--bg-3: #1e2535;
-	--border: rgba(139, 92, 246, 0.35);
-	--cyan: #06b6d4;
-	--purple: #8b5cf6;
-	--pink: #ec4899;
-	--green: #10b981;
-	--gold: #f59e0b;
+	--wood-900: #1a0f07;
+	--wood-800: #2a1a0e;
+	--wood-700: #3d2614;
+	--wood-600: #5c3a21;
+	--wood-500: #7a4f2d;
+	--brass: #c9a227;
+	--brass-light: #f2d78a;
+	--brass-dark: #8a6a1e;
+	--gold: #f2c744;
+	--parchment: #e8d9b5;
+	--parchment-dark: #cbb482;
+	--ink: #2a1a0b;
+	--sea-900: #04141a;
+	--sea-800: #082630;
+	--sea-700: #0e4a5c;
+	--amber: #e8a33d;
+	--parrot: #3f9142;
+	--blood: #b23030;
+
+	--txt-1: #f6ead0;
+	--txt-dim: #c4ab7f;
+
+	--font-display: 'Pirata One', 'Cinzel', Georgia, serif;
+	--font-ui: 'Cinzel', Georgia, serif;
 
 	/* Layout constants — kept in sync with HEADER_H / FOOTER_H / CONTROLS_H
 	   in Game.svelte, since the pixi canvas reserves the same space. */
@@ -30,14 +46,20 @@ body {
 	overflow: hidden;
 }
 
+/* Night sea under torchlight: warm glow from above, deep teal fading to
+   near-black, a faint wave shimmer band across the middle. */
 body {
-	font-family: 'Rajdhani', 'Poppins', sans-serif;
+	font-family: var(--font-ui);
 	color: var(--txt-1);
-	background-color: var(--bg-1);
+	background-color: var(--sea-900);
 	background-image:
-		linear-gradient(to right, rgba(139, 92, 246, 0.08) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
-	background-size: 22px 22px;
+		radial-gradient(ellipse 70% 40% at 50% 0%, rgba(232, 163, 61, 0.28), transparent 70%),
+		repeating-linear-gradient(
+			100deg,
+			rgba(255, 255, 255, 0.025) 0 2px,
+			transparent 2px 28px
+		),
+		linear-gradient(180deg, var(--sea-800) 0%, var(--sea-700) 40%, #0a3342 65%, var(--sea-900) 100%);
 }
 
 button {
@@ -50,15 +72,15 @@ button {
 	border-radius: 10px;
 	border: none;
 	cursor: pointer;
-	transition: transform 0.1s ease, filter 0.1s ease, border-color 0.15s ease;
+	transition: transform 0.1s ease, filter 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 button:active {
-	transform: scale(0.96);
+	transform: scale(0.96) translateY(1px);
 }
 
 button:disabled {
-	opacity: 0.4;
+	opacity: 0.45;
 	pointer-events: none;
 }
 
@@ -82,7 +104,21 @@ button:disabled {
 	margin: 0 auto;
 }
 
-/* ---------- Header: logo pill + max-win banner ---------- */
+/* Shared surfaces */
+.wood-panel,
+.option-card,
+.footer-bar,
+.paytable-modal {
+	background:
+		repeating-linear-gradient(
+			180deg,
+			rgba(0, 0, 0, 0.12) 0 1px,
+			transparent 1px 9px
+		),
+		linear-gradient(170deg, var(--wood-600), var(--wood-800));
+}
+
+/* ---------- Header: logo plaque + max-win ribbon ---------- */
 
 .header-bar {
 	position: fixed;
@@ -96,59 +132,84 @@ button:disabled {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 0.2rem;
+	gap: 0.15rem;
 	pointer-events: none;
 }
 
 .logo-pill {
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
-	background: var(--bg-2);
-	border: 1px solid var(--border);
-	padding: 0.2rem 0.9rem;
-	border-radius: 14px;
-	box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+	gap: 0.45rem;
+	padding: 0.1rem 1.1rem 0.15rem 0.7rem;
+	border-radius: 999px;
+	background: linear-gradient(180deg, var(--wood-600), var(--wood-800));
+	border: 2px solid var(--brass);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.15),
+		0 3px 8px rgba(0, 0, 0, 0.5);
 	pointer-events: auto;
 }
 
-.logo-emoji {
-	font-size: 0.95rem;
+.logo-icon {
+	width: 26px;
+	height: 26px;
+	object-fit: contain;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
 
 .logo-title {
-	font-weight: 900;
-	font-size: 0.85rem;
-	letter-spacing: 1.5px;
-	text-transform: uppercase;
-	background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
-	-webkit-background-clip: text;
-	background-clip: text;
-	color: transparent;
+	font-family: var(--font-display);
+	font-size: 1.35rem;
+	line-height: 1.1;
+	letter-spacing: 1px;
+	color: var(--gold);
+	text-shadow:
+		0 2px 0 #3a1f08,
+		0 0 10px rgba(242, 199, 68, 0.35);
 }
 
+/* Parchment ribbon with notched ends. */
 .max-win-banner {
-	font-size: 0.62rem;
-	font-weight: 800;
-	letter-spacing: 0.8px;
-	color: var(--gold);
-	text-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+	padding: 0.12rem 1.2rem;
+	font-size: 0.58rem;
+	font-weight: 700;
+	letter-spacing: 1.2px;
 	text-transform: uppercase;
+	color: var(--ink);
+	background: linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+	clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%);
+}
+
+/* Free-scratch state turns the ribbon into a red hoisted flag. */
+.max-win-banner.free {
+	color: #fbe9c9;
+	background: linear-gradient(135deg, var(--blood), #7a1f1f);
 }
 
 .sound-toggle {
 	position: absolute;
-	top: 0.4rem;
+	top: 0.55rem;
 	right: 0.6rem;
-	padding: 0.3rem;
-	font-size: 1rem;
-	line-height: 1;
-	background: none;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	color: var(--wood-900);
+	background: radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass-dark) 75%);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 	pointer-events: auto;
 }
 
 .sound-toggle:hover {
-	filter: brightness(1.3);
+	filter: brightness(1.12);
+}
+
+.sound-toggle svg {
+	width: 18px;
+	height: 18px;
 }
 
 /* ---------- Controls stack (above the footer bar) ---------- */
@@ -168,21 +229,24 @@ button:disabled {
 }
 
 .option-card {
-	background: var(--bg-2);
-	border: 1px solid var(--border);
+	border: 2px solid var(--wood-900);
 	border-radius: 10px;
 	padding: 0.4rem 0.6rem;
 	display: flex;
 	flex-direction: column;
 	gap: 0.3rem;
+	box-shadow:
+		inset 0 0 0 1px rgba(201, 162, 39, 0.35),
+		0 3px 8px rgba(0, 0, 0, 0.45);
 }
 
 .option-title {
-	font-size: 0.6rem;
-	font-weight: 800;
-	letter-spacing: 1px;
+	font-size: 0.58rem;
+	font-weight: 700;
+	letter-spacing: 1.4px;
 	text-transform: uppercase;
-	color: var(--txt-dim);
+	color: var(--brass-light);
+	opacity: 0.85;
 }
 
 /* ---------- Difficulty row ---------- */
@@ -194,21 +258,30 @@ button:disabled {
 
 .diff-btn {
 	flex: 1;
-	padding: 0.4rem 0;
-	font-size: 0.65rem;
-	font-weight: 800;
-	text-transform: capitalize;
+	padding: 0.42rem 0;
+	font-size: 0.66rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
 	text-align: center;
 	color: var(--txt-dim);
-	background: var(--bg-3);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: linear-gradient(180deg, var(--wood-700), var(--wood-900));
+	border: 1px solid var(--wood-900);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.diff-btn:hover:not(:disabled):not(.active) {
+	color: var(--brass-light);
+	border-color: var(--brass-dark);
 }
 
 .diff-btn.active {
-	color: #031018;
-	background: linear-gradient(135deg, var(--cyan), #3b82f6);
-	border-color: var(--cyan);
-	box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+	color: var(--wood-900);
+	background: linear-gradient(180deg, var(--brass-light), var(--brass) 60%, var(--brass-dark));
+	border-color: var(--brass-dark);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		0 0 10px rgba(242, 199, 68, 0.45);
 }
 
 /* ---------- Bet amount stepper ---------- */
@@ -220,6 +293,7 @@ button:disabled {
 	gap: 0.4rem;
 }
 
+/* Brass coin buttons. */
 .step-btn {
 	width: 2.1rem;
 	height: 2.1rem;
@@ -228,24 +302,27 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--bg-3);
-	border: 1px solid var(--border);
-	color: var(--cyan);
-	font-size: 1.1rem;
+	border-radius: 50%;
+	color: var(--wood-900);
+	background: radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass-dark) 75%);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+	font-size: 1.15rem;
 	font-weight: 900;
 }
 
+/* Parchment readout. */
 .bet-display {
 	flex: 1;
 	min-width: 4.5rem;
 	text-align: center;
 	font-size: 0.95rem;
-	font-weight: 800;
-	color: var(--green);
-	background: var(--bg-3);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 8px;
-	padding: 0.4rem 0.3rem;
+	font-weight: 700;
+	color: var(--ink);
+	background: linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+	border: 1px solid var(--wood-500);
+	border-radius: 6px;
+	padding: 0.38rem 0.3rem;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .quick-row {
@@ -256,45 +333,63 @@ button:disabled {
 
 .q-btn {
 	flex: 1;
-	padding: 0.35rem 0;
-	font-size: 0.65rem;
+	padding: 0.32rem 0;
+	font-size: 0.64rem;
 	font-weight: 700;
 	color: var(--txt-dim);
-	background: var(--bg-3);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: linear-gradient(180deg, var(--wood-700), var(--wood-900));
+	border: 1px solid var(--wood-900);
+	border-radius: 7px;
 }
 
 .q-btn:hover:not(:disabled) {
-	border-color: var(--cyan);
-	color: var(--cyan);
+	border-color: var(--brass);
+	color: var(--brass-light);
 }
 
 /* ---------- Main action button (Play / Reveal all) ---------- */
 
 .main-btn {
 	width: 100%;
-	padding: 0.85rem 1.2rem;
-	font-size: 0.95rem;
-	letter-spacing: 0.3px;
-	text-transform: uppercase;
-	color: #031018;
-	background: linear-gradient(135deg, var(--green), var(--cyan));
-	box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+	padding: 0.7rem 1.2rem;
+	font-family: var(--font-display);
+	font-size: 1.3rem;
+	font-weight: 400;
+	letter-spacing: 1.5px;
+	color: #3a2410;
+	background: linear-gradient(180deg, #f6e2a0 0%, #e0b94a 45%, #b9860f 100%);
+	border: 2px solid #5c3a14;
+	border-radius: 12px;
+	box-shadow:
+		inset 0 2px 0 rgba(255, 255, 255, 0.6),
+		inset 0 -4px 6px rgba(90, 60, 10, 0.4),
+		0 5px 10px rgba(0, 0, 0, 0.55);
+	text-shadow: 0 1px 0 rgba(255, 240, 200, 0.6);
 }
 
 .main-btn:hover:not(:disabled) {
-	filter: brightness(1.15);
-	box-shadow: 0 0 28px rgba(16, 185, 129, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+	filter: brightness(1.08);
+	box-shadow:
+		inset 0 2px 0 rgba(255, 255, 255, 0.7),
+		inset 0 -4px 6px rgba(90, 60, 10, 0.4),
+		0 5px 10px rgba(0, 0, 0, 0.55),
+		0 0 18px rgba(242, 199, 68, 0.55);
 }
 
+/* Mid-round: weathered teal-and-brass so it reads as a different action. */
 .main-btn.reveal-mode {
-	background: linear-gradient(135deg, var(--cyan), #3b82f6);
-	box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+	color: #e9f6f4;
+	background: linear-gradient(180deg, #2a8a95 0%, #156a76 50%, #0b4651 100%);
+	border-color: var(--brass-dark);
+	text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
 }
 
+/* Free scratch: blood-red flag cloth. */
 .main-btn.bonus-mode {
-	background: linear-gradient(135deg, var(--gold), #f97316);
-	box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+	color: #fbe9c9;
+	background: linear-gradient(180deg, #d24a3a 0%, var(--blood) 50%, #6e1a1a 100%);
+	border-color: #3a0d0d;
+	text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* ---------- Footer stat bar ---------- */
@@ -310,9 +405,8 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	justify-content: space-around;
-	background: rgba(6, 8, 13, 0.85);
-	backdrop-filter: blur(8px);
-	border-top: 1px solid var(--border);
+	border-top: 2px solid var(--brass);
+	box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.45);
 	pointer-events: auto;
 	padding: 0 1rem;
 }
@@ -321,28 +415,29 @@ button:disabled {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.1rem;
+	gap: 0.05rem;
 }
 
 .footer-stat-label {
-	font-size: 0.6rem;
+	font-size: 0.55rem;
 	font-weight: 700;
-	letter-spacing: 1px;
+	letter-spacing: 1.2px;
 	text-transform: uppercase;
-	color: var(--txt-dim);
+	color: var(--brass);
 }
 
 .footer-stat-value {
-	font-weight: 800;
-	font-size: 0.85rem;
+	font-weight: 700;
+	font-size: 0.9rem;
+	text-shadow: 0 1px 0 #000;
 }
 
 .footer-stat-value.balance {
-	color: var(--cyan);
+	color: var(--txt-1);
 }
 
 .footer-stat-value.win {
-	color: var(--green);
+	color: #9fe39a;
 }
 
 .icon-actions {
@@ -361,19 +456,19 @@ button:disabled {
 }
 
 .paytable-btn {
-	font-size: 0.6rem;
-	font-weight: 800;
+	font-size: 0.58rem;
+	font-weight: 700;
 	letter-spacing: 1px;
-	padding: 0.35rem 0.6rem;
-	border: 1px solid var(--border);
+	padding: 0.38rem 0.65rem;
 	border-radius: 7px;
-	color: var(--cyan);
-	background: rgba(6, 182, 212, 0.08);
+	color: var(--wood-900);
+	background: linear-gradient(180deg, var(--brass-light), var(--brass) 60%, var(--brass-dark));
+	border: 1px solid var(--brass-dark);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .paytable-btn:hover {
-	border-color: var(--cyan);
-	background: rgba(6, 182, 212, 0.15);
+	filter: brightness(1.1);
 }
 
 /* ---------- Paytable modal ---------- */
@@ -385,7 +480,7 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(2, 3, 8, 0.78);
+	background: rgba(2, 8, 10, 0.8);
 	animation: win-fade-in 0.15s ease-out;
 	padding: 1.5rem;
 }
@@ -397,11 +492,12 @@ button:disabled {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
-	background: var(--bg-2);
-	border: 1px solid var(--border);
+	border: 3px solid var(--wood-900);
 	border-radius: 16px;
 	padding: 1rem;
-	box-shadow: 0 0 40px rgba(139, 92, 246, 0.35);
+	box-shadow:
+		inset 0 0 0 2px var(--brass),
+		0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .paytable-modal-header {
@@ -411,19 +507,22 @@ button:disabled {
 }
 
 .paytable-modal-title {
-	font-size: 0.85rem;
-	font-weight: 800;
+	font-family: var(--font-display);
+	font-size: 1.4rem;
 	letter-spacing: 1px;
-	text-transform: uppercase;
-	color: var(--cyan);
+	color: var(--gold);
+	text-shadow: 0 2px 0 #3a1f08;
 }
 
 .close-btn {
-	background: none;
-	border: none;
-	color: var(--txt-dim);
-	font-size: 1.1rem;
-	padding: 0.2rem;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border-radius: 50%;
+	color: var(--wood-900);
+	background: radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass-dark) 75%);
+	font-size: 0.85rem;
+	font-weight: 900;
 	cursor: pointer;
 }
 
@@ -438,40 +537,42 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	gap: 0.6rem;
-	background: rgba(10, 10, 20, 0.5);
-	border: 1px solid var(--bg-3);
+	background: rgba(15, 9, 4, 0.55);
+	border: 1px solid rgba(201, 162, 39, 0.25);
 	border-radius: 8px;
-	padding: 0.5rem 0.7rem;
+	padding: 0.4rem 0.7rem;
 }
 
 .pay-item-icon {
-	width: 32px;
-	height: 32px;
+	width: 36px;
+	height: 36px;
 	object-fit: contain;
 	flex: 0 0 auto;
+	filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6));
 }
 
 .pay-item-name {
 	flex: 1;
-	font-size: 0.78rem;
+	font-size: 0.74rem;
 	font-weight: 600;
-	color: var(--txt-dim);
-	text-transform: capitalize;
+	color: var(--txt-1);
 }
 
 .pay-item-mult {
-	font-size: 0.85rem;
-	font-weight: 800;
-	color: var(--cyan);
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--gold);
 }
 
 .pay-item.bonus-item {
-	border-color: rgba(236, 72, 153, 0.5);
-	background: rgba(236, 72, 153, 0.08);
+	border-color: rgba(178, 48, 48, 0.8);
+	background: rgba(120, 25, 25, 0.35);
 }
 
 .pay-item.bonus-item .pay-item-mult {
-	color: var(--pink);
+	color: #ff9a8a;
+	font-size: 0.7rem;
+	text-align: right;
 }
 
 /* ---------- Win celebration overlay ---------- */
@@ -483,65 +584,68 @@ button:disabled {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(2, 3, 8, 0.78);
+	background: rgba(2, 8, 10, 0.8);
 	animation: win-fade-in 0.15s ease-out;
 }
 
+/* Carved gold plaque. */
 .win-modal {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.2rem;
-	padding: 1.1rem 1.5rem;
+	gap: 0.15rem;
+	padding: 1.1rem 1.8rem;
 	border-radius: 16px;
-	background: linear-gradient(160deg, var(--cyan), var(--purple) 55%, var(--pink));
-	box-shadow: 0 0 36px 6px rgba(139, 92, 246, 0.6);
+	background: linear-gradient(180deg, #f6e2a0 0%, #e0b94a 45%, #a8780c 100%);
+	border: 3px solid #5c3a14;
+	box-shadow: 0 0 36px 6px rgba(242, 199, 68, 0.55);
 	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), win-glow 1.4s ease-in-out infinite 0.35s;
-	max-width: 240px;
+	max-width: 260px;
 }
 
 .win-modal-title {
-	font-size: 0.75rem;
-	text-transform: uppercase;
-	letter-spacing: 1.5px;
-	font-weight: 800;
-	color: rgba(3, 7, 18, 0.75);
+	font-family: var(--font-display);
+	font-size: 1.2rem;
+	letter-spacing: 1px;
+	color: #4a2a08;
 }
 
 .win-modal-amount {
-	font-size: 1.6rem;
-	font-weight: 900;
-	color: white;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	font-family: var(--font-display);
+	font-size: 2.3rem;
+	line-height: 1.05;
+	color: #fffbe8;
+	text-shadow:
+		0 2px 0 #6a3f08,
+		0 3px 8px rgba(0, 0, 0, 0.45);
 }
 
 .win-modal-mult {
 	font-size: 0.85rem;
 	font-weight: 700;
-	color: rgba(3, 7, 18, 0.75);
+	color: #4a2a08;
 }
 
 .win-modal-bonus {
-	margin-top: 0.2rem;
-	font-size: 0.85rem;
-	font-weight: 800;
-	color: #fff7e0;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	margin-top: 0.3rem;
+	padding: 0.2rem 0.8rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: #fbe9c9;
+	background: linear-gradient(135deg, var(--blood), #7a1f1f);
+	border-radius: 6px;
 }
 
 .win-modal-hint {
 	margin-top: 0.4rem;
-	font-size: 0.6rem;
+	font-size: 0.55rem;
 	text-transform: uppercase;
 	letter-spacing: 1px;
-	color: rgba(3, 7, 18, 0.65);
+	color: rgba(74, 42, 8, 0.75);
 }
 
-/* PLACEHOLDER feature overlays (Treasure Chest / Kraken) -- reuses the
-   win-backdrop/win-modal shape above with its own gradient per kind. Swap
-   for the real full-screen feature animations once the artist's assets
-   land (see the artist brief) -- this is just enough to make the features
-   visible/testable end to end. */
+/* Feature overlays (Treasure Chest / Kraken) — placeholder shapes until the
+   artist's full-screen feature animations land, styled to the same world. */
 .feature-modal {
 	display: flex;
 	flex-direction: column;
@@ -550,72 +654,78 @@ button:disabled {
 	padding: 1.2rem 1.6rem;
 	border-radius: 16px;
 	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-	max-width: 280px;
+	max-width: 300px;
 }
 
 .feature-modal--kraken {
-	background: linear-gradient(160deg, #0c4a6e, #155e75 55%, #0e7490);
-	box-shadow: 0 0 36px 6px rgba(14, 116, 144, 0.6);
+	background: linear-gradient(160deg, #0b3a46, #0e4a5c 55%, #0a2a33);
+	border: 2px solid rgba(111, 209, 224, 0.45);
+	box-shadow: 0 0 36px 6px rgba(14, 116, 144, 0.55);
 }
 
 .feature-modal--chest {
-	background: linear-gradient(160deg, #78350f, #92400e 55%, #b45309);
-	box-shadow: 0 0 36px 6px rgba(180, 83, 9, 0.6);
+	background: linear-gradient(170deg, var(--wood-600), var(--wood-800));
+	border: 3px solid var(--wood-900);
+	box-shadow:
+		inset 0 0 0 2px var(--brass),
+		0 0 36px 6px rgba(242, 199, 68, 0.45);
 }
 
 .feature-modal-title {
-	font-size: 0.8rem;
-	text-transform: uppercase;
-	letter-spacing: 1.5px;
-	font-weight: 800;
-	color: white;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+	font-family: var(--font-display);
+	font-size: 1.35rem;
+	letter-spacing: 1px;
+	color: var(--gold);
+	text-shadow: 0 2px 0 #1a0f07;
+}
+
+.feature-modal .win-modal-hint {
+	color: rgba(246, 234, 208, 0.65);
 }
 
 .kraken-numbers {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: 0.7rem;
 }
 
+/* Barnacle-crusted wooden plaques. */
 .kraken-number {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 2.4rem;
-	height: 2.4rem;
+	width: 3rem;
+	height: 3rem;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.12);
-	border: 2px solid rgba(255, 255, 255, 0.4);
-	font-size: 1.1rem;
+	background: radial-gradient(circle at 35% 30%, var(--wood-500), var(--wood-800) 75%);
+	border: 3px solid var(--wood-900);
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 3px 8px rgba(0, 0, 0, 0.5);
+	font-size: 1.3rem;
 	font-weight: 900;
-	color: white;
+	color: var(--txt-1);
 }
 
 .kraken-vs {
-	font-size: 0.7rem;
-	font-weight: 700;
-	color: rgba(255, 255, 255, 0.6);
-	text-transform: uppercase;
+	font-family: var(--font-display);
+	font-size: 1rem;
+	color: #6fd1e0;
 }
 
 .kraken-result {
-	font-size: 0.9rem;
-	font-weight: 800;
-	color: white;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	font-family: var(--font-display);
+	font-size: 1.25rem;
+	color: var(--gold);
+	text-shadow: 0 2px 0 #1a0f07;
 }
 
 .kraken-result-miss {
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(191, 227, 232, 0.6);
 }
 
 /* In-card Kraken overlay -- sits over the ticket itself (positioned via
    inline top/bottom, matching <Ticket>'s own topReserved/bottomReserved)
    instead of a full-screen dimmed backdrop, so the header/footer/controls
-   stay visible behind it. Same dark-teal Kraken palette as .feature-modal--
-   kraken above, just shaped as a strip across the card instead of a
-   centered pop-up. */
+   stay visible behind it. */
 .kraken-card-overlay {
 	position: fixed;
 	left: 0;
@@ -629,28 +739,35 @@ button:disabled {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 0.5rem;
+	gap: 0.6rem;
 	padding: 1rem;
-	background: linear-gradient(160deg, rgba(12, 74, 110, 0.92), rgba(14, 116, 144, 0.92));
-	border: 2px solid rgba(94, 211, 255, 0.4);
+	background:
+		radial-gradient(ellipse at 50% 30%, rgba(14, 116, 144, 0.55), transparent 70%),
+		linear-gradient(180deg, rgba(6, 24, 31, 0.95), rgba(3, 16, 22, 0.97));
+	border: 2px solid rgba(111, 209, 224, 0.45);
 	border-radius: 16px;
 	box-shadow: 0 0 36px 6px rgba(14, 116, 144, 0.5);
 	animation: win-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.kraken-card-overlay .feature-modal-title {
+	color: #9fe8f0;
+	text-shadow: 0 2px 10px rgba(14, 116, 144, 0.8), 0 2px 0 #06181f;
+}
+
 /* The Kraken's own number, before the player taps to reveal it -- dashed,
    dim, and showing "?" instead of the real value. */
 .kraken-number--hidden {
-	background: rgba(255, 255, 255, 0.06);
-	border-style: dashed;
-	color: rgba(255, 255, 255, 0.5);
+	background: rgba(10, 42, 38, 0.8);
+	border: 3px dashed rgba(111, 209, 224, 0.5);
+	color: rgba(191, 227, 232, 0.6);
 }
 
 .kraken-card-hint {
-	font-size: 0.6rem;
+	font-size: 0.58rem;
 	text-transform: uppercase;
 	letter-spacing: 1px;
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(191, 227, 232, 0.75);
 }
 
 .chest-row {
@@ -661,28 +778,32 @@ button:disabled {
 }
 
 .chest-pill {
-	padding: 0.4rem 0.7rem;
-	border-radius: 999px;
+	padding: 0.4rem 0.75rem;
+	border-radius: 8px;
 	font-size: 0.8rem;
-	font-weight: 800;
-	color: #1e1b4b;
-	background: rgba(255, 255, 255, 0.85);
+	font-weight: 700;
+	color: var(--ink);
+	background: linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+	border: 1px solid var(--wood-900);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .chest-pill--cash {
-	background: #fde68a;
+	background: linear-gradient(180deg, #f6e2a0, var(--gold));
 }
 
 .chest-pill--multiplier {
-	background: #a7f3d0;
+	color: #fff;
+	background: linear-gradient(180deg, #5fb366, var(--parrot));
 }
 
 .chest-pill--retrigger {
-	background: #bfdbfe;
+	color: #fff;
+	background: linear-gradient(180deg, #2a8a95, #0b4651);
 }
 
 .chest-pill--key {
-	background: #fbbf24;
+	background: linear-gradient(180deg, var(--brass-light), var(--brass));
 }
 
 @keyframes win-fade-in {
@@ -708,9 +829,9 @@ button:disabled {
 @keyframes win-glow {
 	0%,
 	100% {
-		box-shadow: 0 0 60px 10px rgba(139, 92, 246, 0.6);
+		box-shadow: 0 0 40px 8px rgba(242, 199, 68, 0.5);
 	}
 	50% {
-		box-shadow: 0 0 90px 22px rgba(236, 72, 153, 0.75);
+		box-shadow: 0 0 80px 20px rgba(232, 163, 61, 0.75);
 	}
 }

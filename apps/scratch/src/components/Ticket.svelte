@@ -61,7 +61,7 @@
 	const availableWidth = $derived(canvas.width - left - right);
 	const cardWidth = $derived(Math.min(availableWidth - 24, 400));
 	const cardX = $derived(left + (availableWidth - cardWidth) / 2);
-	const pad = 10;
+	const pad = 12;
 
 	const gridWidth = $derived(cardWidth - pad * 2);
 	const gap = 8;
@@ -82,12 +82,32 @@
 
 	const cardHeight = $derived(pad * 2 + gridActualHeight);
 
-	// Dark glass board frame with a glowing purple border — matches the
-	// reference's .board-frame treatment instead of a bright gradient fill.
+	// Carved wooden frame: dark plank fill, near-black outer edge, an inset
+	// brass trim line, a lighter plank edge inside that, and brass rivets in
+	// each corner.
 	const drawCardBackground = (graphics: PIXI.Graphics, width: number, height: number) => {
-		graphics.roundRect(0, 0, width, height, 18);
-		graphics.fill({ color: 0x0a0d14, alpha: 0.88 });
-		graphics.stroke({ color: 0x8b5cf6, width: 2, alpha: 0.8 });
+		graphics.roundRect(-6, -6, width + 12, height + 12, 22);
+		graphics.fill({ color: 0x2a1a0e, alpha: 0.97 });
+		graphics.stroke({ color: 0x1a0f07, width: 4 });
+
+		graphics.roundRect(-2, -2, width + 4, height + 4, 19);
+		graphics.stroke({ color: 0xc9a227, width: 2, alpha: 0.85 });
+
+		graphics.roundRect(3, 3, width - 6, height - 6, 15);
+		graphics.fill({ color: 0x1a110a, alpha: 0.85 });
+		graphics.stroke({ color: 0x7a4f2d, width: 1.5, alpha: 0.9 });
+
+		const rivet = (cx: number, cy: number) => {
+			graphics.circle(cx, cy, 5);
+			graphics.fill({ color: 0xc9a227 });
+			graphics.stroke({ color: 0x5c4310, width: 1.5 });
+			graphics.circle(cx - 1.4, cy - 1.4, 1.8);
+			graphics.fill({ color: 0xf6e2a0, alpha: 0.9 });
+		};
+		rivet(4, 4);
+		rivet(width - 4, 4);
+		rivet(4, height - 4);
+		rivet(width - 4, height - 4);
 	};
 
 	const panels = $derived(context.stateGame.panels);
@@ -115,7 +135,7 @@
 		anchor={0.5}
 		x={cardWidth / 2}
 		y={cardHeight * 0.25}
-		backgroundColor={0x8b5cf6}
+		backgroundColor={0xe8a33d}
 		backgroundAlpha={0.1}
 	/>
 	<Circle
@@ -123,8 +143,8 @@
 		anchor={0.5}
 		x={cardWidth / 2}
 		y={cardHeight * 0.25}
-		backgroundColor={0x06b6d4}
-		backgroundAlpha={0.08}
+		backgroundColor={0x0e7490}
+		backgroundAlpha={0.12}
 	/>
 
 	<Graphics draw={(graphics) => drawCardBackground(graphics, cardWidth, cardHeight)} />

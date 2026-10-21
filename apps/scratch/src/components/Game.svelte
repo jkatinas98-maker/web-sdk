@@ -111,7 +111,6 @@
 	// instead of a plain on-off mute — "max" alone was still too quiet, so
 	// this also doubles as the way to actually turn it up.
 	const VOLUME_LEVELS = [0, 0.4, 0.7, 1];
-	const VOLUME_ICONS = ['🔇', '🔈', '🔉', '🔊'];
 	let volumeLevel = $state(VOLUME_LEVELS.length - 1);
 	function cycleVolume() {
 		volumeLevel = (volumeLevel + 1) % VOLUME_LEVELS.length;
@@ -332,16 +331,30 @@
 	<!-- HEADER: logo pill + max-win banner, centered -->
 	<header class="header-bar">
 		<div class="logo-pill">
-			<span class="logo-emoji">😜</span>
-			<span class="logo-title">Emoji Scratch</span>
+			<img class="logo-icon" src={SYMBOL_IMAGE_URL.skull} alt="" />
+			<span class="logo-title">Pirate Scratch</span>
 		</div>
-		<div class="max-win-banner">
+		<div class="max-win-banner" class:free={freeScratchesRemaining > 0}>
 			{freeScratchesRemaining > 0
-				? `🎁 ${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
+				? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
 				: `Win up to ${maxWin}x bet`}
 		</div>
 		<button class="sound-toggle" onclick={cycleVolume} aria-label="Change volume">
-			{VOLUME_ICONS[volumeLevel]}
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+				{#if volumeLevel === 0}
+					<path d="M17 9l5 6M22 9l-5 6" />
+				{/if}
+				{#if volumeLevel >= 1}
+					<path d="M16 10a3 3 0 0 1 0 4" />
+				{/if}
+				{#if volumeLevel >= 2}
+					<path d="M18.5 7.5a6.5 6.5 0 0 1 0 9" />
+				{/if}
+				{#if volumeLevel >= 3}
+					<path d="M21 5a10 10 0 0 1 0 14" />
+				{/if}
+			</svg>
 		</button>
 	</header>
 
@@ -358,7 +371,7 @@
 						disabled={locked}
 						onclick={() => selectMode(mode as BetMode)}
 					>
-						{mode} ({m.rows}x{m.cols})
+						{mode} {m.rows}×{m.cols}
 					</button>
 				{/each}
 			</div>
@@ -517,13 +530,13 @@
 		onkeydown={(e) => e.key === 'Enter' && (showWinModal = false)}
 	>
 		<div class="win-modal">
-			<div class="win-modal-title">{totalWin > 0 ? 'You won!' : 'Bonus!'}</div>
+			<div class="win-modal-title">{totalWin > 0 ? 'Treasure won!' : 'Bonus!'}</div>
 			{#if totalWin > 0}
 				<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
 				<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
 			{/if}
 			{#if awardedFreeScratches > 0}
-				<div class="win-modal-bonus">🎁 +{awardedFreeScratches} Free Scratches!</div>
+				<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
 			{/if}
 			<div class="win-modal-hint">Tap anywhere to continue</div>
 		</div>

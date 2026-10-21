@@ -50,34 +50,56 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	// Color priority: a confirmed win (green) beats the jackpot-symbol glow
-	// (gold) beats the bonus-scatter glow (pink) beats a plain revealed tile
-	// (cyan) beats the unrevealed default (purple). The special glow blinks
-	// on top of whatever color won out — stacks with the winning-tile
-	// breathing pulse rather than replacing it, so a jackpot/bonus symbol
-	// that's ALSO part of the win still reads as a win first, just a
-	// sparklier one.
-	const specialColor = $derived(jackpot ? 0xfbbf24 : isKey ? 0xca8a04 : 0xec4899);
-	const borderColor = $derived(winning ? 0x10b981 : special ? specialColor : revealed ? 0x06b6d4 : 0x8b5cf6);
-	const baseBorderAlpha = $derived(winning ? 0.9 : special ? 0.95 : revealed ? 0.55 : 0.3);
-	const borderWidth = $derived(winning ? 2.5 : special ? 2.5 : revealed ? 1.5 : 1);
-	const fillColor = $derived(winning ? 0x10b981 : special ? specialColor : 0x0f172a);
-	const baseFillAlpha = $derived(winning ? 0.22 : special ? 0.18 : 0.9);
-	const radius = $derived(size * 0.18);
+	// Color priority: a confirmed win (gold) beats the jackpot-symbol glow
+	// (bright gold) beats the key (brass) beats the bonus scatter (blood red)
+	// beats a plain revealed tile (dim brass edge) beats the unrevealed
+	// parchment foil. The special glow blinks on top of whatever color won
+	// out — stacks with the winning-tile breathing pulse rather than
+	// replacing it, so a jackpot/bonus symbol that's ALSO part of the win
+	// still reads as a win first, just a sparklier one.
+	const specialColor = $derived(jackpot ? 0xffd75e : isKey ? 0xe0b13a : 0xd23a2a);
+	const borderColor = $derived(winning ? 0xf2c744 : special ? specialColor : revealed ? 0x8a6a3e : 0x5c3a21);
+	const baseBorderAlpha = $derived(winning ? 1 : special ? 0.95 : revealed ? 0.8 : 1);
+	const borderWidth = $derived(winning ? 3 : special ? 2.5 : revealed ? 1.5 : 2);
+	const fillColor = $derived(winning ? 0xf2c744 : special ? specialColor : 0x120c07);
+	const baseFillAlpha = $derived(winning ? 0.24 : special ? 0.18 : 0.92);
+	const radius = $derived(size * 0.14);
 
 	const borderAlpha = $derived(special ? baseBorderAlpha * blinkAlpha : baseBorderAlpha);
 	const fillAlpha = $derived(special ? baseFillAlpha * blinkAlpha : baseFillAlpha);
 
+	// Revealed slot: dark recessed wood with a soft warm center so the art
+	// pops, then the state-colored edge on top.
 	const drawTile = (graphics: PIXI.Graphics) => {
 		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
 		graphics.fill({ color: fillColor, alpha: fillAlpha });
+		graphics.circle(0, -size * 0.06, size * 0.36);
+		graphics.fill({ color: 0xe8a33d, alpha: winning ? 0.16 : 0.07 });
+		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
 		graphics.stroke({ color: borderColor, width: borderWidth, alpha: borderAlpha });
 	};
 
+	// Unscratched: weathered parchment with a darker inset border and a
+	// faint compass-rose mark, like a sealed map square.
 	const drawFoil = (graphics: PIXI.Graphics) => {
-		graphics.roundRect(-size / 2, -size / 2, size, size, radius);
-		graphics.fill({ color: 0x1e293b, alpha: 1 });
-		graphics.stroke({ color: 0x8b5cf6, width: 1, alpha: 0.3 });
+		const h = size / 2;
+		graphics.roundRect(-h, -h, size, size, radius);
+		graphics.fill({ color: 0xd8c39a });
+		graphics.roundRect(-h, -h, size, size * 0.5, radius);
+		graphics.fill({ color: 0xf2e4c0, alpha: 0.35 });
+		graphics.roundRect(-h + 5, -h + 5, size - 10, size - 10, radius * 0.7);
+		graphics.stroke({ color: 0xa8875a, width: 1.2, alpha: 0.7 });
+
+		const r = size * 0.2;
+		graphics.circle(0, -size * 0.06, r);
+		graphics.stroke({ color: 0x9a7a4c, width: 1.2, alpha: 0.6 });
+		graphics.poly([0, -size * 0.06 - r * 1.25, r * 0.22, -size * 0.06, 0, -size * 0.06 + r * 1.25, -r * 0.22, -size * 0.06]);
+		graphics.fill({ color: 0x8a6a3e, alpha: 0.55 });
+		graphics.poly([-r * 1.25, -size * 0.06, 0, -size * 0.06 - r * 0.22, r * 1.25, -size * 0.06, 0, -size * 0.06 + r * 0.22]);
+		graphics.fill({ color: 0x8a6a3e, alpha: 0.4 });
+
+		graphics.roundRect(-h, -h, size, size, radius);
+		graphics.stroke({ color: 0x5c3a21, width: 2 });
 	};
 
 	// Invisible but hit-testable — keeps the tap target the full tile even
@@ -153,10 +175,11 @@
 				anchor={0.5}
 				text={mult > 0 ? `×${mult}` : isBonus ? 'BONUS' : isKey ? 'KEY' : '—'}
 				style={{
-					fontFamily: 'Outfit, sans-serif',
-					fontWeight: '800',
-					fontSize: isBonus || isKey ? size * 0.1 : size * 0.14,
-					fill: mult > 0 ? 0x06b6d4 : isBonus ? 0xec4899 : isKey ? 0xca8a04 : 0x64748b,
+					fontFamily: 'Cinzel, Georgia, serif',
+					fontWeight: '700',
+					fontSize: isBonus || isKey ? size * 0.1 : size * 0.13,
+					fill: mult > 0 ? 0xf2c744 : isBonus ? 0xff8a7a : isKey ? 0xf2c744 : 0x8a7a66,
+					dropShadow: { color: 0x000000, alpha: 0.8, blur: 2, distance: 1 },
 				}}
 			/>
 		</Container>
@@ -169,13 +192,14 @@
 			<Graphics draw={drawHitArea} />
 			<Text
 				anchor={0.5}
+				y={size * 0.34}
 				text="SCRATCH"
 				style={{
-					fontFamily: 'Outfit, sans-serif',
+					fontFamily: 'Cinzel, Georgia, serif',
 					fontWeight: '700',
-					fontSize: size * 0.1,
+					fontSize: size * 0.085,
 					letterSpacing: 1,
-					fill: 0x475569,
+					fill: 0x6b4524,
 				}}
 			/>
 		</Container>

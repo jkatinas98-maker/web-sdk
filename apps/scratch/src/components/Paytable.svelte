@@ -27,7 +27,7 @@
 <Container {x} {y}>
 	{#each entries as [name, sym], i (name)}
 		<Container x={(i - (entries.length - 1) / 2) * itemWidth}>
-			<Circle diameter={34} anchor={0.5} backgroundColor={0x1e1b4b} backgroundAlpha={0.55} />
+			<Circle diameter={34} anchor={0.5} backgroundColor={0x2a1a0e} backgroundAlpha={0.8} />
 			<Container y={-4}>
 				<SymbolIcon {name} size={28} />
 			</Container>
@@ -36,10 +36,10 @@
 				anchor={0.5}
 				text={`×${sym.mult}`}
 				style={{
-					fontFamily: 'Outfit, sans-serif',
+					fontFamily: 'Cinzel, Georgia, serif',
 					fontWeight: '700',
 					fontSize: 9,
-					fill: 0xcbd5f5,
+					fill: 0xf2c744,
 				}}
 			/>
 		</Container>
