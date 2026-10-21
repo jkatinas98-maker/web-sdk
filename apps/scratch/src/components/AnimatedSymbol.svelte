@@ -1,16 +1,24 @@
 <script lang="ts">
-	import type * as PIXI from 'pixi.js';
-	import { Container, Graphics } from 'pixi-svelte';
+	import * as PIXI from 'pixi.js';
+	import { onMount, onDestroy } from 'svelte';
+	import { getContextParent } from 'pixi-svelte';
 
-	import SymbolIcon from './SymbolIcon.svelte';
+	import { getContext } from '../game/context';
+	import { symbolAssetKey } from '../game/assets';
 	import type { SymbolName } from '../game/types';
 
 	// Code-driven symbol animation around the sharp static icon:
 	//  - reveal (once, ~0.6s): elastic pop with a wobble, white-gold flash,
 	//    expanding shockwave ring, spinning light rays and a spark burst.
 	//  - idle (loop): gentle float + breathing, with a periodic star glint.
-	//  - win (loop): rotating gold sunburst and pulsing glow behind, the
-	//    symbol bouncing, embers/coins rising, plus a fresh burst on entry.
+	//  - win (loop): layered fire ringing the symbol, glow, sunburst, splash
+	//    rings, twinkles, rising embers/coins, and a bouncing symbol.
+	//
+	// Runs IMPERATIVELY on Pixi's own ticker: the Pixi objects are created
+	// here and mutated every frame directly. Driving 60fps transforms and
+	// redraws through Svelte reactive props per cell was unreliable (frames
+	// only flushed on re-layout, and transforms went wrong), and is far
+	// heavier than this.
 	type Props = {
 		name: SymbolName;
 		// Edge length the symbol art occupies.
@@ -18,7 +26,9 @@
 		winning: boolean;
 	};
 
-	const { name, size, winning }: Props = $props();
+	const props: Props = $props();
+	const context = getContext();
+	const parent = getContextParent();
 
 	const REVEAL_S = 0.6;
 	const TAU = Math.PI * 2;
@@ -60,57 +70,27 @@
 		color: TWINKLE_COLORS[i % TWINKLE_COLORS.length],
 	}));
 
-	// Seconds since this symbol appeared (tw below: since it started winning).
-	let t = $state(0);
-
-	$effect(() => {
-		const start = performance.now();
-		let raf: number;
-		const loop = (now: number) => {
-			t = (now - start) / 1000;
-			raf = requestAnimationFrame(loop);
-		};
-		raf = requestAnimationFrame(loop);
-		return () => cancelAnimationFrame(raf);
-	});
-
+	// Animation state, advanced in update() below (plain variables: never
+	// reactive, only read by the per-frame draw code).
+	let size = props.size;
+	let winning = props.winning;
+	let t = 0;
+	let tw = -1;
+	let revealP = 0;
+	let revealing = true;
+	let isWin = false;
+	let winSplash = 0;
 	let winStart = -1;
+
 	$effect(() => {
-		if (winning) {
-			if (winStart < 0) winStart = t;
-		} else {
-			winStart = -1;
-		}
+		size = props.size;
+		winning = props.winning;
 	});
-	const tw = $derived(winning && winStart >= 0 ? t - winStart : -1);
 
 	const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 	// Overshooting elastic ease-out: 0 -> ~1.2 -> ~0.93 -> 1.
 	const elastic = (p: number) =>
 		p >= 1 ? 1 : 1 - Math.pow(2, -9 * p) * Math.cos(p * Math.PI * 3.2);
-
-	const revealP = $derived(clamp01(t / REVEAL_S));
-	const revealing = $derived(revealP < 1);
-	const isWin = $derived(tw >= 0);
-	// 1 at the moment a win lands, easing to 0 over half a second: drives
-	// the initial flame splash and symbol punch.
-	const winSplash = $derived(isWin ? Math.max(0, 1 - tw / 0.5) : 0);
-
-	const symbolScale = $derived.by(() => {
-		if (revealing) return Math.max(0.01, elastic(revealP));
-		if (isWin) return winSplash * 0.25 + 1.08 + 0.12 * Math.abs(Math.sin(tw * 5));
-		return 1 + 0.025 * Math.sin(t * 2.3 + seed);
-	});
-	const symbolRotation = $derived.by(() => {
-		if (revealing) return 0.22 * (1 - revealP) * Math.sin(revealP * 16);
-		if (isWin) return 0.035 * Math.sin(tw * 9);
-		return 0.025 * Math.sin(t * 1.4 + seed);
-	});
-	const symbolY = $derived.by(() => {
-		if (revealing) return 0;
-		if (isWin) return -Math.abs(Math.sin(tw * 5)) * size * 0.08;
-		return Math.sin(t * 2 + seed) * size * 0.025;
-	});
 
 	const rays = (g: PIXI.Graphics, count: number, inner: number, outer: number, rot: number, color: number, alpha: number) => {
 		for (let i = 0; i < count; i++) {
@@ -284,25 +264,80 @@
 		}
 	};
 
-	// A throw inside a draw would silently stop that layer for good, so
-	// report it once and keep animating.
+	// ---------- Pixi objects ----------
+	const root = new PIXI.Container();
+	const back = new PIXI.Graphics();
+	const iconHolder = new PIXI.Container();
+	const icon = new PIXI.Sprite(
+		(context.stateApp.loadedAssets?.[symbolAssetKey(props.name)] as PIXI.Texture) ?? PIXI.Texture.EMPTY,
+	);
+	icon.anchor.set(0.5);
+	const front = new PIXI.Graphics();
+	iconHolder.addChild(icon);
+	root.addChild(back, iconHolder, front);
+	parent.addToParent(root);
+
 	let reported = false;
-	const guard = (draw: (g: PIXI.Graphics) => void) => (g: PIXI.Graphics) => {
+
+	const update = (ticker: PIXI.Ticker) => {
 		try {
-			draw(g);
+			t += ticker.deltaMS / 1000;
+			if (winning) {
+				if (winStart < 0) winStart = t;
+			} else {
+				winStart = -1;
+			}
+			tw = winStart >= 0 ? t - winStart : -1;
+			revealP = clamp01(t / REVEAL_S);
+			revealing = revealP < 1;
+			isWin = tw >= 0;
+			winSplash = isWin ? Math.max(0, 1 - tw / 0.5) : 0;
+
+			let scale: number;
+			let rotation: number;
+			let y: number;
+			if (revealing) {
+				scale = Math.max(0.01, elastic(revealP));
+				rotation = 0.22 * (1 - revealP) * Math.sin(revealP * 16);
+				y = 0;
+			} else if (isWin) {
+				scale = winSplash * 0.25 + 1.08 + 0.12 * Math.abs(Math.sin(tw * 5));
+				rotation = 0.035 * Math.sin(tw * 9);
+				y = -Math.abs(Math.sin(tw * 5)) * size * 0.08;
+			} else {
+				scale = 1 + 0.025 * Math.sin(t * 2.3 + seed);
+				rotation = 0.025 * Math.sin(t * 1.4 + seed);
+				y = Math.sin(t * 2 + seed) * size * 0.025;
+			}
+
+			// Icon PNGs are square-padded, so one uniform factor fits the art
+			// into `size` without distortion.
+			const texW = icon.texture.orig.width || 1;
+			icon.scale.set(size / texW);
+			iconHolder.scale.set(scale);
+			iconHolder.rotation = rotation;
+			iconHolder.y = y;
+
+			back.clear();
+			drawBack(back);
+			front.clear();
+			drawFront(front);
 		} catch (error) {
 			if (!reported) {
 				reported = true;
-				console.error('AnimatedSymbol draw failed:', error);
+				console.error('AnimatedSymbol update failed:', error);
 			}
 		}
 	};
-	const safeBack = guard(drawBack);
-	const safeFront = guard(drawFront);
-</script>
 
-<Graphics draw={safeBack} />
-<Container y={symbolY} scale={symbolScale} rotation={symbolRotation}>
-	<SymbolIcon {name} {size} />
-</Container>
-<Graphics draw={safeFront} />
+	onMount(() => {
+		context.stateApp.pixiApplication?.ticker.add(update);
+	});
+
+	onDestroy(() => {
+		context.stateApp.pixiApplication?.ticker.remove(update);
+		// root itself is destroyed by addToParent's cleanup; take its
+		// children (graphics/sprite holders) down too.
+		for (const child of [back, iconHolder, front]) child.destroy({ children: true });
+	});
+</script>
