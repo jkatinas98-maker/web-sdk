@@ -14,4 +14,5 @@ export type EmitterEventGame =
 	| { type: 'chestSequence'; data: BookEventOfType<'chestSequence'> }
 	| { type: 'krakenResult'; data: BookEventOfType<'krakenResult'> }
 	| { type: 'sharkBite'; data: BookEventOfType<'sharkBite'> }
-	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> };
+	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> }
+	| { type: 'chestPick'; data: BookEventOfType<'chestPick'> };

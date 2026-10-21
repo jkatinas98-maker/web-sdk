@@ -88,6 +88,29 @@ const CHEST_PRIZE_TABLE: Array<{ id: string; kind: ChestOutcomeKind; value: numb
 ];
 const MAX_CHEST_OPENS_PER_ROUND = 60;
 
+// Key feature (key symbol or Shark Bite -> Key): pick 1 of 3 chests.
+// PLACEHOLDER prize tables (multiplier of the bet, weight) -- real math later.
+const CHEST_PICK_TABLE: Record<BetMode, Array<[mult: number, weight: number]>> = {
+	easy: [[1, 40], [2, 28], [3, 16], [5, 9], [10, 5], [20, 2]],
+	medium: [[1, 38], [2, 27], [4, 16], [8, 10], [15, 5], [30, 3], [50, 1]],
+	hard: [[2, 38], [4, 26], [8, 16], [15, 10], [30, 6], [75, 3], [150, 1]],
+};
+const rollChestPick = (betMode: BetMode): number => {
+	const table = CHEST_PICK_TABLE[betMode];
+	const total = table.reduce((s, [, w]) => s + w, 0);
+	let r = Math.random() * total;
+	for (const [m, w] of table) {
+		r -= w;
+		if (r <= 0) return m;
+	}
+	return table[0][0];
+};
+// "Missed" chests lean toward bigger prizes so the reveal teases.
+const rollMissed = (betMode: BetMode): number => {
+	const table = CHEST_PICK_TABLE[betMode];
+	return table[Math.floor(Math.random() * table.length)][0];
+};
+
 
 // The real math-sdk simulator bundles a whole round (base card + every
 // free-scratch card it awards) into ONE book, so the Treasure Meter's
@@ -282,7 +305,7 @@ export const createMockBet = (
 	}
 
 	// Landing >= 1 shark rolls the Shark Bite bar once.
-	let sharkChestTriggers = 0;
+	let keyPicks = keyCount > 0 ? 1 : 0;
 	if (sharkCount > 0) {
 		const outcome = rollSharkOutcome();
 		events.push({ index: idx, type: 'sharkBite', outcome });
@@ -301,7 +324,7 @@ export const createMockBet = (
 			events.push({ index: idx, type: 'octopusCards', cards });
 			idx += 1;
 		} else if (outcome === 'key') {
-			sharkChestTriggers = 1;
+			keyPicks += 1;
 		} else if (outcome === 'bonus') {
 			freeScratches += FREE_SCRATCHES_AWARDED;
 		}
@@ -315,7 +338,15 @@ export const createMockBet = (
 	}
 	meterPointsAcc += meterPoints;
 
-	let chestTriggers = keyCount + sharkChestTriggers;
+	for (let p = 0; p < keyPicks; p++) {
+		const win = rollChestPick(betMode);
+		amount += win;
+		events.push({ index: idx, type: 'chestPick', win, missed: [rollMissed(betMode), rollMissed(betMode)] });
+		idx += 1;
+	}
+
+	// Treasure Meter pops still use the old chest sequence.
+	let chestTriggers = 0;
 	const threshold = TREASURE_METER_THRESHOLD[betMode];
 	while (meterPointsAcc >= threshold) {
 		meterPointsAcc -= threshold;

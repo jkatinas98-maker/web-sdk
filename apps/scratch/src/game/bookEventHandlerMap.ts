@@ -58,6 +58,17 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 		const cards = bookEvent.cards.map((card) => ({ ...card, win: card.win * stateBet.betAmount }));
 		await eventEmitter.broadcastAsync({ type: 'octopusCards', data: { ...bookEvent, cards } });
 	},
+	chestPick: async (bookEvent: BookEventOfType<'chestPick'>) => {
+		const bet = stateBet.betAmount;
+		await eventEmitter.broadcastAsync({
+			type: 'chestPick',
+			data: {
+				...bookEvent,
+				win: bookEvent.win * bet,
+				missed: [bookEvent.missed[0] * bet, bookEvent.missed[1] * bet],
+			},
+		});
+	},
 	krakenResult: async (bookEvent: BookEventOfType<'krakenResult'>) => {
 		const dollarAmount = bookEvent.amount * stateBet.betAmount;
 		await eventEmitter.broadcastAsync({

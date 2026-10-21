@@ -26,6 +26,7 @@
 	import Ticket from './Ticket.svelte';
 	import CaseReel from './CaseReel.svelte';
 	import SharkBiteBar from './SharkBiteBar.svelte';
+	import ChestPick from './ChestPick.svelte';
 
 	const context = getContext();
 
@@ -69,6 +70,7 @@
 		| { kind: 'chest'; data: ChestOutcome[] }
 		| { kind: 'shark'; data: SharkOutcome }
 		| { kind: 'octopus'; data: OctopusCard[] }
+		| { kind: 'chestPick'; data: BookEventOfType<'chestPick'> }
 	> = [];
 	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
@@ -530,6 +532,9 @@
 		sharkBite: ({ data }: { data: BookEventOfType<'sharkBite'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'shark', data: data.outcome }];
 		},
+		chestPick: ({ data }: { data: BookEventOfType<'chestPick'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'chestPick', data }];
+		},
 		octopusCards: ({ data }: { data: BookEventOfType<'octopusCards'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'octopus', data: data.cards }];
 		},
@@ -832,6 +837,13 @@
 			</div>
 		{/if}
 	</div>
+{/if}
+
+{#if activeFeatureOverlay?.kind === 'chestPick'}
+	{@const cp = activeFeatureOverlay.data}
+	{#key cp}
+		<ChestPick win={cp.win} missed={cp.missed} {betAmount} onDone={advanceFeatureOverlay} />
+	{/key}
 {/if}
 
 {#if activeFeatureOverlay?.kind === 'chest'}

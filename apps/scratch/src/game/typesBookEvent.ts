@@ -84,6 +84,16 @@ type BookEventOctopusCards = {
 	cards: OctopusCard[];
 };
 
+// Key feature: pick 1 of 3 chests. The book decides the prize (`win`);
+// whichever chest the player taps gets it, and the other two open to show
+// `missed`. Per-$1 multipliers like everything else.
+type BookEventChestPick = {
+	index: number;
+	type: 'chestPick';
+	win: number;
+	missed: [number, number];
+};
+
 export type BookEvent =
 	| BookEventRevealPanels
 	| BookEventSetTotalWin
@@ -91,7 +101,8 @@ export type BookEvent =
 	| BookEventChestSequence
 	| BookEventKrakenResult
 	| BookEventSharkBite
-	| BookEventOctopusCards;
+	| BookEventOctopusCards
+	| BookEventChestPick;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;
