@@ -3,6 +3,7 @@
 	import { Container, Graphics, Text } from 'pixi-svelte';
 
 	import AnimatedSymbol from './AnimatedSymbol.svelte';
+	import { MATCH_GAP_MS, EXTRA_START_MS, EXTRA_GAP_MS } from '../game/winTiming';
 	import config from '../game/config';
 	import { playSound } from '../game/sound';
 	import type { RawSymbol } from '../game/types';
@@ -23,10 +24,14 @@
 		// (0 otherwise); extraStep is the bonus it adds (+0.25x etc).
 		extraIndex?: number;
 		extraStep?: number;
+		// 1..3 for the three tiles that make the match; matchMult is the
+		// symbol's multiplier (shown off the 3rd).
+		matchIndex?: number;
+		matchMult?: number;
 		onReveal: () => void;
 	};
 
-	const { x, y, size, panel, revealed, winning, jackpot, interactive, extraIndex = 0, extraStep = 0, onReveal }: Props = $props();
+	const { x, y, size, panel, revealed, winning, jackpot, interactive, extraIndex = 0, extraStep = 0, matchIndex = 0, matchMult = 0, onReveal }: Props = $props();
 
 	// Extra-match animation: each extra tile, in turn, bursts a gold ring
 	// and fires a "+0.25x" that floats up and away, then keeps a small
@@ -37,7 +42,7 @@
 			extraT = -1;
 			return;
 		}
-		const start = performance.now() + 600 + (extraIndex - 1) * 550;
+		const start = performance.now() + EXTRA_START_MS + (extraIndex - 1) * EXTRA_GAP_MS;
 		let sounded = false;
 		let raf = 0;
 		const loop = (now: number) => {
@@ -52,6 +57,31 @@
 		raf = requestAnimationFrame(loop);
 		return () => cancelAnimationFrame(raf);
 	});
+	// Regular match (the 3 tiles that win): quicker, cool silver-blue
+	// "ting" chain -- ring + numbered seal (1, 2, 3), the 3rd also lifts the
+	// symbol's "x2". Extras (gold "+0.25x") follow after it.
+	let matchT = $state(-1);
+	$effect(() => {
+		if (!(winning && matchIndex > 0)) {
+			matchT = -1;
+			return;
+		}
+		const start = performance.now() + 150 + (matchIndex - 1) * MATCH_GAP_MS;
+		let sounded = false;
+		let raf = 0;
+		const loop = (now: number) => {
+			const t = (now - start) / 1100;
+			if (t >= 0 && !sounded) {
+				sounded = true;
+				playSound('match', 1 + (matchIndex - 1) * 0.26);
+			}
+			matchT = t < 0 ? -1 : Math.min(1, t);
+			if (t < 1) raf = requestAnimationFrame(loop);
+		};
+		raf = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(raf);
+	});
+
 	const extraLabel = $derived(`+${+extraStep.toFixed(2)}x`);
 	const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -226,6 +256,50 @@
 				}}
 			/>
 		</Container>
+		{#if matchT >= 0}
+			{@const mRing = Math.min(1, matchT / 0.4)}
+			<Graphics
+				draw={(g) => {
+					g.clear();
+					if (mRing < 1) {
+						g.circle(0, -size * 0.06, size * (0.2 + 0.42 * easeOut(mRing)));
+						g.stroke({ color: 0x9be7ff, width: size * 0.05 * (1 - mRing), alpha: 1 - mRing });
+					}
+					// numbered seal, top-left corner
+					const sx = -size * 0.33;
+					const sy = -size * 0.33;
+					const pop = Math.min(1, matchT / 0.2);
+					g.circle(sx, sy, size * 0.11 * (0.5 + 0.5 * easeOut(pop)));
+					g.fill({ color: 0x0c4a6e, alpha: 0.95 });
+					g.circle(sx, sy, size * 0.11 * (0.5 + 0.5 * easeOut(pop)));
+					g.stroke({ color: 0xbfefff, width: 2 });
+				}}
+			/>
+			<Text
+				anchor={0.5}
+				x={-size * 0.33}
+				y={-size * 0.33}
+				alpha={Math.min(1, matchT / 0.2)}
+				text={`${matchIndex}`}
+				style={{ fontFamily: 'Cinzel, Georgia, serif', fontWeight: '900', fontSize: size * 0.13, fill: 0xe0f7ff }}
+			/>
+			{#if matchIndex === 3}
+				<Text
+					anchor={0.5}
+					y={-size * 0.05 - size * 0.6 * easeOut(matchT)}
+					alpha={matchT < 0.6 ? 1 : 1 - (matchT - 0.6) / 0.4}
+					scale={0.6 + 0.7 * easeOut(Math.min(1, matchT / 0.25)) - 0.15 * matchT}
+					text={`x${matchMult}`}
+					style={{
+						fontFamily: 'Pirata One, Cinzel, serif',
+						fontSize: size * 0.32,
+						fill: 0xf0fbff,
+						stroke: { color: 0x0c3a5a, width: 4 },
+						dropShadow: { color: 0x38bdf8, alpha: 0.9, blur: 6, distance: 0 },
+					}}
+				/>
+			{/if}
+		{/if}
 		{#if extraT >= 0}
 			{@const ringT = Math.min(1, extraT / 0.45)}
 			<Graphics

@@ -14,6 +14,7 @@ type SoundType =
 	| 'chestOpen' // treasure chest: creak, lid thunk, coins
 	| 'cannon' // big win: cannon boom
 	| 'splash' // Kraken / Shark: sea splash
+	| 'match' // a winning tile ticks in (pitch rises 1st -> 3rd)
 	| 'pirateArr' // voice: pirate "Arrr!" (recorded sample only)
 	| 'pirateCheer' // voice: crew cheering (recorded sample only)
 	| 'parrot'; // parrot squawk (recorded sample only)
@@ -160,7 +161,7 @@ const getNoise = (ctx: AudioContext) => {
 	return noiseBuffer;
 };
 
-export const playSound = (type: SoundType) => {
+export const playSound = (type: SoundType, pitch = 1) => {
 	if (volume <= 0) return;
 
 	try {
@@ -290,7 +291,12 @@ export const playSound = (type: SoundType) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'click') {
+		if (type === 'match') {
+			// Bright silver "ting" + a soft wood tap under it.
+			tone(1046 * pitch, 0.12, 0.25, 'sine');
+			tone(2093 * pitch, 0.05, 0.15, 'sine', 0.005);
+			knock(1800, 0.15, 400 * pitch);
+		} else if (type === 'click') {
 			knock(1900 * r, 0.35, 420 * r);
 		} else if (type === 'scratch') {
 			noise('bandpass', 2600 * r, 1.2, 0.18, 0.07, 0, 1400);

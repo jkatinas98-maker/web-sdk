@@ -143,6 +143,18 @@
 		});
 		return m;
 	});
+	// The three tiles that make the match (1, 2, 3 in reading order).
+	const matchOrder = $derived.by(() => {
+		const m = new Map<number, number>();
+		if (!winningSymbol) return m;
+		let n = 0;
+		panels.forEach((p, i) => {
+			if (p?.name !== winningSymbol || n >= 3) return;
+			n += 1;
+			m.set(i, n);
+		});
+		return m;
+	});
 
 	const cellPositions = $derived(
 		Array.from({ length: cols * rows }, (_, index) => {
@@ -199,6 +211,8 @@
 			jackpot={revealed.has(cell.index) && panels[cell.index]?.name === jackpotSymbol}
 			interactive={interactive && !revealed.has(cell.index)}
 			extraIndex={extraOrder.get(cell.index) ?? 0}
+			matchIndex={matchOrder.get(cell.index) ?? 0}
+			matchMult={winningSymbol ? config.symbols[winningSymbol].mult : 0}
 			{extraStep}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>

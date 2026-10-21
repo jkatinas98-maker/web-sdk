@@ -35,6 +35,7 @@
 	import Ticket from './Ticket.svelte';
 	import CaseReel from './CaseReel.svelte';
 	import SharkBiteBar from './SharkBiteBar.svelte';
+	import { MATCH_DONE_MS, EXTRA_START_MS, EXTRA_GAP_MS } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
 
 	const context = getContext();
@@ -333,7 +334,7 @@
 	// Win tally over the grid when the winning symbol landed more than 3
 	// times: starts at the symbol's multiplier and steps up by the mode's
 	// extra-match bonus in time with each extra tile's "+0.25x" burst.
-	let tally: { name: SymbolName; value: number; step: number } | null = $state(null);
+	let tally: { name: SymbolName; value: number; step: number; extras: number } | null = $state(null);
 	$effect(() => {
 		const ws = winningSymbol;
 		const panels = context.stateGame.panels;
@@ -344,18 +345,17 @@
 		}
 		const count = panels.filter((p) => p?.name === ws).length;
 		const extras = Math.max(0, count - 3);
-		if (extras === 0) {
-			tally = null;
-			return;
-		}
 		const base = config.symbols[ws].mult;
-		tally = { name: ws, value: base, step: 0 };
+		tally = null;
 		const timers: ReturnType<typeof setTimeout>[] = [];
+		// Appears once the 3rd matching tile has ticked in...
+		timers.push(setTimeout(() => (tally = { name: ws, value: base, step: 0, extras }), MATCH_DONE_MS));
+		// ...then bumps for each extra.
 		for (let k = 1; k <= extras; k++) {
 			timers.push(
 				setTimeout(() => {
-					tally = { name: ws, value: Math.round((base + k * step) * 100) / 100, step: k };
-				}, 600 + (k - 1) * 550 + 150),
+					tally = { name: ws, value: Math.round((base + k * step) * 100) / 100, step: k, extras };
+				}, EXTRA_START_MS + (k - 1) * EXTRA_GAP_MS + 150),
 			);
 		}
 		return () => timers.forEach(clearTimeout);
@@ -927,9 +927,11 @@
 {#if tally}
 	<!-- Extra-match tally: "Crab x2 -> x2.25 -> x2.5" -->
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
-		<div class="win-tally-pill">
+		<div class="win-tally-pill" class:extra={tally.step > 0}>
 			<img src={SYMBOL_IMAGE_URL[tally.name]} alt="" />
-			<span class="win-tally-label">{SYMBOL_LABEL[tally.name]}</span>
+			<span class="win-tally-label">
+				{tally.step > 0 ? `3 + ${tally.step} extra` : '3 match'} · {SYMBOL_LABEL[tally.name]}
+			</span>
 			{#key tally.value}
 				<span class="win-tally-value" class:bumped={tally.step > 0}>x{tally.value}</span>
 			{/key}
