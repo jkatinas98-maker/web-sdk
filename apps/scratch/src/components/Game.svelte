@@ -22,6 +22,10 @@
 	import bgWebmUrl from '../assets/bg_loop.webm';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
+	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
+	import modeEasyUrl from '../assets/signs/mode_easy.webp';
+	import modeMediumUrl from '../assets/signs/mode_medium.webp';
+	import modeHardUrl from '../assets/signs/mode_hard.webp';
 	import megaWinUrl from '../assets/winpop/mega_win.webp';
 	import epicWinUrl from '../assets/winpop/epic_win.webp';
 	import type { SymbolName } from '../game/types';
@@ -366,7 +370,8 @@
 	const STACK_H_PER_S = BAR_H_PER_S + contentH;
 	const MAX_SCALE = 0.9;
 	// Narrow mode: logo + ribbon + tabs band above the bar.
-	const NARROW_HEADER_H = 140;
+	const NARROW_HEADER_H = 178;
+	const MODE_SIGN_URL: Record<string, string> = { easy: modeEasyUrl, medium: modeMediumUrl, hard: modeHardUrl };
 	const SIDE_MIN = 190;
 
 	const wideScale = $derived(Math.min(vw / VIEW_W, (vh - 14) / STACK_H_PER_S, MAX_SCALE));
@@ -691,21 +696,27 @@
 		style={wide ? `width:${sideW}px;top:${Math.max(10, sharkTop)}px;` : `height:${NARROW_HEADER_H}px;`}
 	>
 		<img class="logo" src={logoUrl} alt="Pirate Scratch" />
-		<div class="max-win-banner" class:free={freeScratchesRemaining > 0}>
-			{freeScratchesRemaining > 0
-				? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
-				: `Win up to ${maxWin}x bet`}
+		<!-- Wooden max-win sign (text is live, so it follows the mode / free
+		     scratches) -->
+		<div class="maxwin-sign" class:free={freeScratchesRemaining > 0}>
+			<img src={maxWinSignUrl} alt="" draggable="false" />
+			<span class="maxwin-sign-text">
+				{freeScratchesRemaining > 0
+					? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
+					: `Win up to ${maxWin}x bet`}
+			</span>
 		</div>
-		<div class="diff-row">
+		<div class="mode-signs">
 			{#each Object.keys(config.betModes) as mode}
 				{@const m = config.betModes[mode as BetMode]}
 				<button
-					class="diff-btn"
+					class="mode-sign"
 					class:active={betMode === mode}
 					disabled={locked}
+					aria-label={`${mode} ${m.rows}×${m.cols}`}
 					onclick={() => selectMode(mode as BetMode)}
 				>
-					{mode} {m.rows}×{m.cols}
+					<img src={MODE_SIGN_URL[mode]} alt="" draggable="false" />
 				</button>
 			{/each}
 		</div>
