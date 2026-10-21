@@ -150,14 +150,14 @@
 		showPaytable = !showPaytable;
 	}
 
-	// Layout: logo header, difficulty tabs under it, then the illustrated
-	// frame (grid window + its own control bar) filling the rest. The frame
-	// art's coordinates below are in its source-image pixels (1536x1024);
-	// everything is placed proportionally from them, so any export size of
-	// the same art lines up.
-	// Tall enough for the illustrated logo plaque plus the max-win ribbon.
-	const HEADER_H = 112;
-	const DIFF_H = 44;
+	// Layout: the illustrated frame (grid window + its own control bar) sits
+	// centered vertically on screen; the logo header and difficulty tabs
+	// stack in the space above it. The frame art's coordinates below are in
+	// its source-image pixels (1536x1024); everything is placed
+	// proportionally from them, so any export size of the same art lines up.
+	// Logo + max-win ribbon.
+	const HEADER_H = 150;
+	const DIFF_H = 34;
 	const FRAME = {
 		w: 1536,
 		h: 1024,
@@ -166,9 +166,10 @@
 		// narrow (portrait phone) screens.
 		viewX0: 140,
 		viewX1: 1396,
-		// Vertical extent of the actual art (rest is transparent padding).
+		// Vertical extent of the art, including the action label printed
+		// under the anchor (the rest is transparent padding).
 		contentY0: 5,
-		contentY1: 984,
+		contentY1: 1014,
 		// The transparent window the scratch grid shows through.
 		win: { x0: 264, y0: 205, x1: 1271, y1: 757 },
 	};
@@ -176,20 +177,24 @@
 	let vw = $state(typeof window === 'undefined' ? 390 : window.innerWidth);
 	let vh = $state(typeof window === 'undefined' ? 844 : window.innerHeight);
 
-	const frameAreaTop = HEADER_H + DIFF_H;
-	const frameAreaH = $derived(Math.max(120, vh - frameAreaTop - 8));
-	const frameScale = $derived(
-		Math.min(
-			vw / (FRAME.viewX1 - FRAME.viewX0),
-			frameAreaH / (FRAME.contentY1 - FRAME.contentY0),
-			0.8,
-		),
-	);
+	// Everything above the frame (logo, ribbon, tabs) plus a little air.
+	const TOP_AREA = HEADER_H + DIFF_H + 6;
+	const contentH = FRAME.contentY1 - FRAME.contentY0;
+	const widthScale = $derived(vw / (FRAME.viewX1 - FRAME.viewX0));
+	// Truly centered needs the same free band below as the header takes
+	// above. On short screens (landscape phones) that would shrink the frame
+	// too far, so there it falls back to simply filling the space under the
+	// tabs.
+	const centeredScale = $derived(Math.min(widthScale, (vh - 2 * TOP_AREA) / contentH, 0.8));
+	const fillScale = $derived(Math.min(widthScale, (vh - TOP_AREA - 8) / contentH, 0.8));
+	const centered = $derived(centeredScale >= fillScale * 0.6);
+	const frameScale = $derived(Math.max(0.12, centered ? centeredScale : fillScale));
 	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
 	const frameTop = $derived(
-		frameAreaTop -
-			FRAME.contentY0 * frameScale +
-			Math.max(0, (frameAreaH - (FRAME.contentY1 - FRAME.contentY0) * frameScale) / 2),
+		Math.max(
+			TOP_AREA - FRAME.contentY0 * frameScale,
+			vh / 2 - ((FRAME.contentY0 + FRAME.contentY1) / 2) * frameScale,
+		),
 	);
 	// The frame window in screen pixels, as insets from each viewport edge —
 	// the pixi grid and the in-card Kraken overlay both fill exactly this.
