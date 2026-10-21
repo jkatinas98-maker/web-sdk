@@ -277,10 +277,26 @@
 			}
 		}
 	};
+
+	// A throw inside a draw would silently stop that layer for good, so
+	// report it once and keep animating.
+	let reported = false;
+	const guard = (draw: (g: PIXI.Graphics) => void) => (g: PIXI.Graphics) => {
+		try {
+			draw(g);
+		} catch (error) {
+			if (!reported) {
+				reported = true;
+				console.error('AnimatedSymbol draw failed:', error);
+			}
+		}
+	};
+	const safeBack = guard(drawBack);
+	const safeFront = guard(drawFront);
 </script>
 
-<Graphics draw={drawBack} blendMode="add" />
+<Graphics draw={safeBack} />
 <Container y={symbolY} scale={symbolScale} rotation={symbolRotation}>
 	<SymbolIcon {name} {size} />
 </Container>
-<Graphics draw={drawFront} blendMode="add" />
+<Graphics draw={safeFront} />
