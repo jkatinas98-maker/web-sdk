@@ -910,23 +910,25 @@ button:disabled {
    inline top/bottom, matching <Ticket>'s own topReserved/bottomReserved)
    instead of a full-screen dimmed backdrop, so the header/footer/controls
    stay visible behind it. */
+/* The Kraken feature takes over the whole screen. */
 .kraken-card-overlay {
 	position: fixed;
-	z-index: 15;
+	inset: 0;
+	z-index: 20;
 	pointer-events: auto;
 	cursor: pointer;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: 1rem;
 	overflow: hidden;
-	border-radius: 6px;
-	/* Stormy Kraken night scene behind the panel / reel. */
+	/* Stormy Kraken night scene replaces the harbor background. */
 	background:
-		linear-gradient(180deg, rgba(2, 8, 16, 0.25), rgba(2, 8, 16, 0.55)),
-		var(--kraken-scene) center 40% / cover no-repeat,
+		radial-gradient(ellipse at 50% 55%, rgba(2, 8, 16, 0.05), rgba(2, 8, 16, 0.55) 80%),
+		var(--kraken-scene) center 45% / cover no-repeat,
 		#04101a;
-	animation: win-fade-in 0.25s ease-out;
+	animation: kraken-takeover 0.45s ease-out;
 }
 
 .kraken-card-overlay .feature-modal-title {
@@ -1204,4 +1206,27 @@ button:disabled {
 	text-shadow:
 		0 2px 10px rgba(14, 116, 144, 0.8),
 		0 2px 0 #06181f;
+}
+
+@keyframes kraken-takeover {
+	from {
+		opacity: 0;
+		filter: brightness(2) saturate(0.4);
+	}
+	to {
+		opacity: 1;
+		filter: none;
+	}
+}
+
+.kraken-case-title {
+	font-size: clamp(1.4rem, 3.2vw, 2.6rem);
+}
+
+.kraken-case .kraken-result {
+	font-size: clamp(1.3rem, 3vw, 2.4rem);
+}
+
+.kraken-case .kraken-card-hint {
+	font-size: clamp(0.65rem, 1.2vw, 0.95rem);
 }

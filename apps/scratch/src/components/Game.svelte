@@ -229,12 +229,13 @@
 	// "The Kraken Rises" panel art (1672x941) fitted inside the frame window,
 	// plus where its two number plaques sit, in panel fractions.
 	const KRAKEN_PANEL = { w: 1672, h: 941, player: { x: 543, y: 632 }, kraken: { x: 1122, y: 632 } };
+	// The Kraken feature takes over the whole screen: panel fitted to the
+	// viewport (with some breathing room), reel as wide as fits.
 	const krakenPanel = $derived.by(() => {
-		const winW = vw - gridRect.left - gridRect.right;
-		const winH = vh - gridRect.top - gridRect.bottom;
-		const w = Math.min(winW, (winH * KRAKEN_PANEL.w) / KRAKEN_PANEL.h);
+		const w = Math.min(vw * 0.94, (vh * 0.8 * KRAKEN_PANEL.w) / KRAKEN_PANEL.h, 1150);
 		return { w, h: (w * KRAKEN_PANEL.h) / KRAKEN_PANEL.w };
 	});
+	const krakenReelW = $derived(Math.min(vw * 0.97, 1350));
 	const plaqueAt = (p: { x: number; y: number }) =>
 		`left:${(p.x / KRAKEN_PANEL.w) * 100}%;top:${(p.y / KRAKEN_PANEL.h) * 100}%;`;
 
@@ -606,14 +607,14 @@
 	     overlay. -->
 	<div
 		class="kraken-card-overlay"
-		style={`top:${gridRect.top}px; bottom:${gridRect.bottom}px; left:${gridRect.left}px; right:${gridRect.right}px; --kraken-scene:url(${krakenSceneUrl});`}
+		style={`--kraken-scene:url(${krakenSceneUrl});`}
 		role="button"
 		tabindex="0"
 		onclick={handleKrakenTap}
 		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
 	>
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
-			<div class="kraken-case" style={`width:${krakenPanel.w}px;`}>
+			<div class="kraken-case" style={`width:${krakenReelW}px;`}>
 				<div class="feature-modal-title kraken-case-title">The Kraken's Treasure</div>
 				<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
 				{#if krakenStage === 'landed'}
