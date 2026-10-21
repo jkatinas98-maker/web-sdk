@@ -7,7 +7,7 @@
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
-	import { createMockBet } from '../game/mockBet';
+	import { createMockBet, EXTRA_MATCH_BONUS } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
@@ -941,6 +941,10 @@
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.kraken} alt={SYMBOL_LABEL.kraken} />
 					<span class="pay-item-name">{SYMBOL_LABEL.kraken} (match its number)</span>
 					<span class="pay-item-mult">×2 – ×{maxWin}</span>
+				</div>
+				<div class="pay-item">
+					<span class="pay-item-name">Each extra match beyond 3</span>
+					<span class="pay-item-mult">+{EXTRA_MATCH_BONUS[betMode]}x</span>
 				</div>
 				<div class="pay-item shark-item">
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />

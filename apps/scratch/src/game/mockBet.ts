@@ -74,8 +74,9 @@ const FREE_SCRATCHES_AWARDED = 10;
 
 // --- Treasure Meter / Chest / Kraken -- mirrors game_config.py exactly ---
 // (see that file's comments for why these numbers are what they are).
-const TREASURE_METER_THRESHOLD: Record<BetMode, number> = { easy: 4, medium: 3, hard: 3 };
-const TREASURE_METER_POINTS: Record<4 | 5, number> = { 4: 1, 5: 2 };
+// Extra matching symbols (4th, 5th, ...) of the winning symbol each add
+// this much to the win multiplier. PLACEHOLDER until the math is redone.
+export const EXTRA_MATCH_BONUS: Record<BetMode, number> = { easy: 0.25, medium: 0.5, hard: 1 };
 
 const CHESTS_PER_TRIGGER = 3;
 const CHEST_PRIZE_TABLE: Array<{ id: string; kind: ChestOutcomeKind; value: number; weight: number }> = [
@@ -112,19 +113,9 @@ const rollMissed = (betMode: BetMode): number => {
 };
 
 
-// The real math-sdk simulator bundles a whole round (base card + every
-// free-scratch card it awards) into ONE book, so the Treasure Meter's
-// points accumulate across all of them before being checked against the
-// threshold. This front end's mock mode instead calls createMockBet once
-// PER CARD (Game.svelte re-calls it for each free scratch the player taps
-// through individually) -- so to approximate the same "accumulates across
-// the round" behavior here, the running total lives in this module-level
-// variable across calls, and is reset only when a fresh (non-free) round
-// starts. This is a mock-mode-only approximation; the real book's totals
-// come from scratch_sim.py's play_round, which has no such split.
-let meterPointsAcc = 0;
 // Free-scratch bonus multiplier, carried across the free cards of a bonus
-// (same per-call approximation as meterPointsAcc above).
+// (createMockBet runs once per card, so this module-level value is what
+// carries it from one free card to the next; reset on a paid round).
 let bonusMultAcc = 0;
 
 // --- Shark Bite (PLACEHOLDER numbers -- the real math comes later) ---
@@ -232,7 +223,6 @@ export const createMockBet = (
 	const panelCount = cols * rows;
 
 	if (!isFreeRound) {
-		meterPointsAcc = 0;
 		bonusMultAcc = 0;
 	}
 
@@ -284,7 +274,14 @@ export const createMockBet = (
 	// scaling happens in bookEventHandlerMap.ts, in one place, for both this
 	// mock path and the real RGS path -- baking the multiply in here too
 	// used to double it for mock mode once that fix landed.
-	let amount = winMult;
+	let winSymbol: SymbolName | null = null;
+	for (const [name, c] of Object.entries(counts) as Array<[SymbolName, number]>) {
+		if (c >= 3 && config.symbols[name].mult === winMult) winSymbol = name;
+	}
+	// Each matching symbol beyond the 3rd adds a flat bonus to the win
+	// (+0.25x easy, +0.5x medium, +1x hard). Replaces the Treasure Meter.
+	const extras = winSymbol ? Math.max(0, counts[winSymbol]! - 3) : 0;
+	let amount = winMult + extras * EXTRA_MATCH_BONUS[betMode];
 	let freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
 	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];
@@ -337,28 +334,7 @@ export const createMockBet = (
 		// 'pirate': placeholder, no payout yet.
 	}
 
-	let meterPoints = 0;
-	for (const count of Object.values(counts)) {
-		if (count! >= 5) meterPoints += TREASURE_METER_POINTS[5];
-		else if (count === 4) meterPoints += TREASURE_METER_POINTS[4];
-	}
-	meterPointsAcc += meterPoints;
-
 	for (let p = 0; p < keyPicks; p++) {
-		const win = rollChestPick(betMode);
-		amount += win;
-		events.push({ index: idx, type: 'chestPick', win, missed: [rollMissed(betMode), rollMissed(betMode)] });
-		idx += 1;
-	}
-
-	// Treasure Meter pops open the same pick-a-chest feature as the key.
-	let chestTriggers = 0;
-	const threshold = TREASURE_METER_THRESHOLD[betMode];
-	while (meterPointsAcc >= threshold) {
-		meterPointsAcc -= threshold;
-		chestTriggers += 1;
-	}
-	for (let t = 0; t < chestTriggers; t++) {
 		const win = rollChestPick(betMode);
 		amount += win;
 		events.push({ index: idx, type: 'chestPick', win, missed: [rollMissed(betMode), rollMissed(betMode)] });
