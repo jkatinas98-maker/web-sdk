@@ -103,7 +103,7 @@
 	});
 	const symbolRotation = $derived.by(() => {
 		if (revealing) return 0.22 * (1 - revealP) * Math.sin(revealP * 16);
-		if (isWin) return 0.07 * Math.sin(tw * 9);
+		if (isWin) return 0.035 * Math.sin(tw * 9);
 		return 0.025 * Math.sin(t * 1.4 + seed);
 	});
 	const symbolY = $derived.by(() => {
@@ -169,8 +169,8 @@
 		const dx = Math.cos(angle);
 		const dy = Math.sin(angle);
 		// tip direction: outward, bent strongly toward "up" (fire rises)
-		let tx = dx * 0.55 + sway;
-		let ty = dy * 0.55 - 0.85;
+		let tx = dx * 0.85 + sway;
+		let ty = dy * 0.85 - 0.55;
 		const n = Math.hypot(tx, ty) || 1;
 		tx /= n;
 		ty /= n;
@@ -189,9 +189,10 @@
 
 	// Layered fire: red outer, orange middle, yellow-white core.
 	const FIRE_LAYERS = [
-		{ color: 0xff2a00, scale: 1, width: 1, alpha: 0.75 },
-		{ color: 0xff8a00, scale: 0.72, width: 0.7, alpha: 0.85 },
-		{ color: 0xffe866, scale: 0.42, width: 0.45, alpha: 0.9 },
+		{ color: 0xd81408, scale: 1, width: 1.05, alpha: 0.92 },
+		{ color: 0xff6a00, scale: 0.74, width: 0.75, alpha: 0.92 },
+		{ color: 0xffc21f, scale: 0.5, width: 0.5, alpha: 0.95 },
+		{ color: 0xfff6c8, scale: 0.26, width: 0.28, alpha: 0.9 },
 	];
 
 	const fire = (g: PIXI.Graphics) => {
@@ -202,12 +203,12 @@
 				const flicker =
 					0.72 + 0.22 * Math.sin(tw * 13 + f.phase) + 0.12 * Math.sin(tw * 23 + f.phase * 2.3);
 				// taller where the flame faces up/out the top
-				const upBias = 1 + 0.7 * Math.max(0, -Math.sin(f.angle));
-				const length = size * 0.42 * f.len * flicker * upBias * layer.scale * splashBoost;
+				const upBias = 1 + 0.55 * Math.max(0, -Math.sin(f.angle));
+				const length = size * 0.5 * f.len * flicker * upBias * layer.scale * splashBoost;
 				tongue(
 					g,
 					f.angle,
-					size * 0.34,
+					size * 0.3,
 					length,
 					size * 0.07 * layer.width,
 					layer.color,
@@ -226,11 +227,16 @@
 		if (isWin) {
 			const pulse = 0.5 + 0.5 * Math.sin(tw * 5);
 			// hot core glow, cycling red -> orange -> gold
-			const hue = [0xff3b1f, 0xff8a00, 0xffc93d][Math.floor(tw * 6) % 3];
-			g.circle(0, 0, size * (0.62 + 0.08 * pulse + winSplash * 0.4));
-			g.fill({ color: hue, alpha: 0.3 + 0.2 * pulse });
-			rays(g, 14, size * 0.25, size * (0.95 + winSplash * 0.5), tw * 1.2, 0xffd75e, 0.35 + 0.15 * pulse);
-			rays(g, 14, size * 0.2, size * 0.7, -tw * 0.8 + 0.22, 0xff6a3d, 0.25);
+			// layered hot glow (red rim -> orange -> gold core), breathing
+			const grow = 0.06 * pulse + winSplash * 0.4;
+			g.circle(0, 0, size * (0.95 + grow));
+			g.fill({ color: 0xc8160a, alpha: 0.14 });
+			g.circle(0, 0, size * (0.72 + grow));
+			g.fill({ color: 0xff5a00, alpha: 0.2 + 0.08 * pulse });
+			g.circle(0, 0, size * (0.48 + grow));
+			g.fill({ color: 0xffb21f, alpha: 0.22 + 0.1 * pulse });
+			rays(g, 14, size * 0.25, size * (1.0 + winSplash * 0.5), tw * 1.2, 0xffc21f, 0.22 + 0.12 * pulse);
+			rays(g, 14, size * 0.2, size * 0.75, -tw * 0.8 + 0.22, 0xff4a1a, 0.2);
 			fire(g);
 		}
 	};
