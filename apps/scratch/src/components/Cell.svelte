@@ -2,7 +2,7 @@
 	import type * as PIXI from 'pixi.js';
 	import { Container, Graphics, Text } from 'pixi-svelte';
 
-	import SymbolIcon from './SymbolIcon.svelte';
+	import AnimatedSymbol from './AnimatedSymbol.svelte';
 	import config from '../game/config';
 	import { playSound } from '../game/sound';
 	import type { RawSymbol } from '../game/types';
@@ -173,10 +173,12 @@
 	<Graphics draw={revealed ? drawTile : drawFoil} />
 
 	{#if revealed && panel}
+		<!-- The artist's reveal frames do their own pop-in, so the symbol
+		     isn't code-scaled; only the multiplier label below pops. -->
+		<Container y={-size * 0.08}>
+			<AnimatedSymbol name={panel.name} size={size * 0.62} {winning} />
+		</Container>
 		<Container scale={displayScale}>
-			<Container y={-size * 0.08}>
-				<SymbolIcon name={panel.name} size={size * 0.62} />
-			</Container>
 
 			<Text
 				y={size * 0.36}
