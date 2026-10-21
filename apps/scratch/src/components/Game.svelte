@@ -14,6 +14,9 @@
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
 	import frameUrl from '../assets/frame.webp';
+	import bgPosterUrl from '../assets/background.jpg';
+	import bgMp4Url from '../assets/bg_loop.mp4';
+	import bgWebmUrl from '../assets/bg_loop.webm';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -375,6 +378,16 @@
 	onpointerdown={() => startMusic(musicUrl)}
 	onkeydown={() => startMusic(musicUrl)}
 />
+
+<!-- Animated harbor background: the artist's 32-frame loop (water ripple,
+     glints, lantern flicker) encoded as a ~0.5 MB looping video. The
+     painted still underneath (body background) is the poster/fallback,
+     e.g. while it loads or under prefers-reduced-motion. -->
+<video class="bg-video" autoplay muted loop playsinline preload="auto" poster={bgPosterUrl} aria-hidden="true">
+	<source src={bgWebmUrl} type="video/webm" />
+	<source src={bgMp4Url} type="video/mp4" />
+</video>
+<div class="bg-dim" aria-hidden="true"></div>
 
 <div class="pixi-layer">
 	<App>
