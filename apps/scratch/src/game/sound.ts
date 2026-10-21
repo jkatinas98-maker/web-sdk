@@ -20,38 +20,47 @@ const getContext = (): AudioContext | null => {
 };
 
 // ---------- Background music ----------
-// Looping soundtrack, sitting UNDER the effects. The track is mastered loud
-// (about -17 dB average) while the synth effects average roughly -24 dB, so
-// matching "30% quieter than the effects" (~-3 dB below them, ~-27 dB)
-// means scaling the track by ~0.33 on top of the shared volume knob.
-// Tweak MUSIC_GAIN if the balance needs adjusting by ear.
+// Looping soundtrack with its OWN on/off switch (the music-note button),
+// independent of the effects volume knob above. The track is mastered loud
+// (about -17 dB average) while the synth effects average roughly -24 dB,
+// so ~0.33 puts it ~30% quieter than the effects at full volume. Tweak
+// MUSIC_GAIN if the balance needs adjusting by ear.
 const MUSIC_GAIN = 0.33;
 let music: HTMLAudioElement | null = null;
 let musicStarted = false;
+let musicEnabled = true;
 
-const applyMusicVolume = () => {
+const applyMusicState = () => {
 	if (!music) return;
-	music.volume = Math.min(1, MUSIC_GAIN * volume);
-	if (volume <= 0) music.pause();
+	music.volume = MUSIC_GAIN;
+	if (!musicEnabled) music.pause();
 	else if (musicStarted && music.paused) music.play().catch(() => {});
 };
 
 // Browsers block audio until the player interacts with the page, so this
 // is called from the first pointer/key event (see Game.svelte). Safe to
-// call repeatedly — only the first call does anything.
+// call repeatedly — only the first successful call does anything.
 export const startMusic = (src: string) => {
 	if (musicStarted || typeof window === 'undefined') return;
 	musicStarted = true;
-	music = new Audio(src);
-	music.loop = true;
-	music.preload = 'auto';
-	applyMusicVolume();
-	if (volume > 0) music.play().catch(() => (musicStarted = false));
+	if (!music) {
+		music = new Audio(src);
+		music.loop = true;
+		music.preload = 'auto';
+	}
+	applyMusicState();
 };
 
+export const setMusicEnabled = (value: boolean) => {
+	musicEnabled = value;
+	applyMusicState();
+};
+
+export const isMusicEnabled = () => musicEnabled;
+
+// Effects-only volume (0 = muted). Doesn't touch the music.
 export const setVolume = (value: number) => {
 	volume = Math.min(1, Math.max(0, value));
-	applyMusicVolume();
 };
 
 export const getVolume = () => volume;

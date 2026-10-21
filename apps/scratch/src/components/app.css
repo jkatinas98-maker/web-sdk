@@ -192,6 +192,15 @@ button:disabled {
 	filter: brightness(1.12);
 }
 
+/* Music on/off sits just left of the effects-volume button. */
+.sound-toggle.music-toggle {
+	right: calc(0.6rem + 42px);
+}
+
+.sound-toggle.off {
+	filter: grayscale(0.6) brightness(0.75);
+}
+
 .sound-toggle svg {
 	width: 18px;
 	height: 18px;

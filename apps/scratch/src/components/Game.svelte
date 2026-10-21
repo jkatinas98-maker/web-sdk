@@ -8,7 +8,7 @@
 	import type { BookEventOfType, ChestOutcome } from '../game/typesBookEvent';
 	import { createMockBet } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume, startMusic } from '../game/sound';
+	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -115,6 +115,14 @@
 	// this also doubles as the way to actually turn it up.
 	const VOLUME_LEVELS = [0, 0.4, 0.7, 1];
 	let volumeLevel = $state(VOLUME_LEVELS.length - 1);
+
+	// Music has its own on/off toggle, separate from the effects volume.
+	let musicOn = $state(true);
+	function toggleMusic() {
+		musicOn = !musicOn;
+		setMusicEnabled(musicOn);
+		playSound('click');
+	}
 	function cycleVolume() {
 		volumeLevel = (volumeLevel + 1) % VOLUME_LEVELS.length;
 		setVolume(VOLUME_LEVELS[volumeLevel]);
@@ -463,7 +471,22 @@
 				? `${freeScratchesRemaining} free scratch${freeScratchesRemaining === 1 ? '' : 'es'} left`
 				: `Win up to ${maxWin}x bet`}
 		</div>
-		<button class="sound-toggle" onclick={cycleVolume} aria-label="Change volume">
+		<button
+			class="sound-toggle music-toggle"
+			class:off={!musicOn}
+			onclick={toggleMusic}
+			aria-label={musicOn ? 'Turn music off' : 'Turn music on'}
+		>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M9 18V6l10-2v12" />
+				<circle cx="6.5" cy="18" r="2.5" fill="currentColor" stroke="none" />
+				<circle cx="16.5" cy="16" r="2.5" fill="currentColor" stroke="none" />
+				{#if !musicOn}
+					<path d="M4 4l16 16" stroke-width="2.6" />
+				{/if}
+			</svg>
+		</button>
+		<button class="sound-toggle" class:off={volumeLevel === 0} onclick={cycleVolume} aria-label="Change effects volume">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 				<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
 				{#if volumeLevel === 0}
