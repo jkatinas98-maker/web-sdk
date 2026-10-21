@@ -345,25 +345,17 @@ export const createMockBet = (
 		idx += 1;
 	}
 
-	// Treasure Meter pops still use the old chest sequence.
+	// Treasure Meter pops open the same pick-a-chest feature as the key.
 	let chestTriggers = 0;
 	const threshold = TREASURE_METER_THRESHOLD[betMode];
 	while (meterPointsAcc >= threshold) {
 		meterPointsAcc -= threshold;
 		chestTriggers += 1;
 	}
-
-	let chestOpensUsed = 0;
 	for (let t = 0; t < chestTriggers; t++) {
-		if (chestOpensUsed >= MAX_CHEST_OPENS_PER_ROUND) break;
-		const { outcomes, total, opened } = resolveChestSequence(
-			CHESTS_PER_TRIGGER,
-			MAX_CHEST_OPENS_PER_ROUND - chestOpensUsed,
-			amount,
-		);
-		chestOpensUsed += opened;
-		amount = total;
-		events.push({ index: idx, type: 'chestSequence', chests: outcomes });
+		const win = rollChestPick(betMode);
+		amount += win;
+		events.push({ index: idx, type: 'chestPick', win, missed: [rollMissed(betMode), rollMissed(betMode)] });
 		idx += 1;
 	}
 
