@@ -19,6 +19,7 @@
 import type { SymbolName, RawSymbol, BetMode } from './types';
 import type { BookEvent, ChestOutcome, ChestOutcomeKind } from './typesBookEvent';
 import config from './config';
+import { KRAKEN_NUMBER_RANGE, rollKrakenPrize } from './kraken';
 
 // `bonus`/`key` are folded in at a low weight — not rebalanced to an exact
 // total, since weightedPick normalizes against the pool's actual total.
@@ -27,6 +28,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'skull', weight: 66.8504 },
 		{ name: 'bonus', weight: 0.8 },
 		{ name: 'key', weight: 0.045 },
+		{ name: 'kraken', weight: 1.5686 },
 		{ name: 'mult1_5', weight: 14.1968 },
 		{ name: 'mult2', weight: 8.5181 },
 		{ name: 'mult4', weight: 5.6787 },
@@ -38,6 +40,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'skull', weight: 70 },
 		{ name: 'bonus', weight: 0.6 },
 		{ name: 'key', weight: 0.035 },
+		{ name: 'kraken', weight: 2.13 },
 		{ name: 'mult1_5', weight: 12 },
 		{ name: 'mult2', weight: 7 },
 		{ name: 'mult5', weight: 4.5 },
@@ -49,6 +52,7 @@ const WEIGHTS: Record<BetMode, Array<{ name: SymbolName; weight: number }>> = {
 		{ name: 'skull', weight: 75 },
 		{ name: 'bonus', weight: 0.4 },
 		{ name: 'key', weight: 0.025 },
+		{ name: 'kraken', weight: 3.05 },
 		{ name: 'mult2', weight: 11 },
 		{ name: 'mult6', weight: 6 },
 		{ name: 'mult9', weight: 4 },
@@ -79,9 +83,6 @@ const CHEST_PRIZE_TABLE: Array<{ id: string; kind: ChestOutcomeKind; value: numb
 ];
 const MAX_CHEST_OPENS_PER_ROUND = 60;
 
-const KRAKEN_TRIGGER_CHANCE: Record<BetMode, number> = { easy: 0.018, medium: 0.018, hard: 0.018 };
-const KRAKEN_NUMBER_RANGE = 10;
-const KRAKEN_MATCH_MULT = 10;
 
 // The real math-sdk simulator bundles a whole round (base card + every
 // free-scratch card it awards) into ONE book, so the Treasure Meter's
@@ -157,6 +158,7 @@ export const createMockBet = (
 	let winMult = 0;
 	let bonusCount = 0;
 	let keyCount = 0;
+	let krakenCount = 0;
 
 	for (let i = 0; i < panelCount; i++) {
 		const name = weightedPick(betMode);
@@ -170,6 +172,10 @@ export const createMockBet = (
 		}
 		if (name === 'key') {
 			keyCount += 1;
+			continue;
+		}
+		if (name === 'kraken') {
+			krakenCount += 1;
 			continue;
 		}
 
@@ -196,18 +202,22 @@ export const createMockBet = (
 	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];
 	let idx = 1;
 
-	if (Math.random() < KRAKEN_TRIGGER_CHANCE[betMode]) {
+	// Landing >= 1 kraken symbol opens the number match; a match wins a
+	// case-reel multiplier from the mode's prize table (see kraken.ts).
+	if (krakenCount > 0) {
 		const playerNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
 		const krakenNumber = 1 + Math.floor(Math.random() * KRAKEN_NUMBER_RANGE);
 		const hit = playerNumber === krakenNumber;
-		if (hit) amount += KRAKEN_MATCH_MULT;
+		const prize = hit ? rollKrakenPrize(betMode) : 0;
+		amount += prize;
 		events.push({
 			index: idx,
 			type: 'krakenResult',
 			playerNumber,
 			krakenNumber,
 			hit,
-			amount: hit ? KRAKEN_MATCH_MULT : 0,
+			multiplier: prize,
+			amount: prize,
 		});
 		idx += 1;
 	}
@@ -239,6 +249,9 @@ export const createMockBet = (
 		events.push({ index: idx, type: 'chestSequence', chests: outcomes });
 		idx += 1;
 	}
+
+	// The mode's advertised max win caps the whole card (mirrors the sim).
+	amount = Math.min(amount, config.betModes[betMode].max_win);
 
 	events.push({ index: idx, type: 'setTotalWin', amount });
 	idx += 1;

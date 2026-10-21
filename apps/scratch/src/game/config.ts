@@ -69,6 +69,8 @@ export default {
 		// -- this entry just reserves the id/weight/art slot so the symbol is
 		// drawable and visible end-to-end while the feature gets built.
 		key: { paytable: null, mult: 0 },
+		// Feature symbol: landing one opens the Kraken number match.
+		kraken: { paytable: null, mult: 0 },
 		mult1_5: { paytable: [{ '3': 1.5 }], mult: 1.5 },
 		mult2: { paytable: [{ '3': 2 }], mult: 2 },
 		mult4: { paytable: [{ '3': 4 }], mult: 4 },

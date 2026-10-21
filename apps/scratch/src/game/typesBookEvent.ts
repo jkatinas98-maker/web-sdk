@@ -51,6 +51,10 @@ type BookEventKrakenResult = {
 	playerNumber: number;
 	krakenNumber: number;
 	hit: boolean;
+	// Prize multiplier of the bet the case reel lands on (0 on a miss).
+	multiplier: number;
+	// Same value as a per-$1 amount, like every other event (scaled to
+	// dollars in bookEventHandlerMap).
 	amount: number;
 };
 

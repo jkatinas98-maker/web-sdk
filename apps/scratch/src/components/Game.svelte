@@ -20,6 +20,7 @@
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
+	import CaseReel from './CaseReel.svelte';
 
 	const context = getContext();
 
@@ -65,17 +66,18 @@
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
 
 	// Kraken is shown in-card (over the ticket), not as a full-screen modal,
-	// and reveals in two taps: the player's own number is visible the moment
-	// it appears, the Kraken's number stays face-down behind a "?" token
-	// until the first tap, which flips it and shows hit/miss. A second tap
-	// (handleCardOverlayTap again, now revealed) advances the queue same as
-	// every other feature overlay. Reset whenever a *new* kraken entry
-	// becomes the active one (covers the back-to-back-krakens edge case,
-	// where the queue advances from one kraken straight into another).
-	let krakenRevealed = $state(false);
+	// and steps through stages on taps:
+	//   numbers  -> player's number shown, the Kraken's face-down ("?")
+	//   revealed -> Kraken's number flipped; hit/miss shown
+	//   case     -> (hit only) CS2-style case reel spinning to the prize
+	//   landed   -> prize shown; next tap advances like any other overlay
+	// Reset whenever a *new* kraken entry becomes the active one.
+	type KrakenStage = 'numbers' | 'revealed' | 'case' | 'landed';
+	let krakenStage: KrakenStage = $state('numbers');
 	$effect(() => {
-		if (activeFeatureOverlay?.kind === 'kraken') krakenRevealed = false;
+		if (activeFeatureOverlay?.kind === 'kraken') krakenStage = 'numbers';
 	});
+	const krakenRevealed = $derived(krakenStage !== 'numbers');
 
 	function advanceFeatureOverlay() {
 		playSound('click');
@@ -86,14 +88,21 @@
 		}
 	}
 
-	// Kraken's own tap handler: first tap flips the hidden number face-up,
-	// second tap dismisses it like any other overlay. Chests (and anything
-	// else) keep using advanceFeatureOverlay directly, single-tap.
+	// Kraken's own tap handler (see the stages above). Taps during the case
+	// spin are ignored; the reel reports when it lands.
 	function handleKrakenTap() {
-		if (!krakenRevealed) {
-			krakenRevealed = true;
-			playSound('click');
-		} else {
+		const hit = activeFeatureOverlay?.kind === 'kraken' && activeFeatureOverlay.data.hit;
+		if (krakenStage === 'numbers') {
+			krakenStage = 'revealed';
+			playSound(hit ? 'scatterLand' : 'click');
+		} else if (krakenStage === 'revealed') {
+			if (hit) {
+				krakenStage = 'case';
+				playSound('click');
+			} else {
+				advanceFeatureOverlay();
+			}
+		} else if (krakenStage === 'landed') {
 			advanceFeatureOverlay();
 		}
 	}
@@ -555,6 +564,11 @@
 					<span class="pay-item-name">{SYMBOL_LABEL.bonus} (land 3)</span>
 					<span class="pay-item-mult">10 Free Scratches</span>
 				</div>
+				<div class="pay-item kraken-item">
+					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.kraken} alt={SYMBOL_LABEL.kraken} />
+					<span class="pay-item-name">{SYMBOL_LABEL.kraken} (match its number)</span>
+					<span class="pay-item-mult">×2 – ×{maxWin}</span>
+				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">
 						<img class="pay-item-icon" src={SYMBOL_IMAGE_URL[name]} alt={SYMBOL_LABEL[name]} />
@@ -584,21 +598,33 @@
 		onclick={handleKrakenTap}
 		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
 	>
-		<div class="feature-modal-title">The Kraken Rises</div>
-		<div class="kraken-numbers">
-			<div class="kraken-number">{k.playerNumber}</div>
-			<div class="kraken-vs">vs</div>
-			<div class="kraken-number" class:kraken-number--hidden={!krakenRevealed}>
-				{krakenRevealed ? k.krakenNumber : '?'}
-			</div>
-		</div>
-		{#if krakenRevealed}
-			<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
-				{k.hit ? `MATCH! +$${k.amount.toFixed(2)}` : 'No match'}
-			</div>
-			<div class="kraken-card-hint">Tap to continue</div>
+		{#if krakenStage === 'case' || krakenStage === 'landed'}
+			<div class="feature-modal-title">The Kraken's Treasure</div>
+			<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
+			{#if krakenStage === 'landed'}
+				<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +${k.amount.toFixed(2)}</div>
+				<div class="kraken-card-hint">Tap to continue</div>
+			{:else}
+				<div class="kraken-card-hint">Opening...</div>
+			{/if}
 		{:else}
-			<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
+			<img class="kraken-art" src={SYMBOL_IMAGE_URL.kraken} alt="" />
+			<div class="feature-modal-title">The Kraken Rises</div>
+			<div class="kraken-numbers">
+				<div class="kraken-number">{k.playerNumber}</div>
+				<div class="kraken-vs">vs</div>
+				<div class="kraken-number" class:kraken-number--hidden={!krakenRevealed}>
+					{krakenRevealed ? k.krakenNumber : '?'}
+				</div>
+			</div>
+			{#if krakenRevealed}
+				<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
+					{k.hit ? 'MATCH!' : 'No match'}
+				</div>
+				<div class="kraken-card-hint">{k.hit ? "Tap to open the Kraken's treasure" : 'Tap to continue'}</div>
+			{:else}
+				<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
+			{/if}
 		{/if}
 	</div>
 {/if}

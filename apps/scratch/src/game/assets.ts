@@ -29,6 +29,7 @@ const SYMBOL_NAMES: SymbolName[] = [
 	'skull',
 	'bonus',
 	'key',
+	'kraken',
 	'mult1_5',
 	'mult2',
 	'mult4',
