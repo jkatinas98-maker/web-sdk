@@ -22,6 +22,7 @@
 	import bgWebmUrl from '../assets/bg_loop.webm';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
+	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
 	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
 	import modeMediumUrl from '../assets/signs/mode_medium.webp';
@@ -269,6 +270,53 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
+	// --- Free-scratch bonus ----------------------------------------------
+	// Awarded free scratches play back to back automatically. Every free
+	// card's win multiplier adds onto the bonus multiplier shown on the
+	// medallion over the anchor (x2, then a x4 card makes it x6, ...); when
+	// the last one is done, a summary shows the bonus total.
+	let bonusActive = $state(false);
+	let bonusMult = $state(0);
+	let bonusPlayed = $state(0);
+	let bonusSpins = $state(0);
+	let pendingBonusSummary = $state(false);
+	let showBonusSummary = $state(false);
+	let roundIsFree = false;
+	const fmtMult = (m: number) => `x${+m.toFixed(2)}`;
+
+	// Summary once nothing else is on screen.
+	$effect(() => {
+		if (pendingBonusSummary && featureOverlayQueue.length === 0 && !showWinModal) {
+			untrack(() => {
+				pendingBonusSummary = false;
+				showBonusSummary = true;
+				playSound('jackpot');
+			});
+		}
+	});
+
+	function closeBonusSummary() {
+		playSound('click');
+		showBonusSummary = false;
+		bonusActive = false;
+	}
+
+	// Auto-deal the next free scratch once the previous card is fully done.
+	$effect(() => {
+		if (
+			!bonusActive ||
+			freeScratchesRemaining <= 0 ||
+			viewState === 'playing' ||
+			isProcessing ||
+			featureOverlayQueue.length > 0 ||
+			showWinModal ||
+			showBonusSummary
+		)
+			return;
+		const t = setTimeout(() => playGame(), 1100);
+		return () => clearTimeout(t);
+	});
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet
@@ -454,6 +502,7 @@
 	function playGame() {
 		if (isProcessing || featureOverlayQueue.length > 0) return;
 		const isFreeRound = freeScratchesRemaining > 0;
+		roundIsFree = isFreeRound;
 		if (!isFreeRound && isMockMode && mockBalance < betAmount) return;
 
 		playSound('click');
@@ -534,9 +583,24 @@
 				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
 				mockLastWin = totalWin;
 			}
+			if (roundIsFree && betAmount > 0) {
+				bonusMult = Math.round((bonusMult + totalWin / betAmount) * 100) / 100;
+				bonusPlayed += 1;
+			}
 			if (pendingFreeScratches > 0) {
 				freeScratchesRemaining += pendingFreeScratches;
 				awardedFreeScratches = pendingFreeScratches;
+				if (!bonusActive) {
+					bonusActive = true;
+					bonusMult = 0;
+					bonusPlayed = 0;
+					bonusSpins = pendingFreeScratches;
+				} else {
+					bonusSpins += pendingFreeScratches;
+				}
+			}
+			if (roundIsFree && bonusActive && freeScratchesRemaining === 0) {
+				pendingBonusSummary = true;
 			}
 			if (totalWin > 0) {
 				// Re-derive which symbol actually won by scanning the resolved
@@ -676,6 +740,15 @@
 				: 'Play card'}
 		onclick={handleMainAction}
 	></button>
+	{#if bonusActive}
+		<!-- Bonus multiplier medallion over the anchor -->
+		<div class="bonus-medallion" style={at(1041, 875, 176, 176)}>
+			{#key bonusMult}
+				<span class="bonus-medallion-mult">{fmtMult(bonusMult)}</span>
+			{/key}
+			<span class="bonus-medallion-count">{Math.min(bonusPlayed + (viewState === 'playing' ? 1 : 0), bonusSpins)}/{bonusSpins}</span>
+		</div>
+	{/if}
 
 	<button
 		class="frame-btn"
@@ -950,7 +1023,19 @@
 		onclick={() => (showWinModal = false)}
 		onkeydown={(e) => e.key === 'Enter' && (showWinModal = false)}
 	>
-		{#if winTier}
+		{#if awardedFreeScratches > 0}
+			<div class="bigwin bigwin--bonus">
+				<div class="bigwin-rays"></div>
+				<img class="bigwin-art" src={epicBonusUrl} alt="Epic bonus" draggable="false" />
+				{#if awardedFreeScratches !== 10}
+					<div class="bigwin-mult">+{awardedFreeScratches} Free Scratches</div>
+				{/if}
+				{#if totalWin > 0}
+					<div class="bigwin-mult">+${totalWin.toFixed(2)} this card</div>
+				{/if}
+				<div class="win-modal-hint">Tap to start the bonus</div>
+			</div>
+		{:else if winTier}
 			<div class={`bigwin bigwin--${winTier}`}>
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
@@ -974,5 +1059,24 @@
 				<div class="win-modal-hint">Tap anywhere to continue</div>
 			</div>
 		{/if}
+	</div>
+{/if}
+
+{#if showBonusSummary}
+	<div
+		class="win-backdrop bigwin-backdrop"
+		role="button"
+		tabindex="0"
+		onclick={closeBonusSummary}
+		onkeydown={(e) => e.key === 'Enter' && closeBonusSummary()}
+	>
+		<div class="bigwin bigwin--bonus">
+			<div class="bigwin-rays"></div>
+			<div class="bonus-summary-title">Bonus complete!</div>
+			<div class="bonus-summary-medal">{fmtMult(bonusMult)}</div>
+			<div class="bigwin-amount">${(bonusMult * betAmount).toFixed(2)}</div>
+			<div class="bigwin-mult">{bonusSpins} free scratches</div>
+			<div class="win-modal-hint">Tap anywhere to continue</div>
+		</div>
 	</div>
 {/if}
