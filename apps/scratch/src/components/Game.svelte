@@ -366,32 +366,37 @@
 	const VIEW_W = FRAME.viewX1 - FRAME.viewX0;
 	const contentH = FRAME.contentY1 - FRAME.contentY0;
 	// Bar height per unit of frame scale, when the bar is VIEW_W wide.
-	const BAR_H_PER_S = (VIEW_W * (SHARK_BAR.y1 - SHARK_BAR.y0)) / SHARK_BAR.w;
+	// The frame tucks right under the bar: it starts at the tube's bottom
+	// rim (the splash below it overlaps the frame), and a little higher
+	// still so the bar sits over the top of the frame's skull crest.
+	const BAR_RIM_Y = 690;
+	const FRAME_TUCK = 34; // frame source px hidden under the bar
+	const BAR_H_PER_S = (VIEW_W * (BAR_RIM_Y - SHARK_BAR.y0)) / SHARK_BAR.w - FRAME_TUCK;
 	const STACK_H_PER_S = BAR_H_PER_S + contentH;
-	const MAX_SCALE = 0.9;
+	const MAX_SCALE = 1;
 	// Narrow mode: logo + ribbon + tabs band above the bar.
 	const NARROW_HEADER_H = 178;
 	const MODE_SIGN_URL: Record<string, string> = { easy: modeEasyUrl, medium: modeMediumUrl, hard: modeHardUrl };
 	const SIDE_MIN = 190;
 
-	const wideScale = $derived(Math.min(vw / VIEW_W, (vh - 14) / STACK_H_PER_S, MAX_SCALE));
+	const wideScale = $derived(Math.min(vw / VIEW_W, (vh - 8) / STACK_H_PER_S, MAX_SCALE));
 	const wide = $derived((vw - VIEW_W * wideScale) / 2 >= SIDE_MIN);
 	const frameScale = $derived(
 		Math.max(
 			0.12,
-			wide ? wideScale : Math.min(vw / VIEW_W, (vh - NARROW_HEADER_H - 14) / STACK_H_PER_S, MAX_SCALE),
+			wide ? wideScale : Math.min(vw / VIEW_W, (vh - NARROW_HEADER_H - 8) / STACK_H_PER_S, MAX_SCALE),
 		),
 	);
 	const sharkBarW = $derived(VIEW_W * frameScale);
 	const sharkBarH = $derived(BAR_H_PER_S * frameScale);
-	const stackH = $derived(STACK_H_PER_S * frameScale + 4);
+	const stackH = $derived(STACK_H_PER_S * frameScale);
 	// Wide: center the bar+frame stack vertically. Narrow: right under the
 	// header band.
-	const sharkTop = $derived(wide ? Math.max(6, (vh - stackH) / 2) : NARROW_HEADER_H);
+	const sharkTop = $derived(wide ? Math.max(2, (vh - stackH) / 2) : NARROW_HEADER_H);
 	// Side column width for the logo + tabs in wide mode.
 	const sideW = $derived(Math.min(280, (vw - sharkBarW) / 2 - 24));
 	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
-	const frameTop = $derived(sharkTop + sharkBarH + 4 - FRAME.contentY0 * frameScale);
+	const frameTop = $derived(sharkTop + sharkBarH - FRAME.contentY0 * frameScale);
 	// Shark bar's glass tube on screen (the Octopus banner sits there).
 	const sharkTube = $derived.by(() => {
 		const k = sharkBarW / SHARK_BAR.w;
