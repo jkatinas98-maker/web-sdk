@@ -76,7 +76,24 @@ const FREE_SCRATCHES_AWARDED = 10;
 // (see that file's comments for why these numbers are what they are).
 // Extra matching symbols (4th, 5th, ...) of the winning symbol each add
 // this much to the win multiplier. PLACEHOLDER until the math is redone.
-export const EXTRA_MATCH_BONUS: Record<BetMode, number> = { easy: 0.25, medium: 0.5, hard: 1 };
+// Escalating: each list entry is what the 4th, 5th, 6th ... match adds;
+// past the end of the list the last value repeats.
+export const EXTRA_MATCH_LADDER: Record<BetMode, number[]> = {
+	easy: [0.25, 0.25, 0.5, 0.5, 1],
+	medium: [0.5, 0.5, 1, 1, 2],
+	hard: [1, 1.5, 2, 2.5, 3, 5],
+};
+// What the k-th extra (1 = the 4th match) adds.
+export const extraMatchBonus = (betMode: BetMode, k: number): number => {
+	const l = EXTRA_MATCH_LADDER[betMode];
+	return l[Math.min(k, l.length) - 1];
+};
+// Total added by the first `extras` extras.
+export const extraMatchTotal = (betMode: BetMode, extras: number): number => {
+	let sum = 0;
+	for (let k = 1; k <= extras; k++) sum += extraMatchBonus(betMode, k);
+	return Math.round(sum * 100) / 100;
+};
 
 const CHESTS_PER_TRIGGER = 3;
 const CHEST_PRIZE_TABLE: Array<{ id: string; kind: ChestOutcomeKind; value: number; weight: number }> = [
@@ -281,7 +298,7 @@ export const createMockBet = (
 	// Each matching symbol beyond the 3rd adds a flat bonus to the win
 	// (+0.25x easy, +0.5x medium, +1x hard). Replaces the Treasure Meter.
 	const extras = winSymbol ? Math.max(0, counts[winSymbol]! - 3) : 0;
-	let amount = winMult + extras * EXTRA_MATCH_BONUS[betMode];
+	let amount = winMult + extraMatchTotal(betMode, extras);
 	let freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
 	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];

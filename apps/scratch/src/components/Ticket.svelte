@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { extraMatchBonus } from '../game/mockBet';
 	import type * as PIXI from 'pixi.js';
 	import { Container, Circle, Graphics } from 'pixi-svelte';
 	import { getContext } from '../game/context';
@@ -23,8 +24,6 @@
 		// The symbol id that won this round (null before resolution / on a
 		// loss) — cells matching it get the green pulsing "winning" treatment.
 		winningSymbol?: SymbolName | null;
-		// Win-multiplier bonus each extra match (4th, 5th, ...) adds.
-		extraStep?: number;
 		onRevealIndex: (index: number) => void;
 	};
 
@@ -37,7 +36,6 @@
 		interactive,
 		frameless = false,
 		winningSymbol = null,
-		extraStep = 0,
 		onRevealIndex,
 	}: Props = $props();
 
@@ -213,7 +211,7 @@
 			extraIndex={extraOrder.get(cell.index) ?? 0}
 			matchIndex={matchOrder.get(cell.index) ?? 0}
 			matchMult={winningSymbol ? config.symbols[winningSymbol].mult : 0}
-			{extraStep}
+			extraStep={(extraOrder.get(cell.index) ?? 0) > 0 ? extraMatchBonus(betMode, extraOrder.get(cell.index)!) : 0}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>
 	{/each}

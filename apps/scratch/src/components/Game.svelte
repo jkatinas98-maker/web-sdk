@@ -7,7 +7,7 @@
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
-	import { createMockBet, EXTRA_MATCH_BONUS } from '../game/mockBet';
+	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
@@ -338,7 +338,7 @@
 	$effect(() => {
 		const ws = winningSymbol;
 		const panels = context.stateGame.panels;
-		const step = EXTRA_MATCH_BONUS[betMode];
+		const mode = betMode;
 		if (!ws) {
 			tally = null;
 			return;
@@ -354,7 +354,7 @@
 		for (let k = 1; k <= extras; k++) {
 			timers.push(
 				setTimeout(() => {
-					tally = { name: ws, value: Math.round((base + k * step) * 100) / 100, step: k, extras };
+					tally = { name: ws, value: Math.round((base + extraMatchTotal(mode, k)) * 100) / 100, step: k, extras };
 				}, EXTRA_START_MS + (k - 1) * EXTRA_GAP_MS + 150),
 			);
 		}
@@ -764,7 +764,6 @@
 			frameless
 			interactive={viewState === 'playing' || octoScratching}
 			{winningSymbol}
-			extraStep={EXTRA_MATCH_BONUS[betMode]}
 			onRevealIndex={revealPanel}
 		/>
 	</App>
@@ -990,8 +989,10 @@
 					<span class="pay-item-mult">×2 – ×{maxWin}</span>
 				</div>
 				<div class="pay-item">
-					<span class="pay-item-name">Each extra match beyond 3</span>
-					<span class="pay-item-mult">+{EXTRA_MATCH_BONUS[betMode]}x</span>
+					<span class="pay-item-name">Extra matches (4th, 5th, …)</span>
+					<span class="pay-item-mult">
+						{EXTRA_MATCH_LADDER[betMode].map((v) => `+${v}`).join(', ')}{'x…'}
+					</span>
 				</div>
 				<div class="pay-item shark-item">
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />
