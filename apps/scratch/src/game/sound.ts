@@ -70,7 +70,7 @@ const loadSamples = (ctx: AudioContext) => {
 const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	// frequent / small -- kept well under the big moments
 	click: 0.35,
-	scratch: 0.35,
+	scratch: 0.5, // wet-sand scratch (same as the bonus one now)
 	reveal: 0.4,
 	woodTick: 0.35,
 	match: 0.55, // gunshot 2: the 3 matching tiles

@@ -5,7 +5,7 @@ game/sound.ts. Per-type volume: SAMPLE_GAIN in game/sound.ts.
 Processed from the ElevenLabs originals: leading/trailing silence trimmed,
 long ones shortened with a fade, peak-normalized to -1 dB.
 
-  click scratch scratchSand(bonus) reveal woodTick woodThunk scatterLand (ship's bell)
+  click scratch(wet sand) scratchSand(bonus, same file) reveal woodTick woodThunk scatterLand (ship's bell)
   match        gunshot 2 -- the 3 matching tiles
   matchExtra   gunshot 1 -- every extra match (4th, 5th, ...)
   wheelSpin    ship's wheel -- Shark Bite roll, Kraken treasure reel
