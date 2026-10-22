@@ -123,6 +123,12 @@
 	let presentPending = $state(false);
 	let pendingAward = 0;
 	function finishPresentation() {
+		if (medallionPending !== null) {
+			const m = medallionPending;
+			medallionPending = null;
+			if (m > bonusMult) playSound('bonusCoins');
+			bonusMult = m;
+		}
 		if (pendingAward > 0) {
 			freeScratchesRemaining += pendingAward;
 			awardedFreeScratches = pendingAward;
@@ -333,6 +339,7 @@
 	let showBonusSummary = $state(false);
 	let roundIsFree = false;
 	let winAnimUntil = 0;
+	let medallionPending: number | null = null;
 	let bonusWinSum = $state(0);
 	// Arrives with the book; shown once the card is scratched.
 	let pendingBonusMult: number | null = null;
@@ -764,12 +771,10 @@
 				// dealt -- otherwise the extras get cut off.
 				const animMs = buildWinSchedule(panels, findWinningSymbols(panels), betMode).total;
 				winAnimUntil = performance.now() + animMs;
-				const newMult = pendingBonusMult;
-				if (newMult !== null)
-					setTimeout(() => {
-						if (newMult > bonusMult) playSound('bonusCoins');
-						bonusMult = newMult;
-					}, animMs + 200);
+				// The book's multiplier already includes this card's features
+				// (Kraken, Shark Bite outcomes, chests, ...); the medallion
+				// updates once those have all played (finishPresentation).
+				medallionPending = pendingBonusMult;
 			}
 			if (totalWin > 0) {
 				// Re-derive which symbol actually won by scanning the resolved

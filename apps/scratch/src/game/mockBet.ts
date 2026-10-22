@@ -376,8 +376,9 @@ export const createMockBet = (
 		idx += 1;
 	}
 
-	// Bonus: a winning free card adds its multiplier to the running bonus
-	// multiplier and pays bet x that total instead (x10 so far + a x2 card
+	// Bonus: a winning free card -- including anything its features won
+	// (Kraken, Octopus cards, Pirate plunder, chest pick, skull grid) --
+	// adds its multiplier to the running bonus multiplier and pays bet x that total instead (x10 so far + a x2 card
 	// -> this card pays x12; another x2 -> x14, ...).
 	if (isFreeRound && amount > 0) {
 		const added = Math.round(amount * 100) / 100;
