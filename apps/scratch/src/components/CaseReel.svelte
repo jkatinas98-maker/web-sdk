@@ -4,7 +4,7 @@
 	import reelFrameUrl from '../assets/reel_frame.webp';
 	import { KRAKEN_PRIZE_TABLE, krakenPrizeRarity, krakenPrizeSymbol } from '../game/kraken';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
-	import { playSound } from '../game/sound';
+	import { playSound, stopSound } from '../game/sound';
 	import type { BetMode } from '../game/types';
 
 	// CS2-style case opening inside the illustrated 5-window reel frame: a
@@ -67,13 +67,15 @@
 	const startOffset = CENTER_X - TILE_W / 2 - PITCH * 2;
 
 	onMount(() => {
-		requestAnimationFrame(() => {
+		// Let the "treasure rises" sound and the reel's entrance play first,
+		// then spin (with the ship's wheel in sync).
+		const startTimer = setTimeout(() => {
 			requestAnimationFrame(() => {
 				spinning = true;
 				playSound('wheelSpin', 0.7); // slowed to ~5.6s, matches SPIN_MS
 				progress = 1;
 			});
-		});
+		}, 900);
 
 		// Tick sound each time a tile crosses the center window.
 		let lastTile = -1;
@@ -91,12 +93,17 @@
 			if (!landed) raf = requestAnimationFrame(tick);
 		};
 		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
+		return () => {
+			clearTimeout(startTimer);
+			cancelAnimationFrame(raf);
+			stopSound('wheelSpin');
+		};
 	});
 
 	function handleEnd(e: TransitionEvent) {
 		if (e.propertyName !== 'transform' || landed) return;
 		landed = true;
+		stopSound('wheelSpin');
 		playSound('woodThunk');
 		setTimeout(() => playSound('jackpot'), 120);
 		onLanded();

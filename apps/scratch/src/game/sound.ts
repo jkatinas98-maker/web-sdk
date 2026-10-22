@@ -129,7 +129,34 @@ const playSample = (ctx: AudioContext, type: SoundType, delay = 0, rate = 1): bo
 	src.connect(g).connect(ctx.destination);
 	src.playbackRate.value = rate;
 	src.start(ctx.currentTime + delay);
+	// Track it so it can be cut off early (stopSound).
+	let set = playing.get(type);
+	if (!set) playing.set(type, (set = new Set()));
+	const entry = { src, g };
+	set.add(entry);
+	src.onended = () => set!.delete(entry);
 	return true;
+};
+
+const playing = new Map<SoundType, Set<{ src: AudioBufferSourceNode; g: GainNode }>>();
+
+// Quickly fade out and stop every playing instance of a sound (e.g. the
+// ship's wheel when a reel lands or the screen changes).
+export const stopSound = (type: SoundType, fadeMs = 150) => {
+	const set = playing.get(type);
+	if (!set || !audioCtx) return;
+	const now = audioCtx.currentTime;
+	for (const { src, g } of set) {
+		try {
+			g.gain.cancelScheduledValues(now);
+			g.gain.setValueAtTime(g.gain.value, now);
+			g.gain.linearRampToValueAtTime(0, now + fadeMs / 1000);
+			src.stop(now + fadeMs / 1000 + 0.02);
+		} catch {
+			/* already stopped */
+		}
+	}
+	set.clear();
 };
 
 const hasSample = (type: SoundType) => !!sampleUrls[type]?.length;

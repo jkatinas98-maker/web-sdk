@@ -3,7 +3,7 @@
 	import octopusUrl from '../assets/symbols/octopus.png';
 	import pirateUrl from '../assets/symbols/pirate.png';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
-	import { playSound } from '../game/sound';
+	import { playSound, stopSound } from '../game/sound';
 	import type { SharkOutcome } from '../game/typesBookEvent';
 
 	// The "Shark Bite" bar under the difficulty tabs. Idle, its five glass
@@ -128,6 +128,7 @@
 		if (e.propertyName !== 'transform' || landed || !outcome) return;
 		landed = true;
 		cancelAnimationFrame(raf);
+		stopSound('wheelSpin');
 		playSound('woodThunk');
 		const landed_ = outcome;
 		setTimeout(() => playSound('scatterLand'), 60);

@@ -9,7 +9,7 @@
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
+	import { playSound, stopSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -108,6 +108,7 @@
 	$effect(() => {
 		if (activeFeatureOverlay?.kind === 'kraken') {
 			krakenStage = 'numbers';
+			stopSound('wheelSpin'); // never carry a reel spin into the Kraken
 			playSound('splash');
 			setTimeout(() => playSound('krakenRoar'), 250);
 		}
