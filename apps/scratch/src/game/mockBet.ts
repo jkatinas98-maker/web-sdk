@@ -262,8 +262,14 @@ export const createMockBet = (
 	let krakenCount = 0;
 	let sharkCount = 0;
 
+	// Kraken, Shark and Key trigger once per card no matter how many land,
+	// so at most one of each is ever dealt (redraw a second one).
+	const ONE_PER_CARD: SymbolName[] = ['kraken', 'shark', 'key'];
+	const dealt = new Set<SymbolName>();
 	for (let i = 0; i < panelCount; i++) {
-		const name = weightedPick(betMode);
+		let name = weightedPick(betMode);
+		while (ONE_PER_CARD.includes(name) && dealt.has(name)) name = weightedPick(betMode);
+		dealt.add(name);
 		panels.push({ name });
 
 		// Bonus is a scatter: it counts toward its own 3-of-a-kind trigger
