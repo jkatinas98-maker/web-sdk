@@ -1126,15 +1126,19 @@
 	{#if octoActive}
 		<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same
 		     size and spot); the live text sits in the banner's red plaque. -->
+		<!-- Smaller than the Shark Bite bar (its art is much taller), with its
+		     plaque's bottom edge sitting where the bar's bottom rim was. -->
 		{@const k = sharkBarW / 1983}
+		{@const ow = sharkBarW * 0.72}
+		{@const k2 = ow / 1983}
 		<div
 			class="octo-bar"
-			style={`left:${vw / 2 - sharkBarW / 2}px;top:${sharkTop - 80 * k}px;width:${sharkBarW}px;height:${793 * k}px;`}
+			style={`left:${vw / 2 - ow / 2}px;top:${sharkTop + (690 - 80) * k - 700 * k2}px;width:${ow}px;height:${793 * k2}px;`}
 		>
 			<img src={octopusBarUrl} alt="Octopus Bonus" draggable="false" />
 			<div
 				class="octo-bar-text"
-				style={`left:${(628 / 1983) * 100}%;right:${((1983 - 1614) / 1983) * 100}%;top:${(518 / 793) * 100}%;bottom:${((793 - 690) / 793) * 100}%;font-size:${Math.max(9, 54 * k)}px;`}
+				style={`left:${(628 / 1983) * 100}%;right:${((1983 - 1614) / 1983) * 100}%;top:${(518 / 793) * 100}%;bottom:${((793 - 690) / 793) * 100}%;font-size:${Math.max(9, 54 * k2)}px;`}
 			>
 				{#if octoIndex < 0}
 					<div class="octo-bar-title">3 Bonus Cards!</div>
