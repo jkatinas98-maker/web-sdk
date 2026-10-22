@@ -9,7 +9,7 @@
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
+	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -25,6 +25,9 @@
 	import bigWinUrl from '../assets/winpop/big_win.webp';
 	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
 	import bonusBgUrl from '../assets/bonus_bg.webp';
+	import bonusMp4Url from '../assets/bonus_loop.mp4';
+	import bonusWebmUrl from '../assets/bonus_loop.webm';
+	import bonusMusicUrl from '../assets/music_bonus.mp3';
 	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
 	import modeMediumUrl from '../assets/signs/mode_medium.webp';
@@ -342,6 +345,11 @@
 				playSound('bonusComplete');
 			});
 		}
+	});
+
+	// Bonus soundtrack while the bonus runs, main theme otherwise.
+	$effect(() => {
+		setMusicTrack(bonusActive ? bonusMusicUrl : musicUrl);
 	});
 
 	function closeBonusSummary() {
@@ -785,12 +793,20 @@
 	<source src={bgMp4Url} type="video/mp4" />
 </video>
 <!-- Sunny beach cove while the free-scratch bonus runs (cross-fades). -->
-<div
+<video
 	class="bonus-bg"
 	class:on={bonusActive}
-	style={`background-image:url(${bonusBgUrl});`}
+	autoplay
+	muted
+	loop
+	playsinline
+	preload="auto"
+	poster={bonusBgUrl}
 	aria-hidden="true"
-></div>
+>
+	<source src={bonusWebmUrl} type="video/webm" />
+	<source src={bonusMp4Url} type="video/mp4" />
+</video>
 <div class="bg-dim" aria-hidden="true"></div>
 
 <div class="pixi-layer">

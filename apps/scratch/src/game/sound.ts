@@ -124,28 +124,68 @@ const getContext = (): AudioContext | null => {
 // so ~0.33 puts it ~30% quieter than the effects at full volume. Tweak
 // MUSIC_GAIN if the balance needs adjusting by ear.
 const MUSIC_GAIN = 0.33;
-let music: HTMLAudioElement | null = null;
+const FADE_MS = 900;
+// One <audio> per soundtrack (main / bonus); only `currentSrc` plays.
+const tracks = new Map<string, HTMLAudioElement>();
+let currentSrc: string | null = null;
 let musicStarted = false;
 let musicEnabled = true;
+const fades = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
+
+const getTrack = (src: string) => {
+	let a = tracks.get(src);
+	if (!a) {
+		a = new Audio(src);
+		a.loop = true;
+		a.preload = 'auto';
+		a.volume = 0;
+		tracks.set(src, a);
+	}
+	return a;
+};
+
+// Smoothly move a track's volume to `to` (pausing it at 0).
+const fadeTo = (a: HTMLAudioElement, to: number) => {
+	clearInterval(fades.get(a));
+	const from = a.volume;
+	const start = performance.now();
+	if (to > 0 && a.paused) a.play().catch(() => {});
+	fades.set(
+		a,
+		setInterval(() => {
+			const t = Math.min(1, (performance.now() - start) / FADE_MS);
+			a.volume = Math.max(0, Math.min(1, from + (to - from) * t));
+			if (t >= 1) {
+				clearInterval(fades.get(a));
+				if (to === 0) a.pause();
+			}
+		}, 30),
+	);
+};
 
 const applyMusicState = () => {
-	if (!music) return;
-	music.volume = MUSIC_GAIN;
-	if (!musicEnabled) music.pause();
-	else if (musicStarted && music.paused) music.play().catch(() => {});
+	for (const [src, a] of tracks) {
+		const on = musicEnabled && musicStarted && src === currentSrc;
+		fadeTo(a, on ? MUSIC_GAIN : 0);
+	}
 };
 
 // Browsers block audio until the player interacts with the page, so this
 // is called from the first pointer/key event (see Game.svelte). Safe to
-// call repeatedly — only the first successful call does anything.
+// call repeatedly — only the first call does anything.
 export const startMusic = (src: string) => {
 	if (musicStarted || typeof window === 'undefined') return;
 	musicStarted = true;
-	if (!music) {
-		music = new Audio(src);
-		music.loop = true;
-		music.preload = 'auto';
-	}
+	if (!currentSrc) currentSrc = src;
+	getTrack(currentSrc);
+	applyMusicState();
+};
+
+// Cross-fade to another soundtrack (e.g. the bonus music and back).
+export const setMusicTrack = (src: string) => {
+	if (typeof window === 'undefined' || src === currentSrc) return;
+	currentSrc = src;
+	getTrack(src);
 	applyMusicState();
 };
 

@@ -1969,14 +1969,15 @@ button:disabled {
    scratches, with a slow drift so it isn't static. */
 .bonus-bg {
 	position: fixed;
-	inset: -3%;
+	inset: 0;
+	width: 100%;
+	height: 100%;
 	z-index: 0;
 	pointer-events: none;
-	background-size: cover;
-	background-position: 50% 60%;
+	object-fit: cover;
+	object-position: 50% 60%;
 	opacity: 0;
 	transition: opacity 1.2s ease;
-	animation: bonus-bg-drift 24s ease-in-out infinite alternate;
 }
 
 .bonus-bg.on {
@@ -1988,9 +1989,6 @@ button:disabled {
 	to { transform: scale(1.06) translate(-1.2%, -0.8%); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-	.bonus-bg { animation: none; }
-}
 
 /* ---------- Extra-match win tally (over the grid) ---------- */
 
