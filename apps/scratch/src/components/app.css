@@ -2151,3 +2151,181 @@ button:disabled {
 	background: #86efac;
 	pointer-events: none;
 }
+
+/* ---------- Rules / info modal ---------- */
+
+.paytable-modal.rules-modal {
+	max-width: min(560px, 94vw);
+	max-height: 86vh;
+}
+
+.rules-tabs {
+	display: flex;
+	gap: 0.35rem;
+}
+
+.rules-tab {
+	flex: 1;
+	padding: 0.45rem 0;
+	border-radius: 8px;
+	font-family: var(--font-ui);
+	font-weight: 700;
+	font-size: 0.72rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--txt-dim);
+	background: linear-gradient(180deg, var(--wood-700), var(--wood-900));
+	border: 1px solid var(--wood-900);
+	cursor: pointer;
+}
+
+.rules-tab.active {
+	color: var(--wood-900);
+	background: linear-gradient(180deg, var(--brass-light), var(--brass) 60%, var(--brass-dark));
+	border-color: var(--brass-dark);
+}
+
+.rules-body {
+	overflow-y: auto;
+	padding-right: 0.3rem;
+	font-size: 0.8rem;
+	line-height: 1.45;
+	color: var(--txt-1);
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.rules-body p {
+	margin: 0;
+}
+
+.rules-body h4,
+.rules-body h5 {
+	margin: 0.3rem 0 0.15rem;
+	font-family: var(--font-display);
+	font-weight: 400;
+	color: var(--gold);
+	text-shadow: 0 2px 0 #3a1f08;
+}
+
+.rules-body h4 {
+	font-size: 1.15rem;
+}
+
+.rules-body h5 {
+	font-size: 0.98rem;
+	margin: 0;
+}
+
+.rules-body b {
+	color: var(--gold);
+}
+
+.rules-body ul {
+	margin: 0;
+	padding-left: 1.1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.rules-mode {
+	text-transform: capitalize;
+	padding: 0.35rem 0.6rem;
+	border-radius: 8px;
+	background: rgba(242, 199, 68, 0.1);
+	border: 1px solid rgba(242, 199, 68, 0.35);
+}
+
+.rules-note {
+	color: var(--txt-dim);
+	font-size: 0.74rem;
+}
+
+.rules-ladder {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
+.rules-ladder span {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 3.1rem;
+	padding: 0.25rem 0.35rem;
+	border-radius: 7px;
+	background: rgba(15, 9, 4, 0.55);
+	border: 1px solid rgba(201, 162, 39, 0.35);
+	font-weight: 800;
+	color: var(--gold);
+}
+
+.rules-ladder small {
+	font-size: 0.62rem;
+	font-weight: 600;
+	color: var(--txt-dim);
+}
+
+.rules-feature {
+	display: flex;
+	gap: 0.7rem;
+	align-items: flex-start;
+	padding: 0.5rem;
+	border-radius: 10px;
+	background: rgba(15, 9, 4, 0.45);
+	border: 1px solid rgba(201, 162, 39, 0.25);
+}
+
+.rules-feature img {
+	width: 52px;
+	height: 52px;
+	object-fit: contain;
+	flex: 0 0 auto;
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+.rules-feature.sub {
+	margin-left: 1.4rem;
+	padding: 0.35rem 0.5rem;
+	background: rgba(15, 9, 4, 0.3);
+}
+
+.rules-feature.sub img {
+	width: 38px;
+	height: 38px;
+}
+
+.rules-feature > div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.rules-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.78rem;
+}
+
+.rules-table th,
+.rules-table td {
+	padding: 0.35rem 0.4rem;
+	text-align: left;
+	border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+	text-transform: capitalize;
+}
+
+.rules-table th {
+	color: var(--txt-dim);
+	font-weight: 700;
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.rules-table tr.current td {
+	color: var(--gold);
+	font-weight: 800;
+}

@@ -43,6 +43,7 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import RulesModal from './RulesModal.svelte';
 
 	const context = getContext();
 
@@ -1107,55 +1108,7 @@
 {/if}
 
 {#if showPaytable}
-	<div
-		class="paytable-backdrop"
-		role="button"
-		tabindex="0"
-		onclick={togglePaytable}
-		onkeydown={(e) => e.key === 'Enter' && togglePaytable()}
-	>
-		<div class="paytable-modal" role="dialog" onclick={(e) => e.stopPropagation()}>
-			<div class="paytable-modal-header">
-				<span class="paytable-modal-title">Paytable</span>
-				<button class="close-btn" onclick={togglePaytable} aria-label="Close">✕</button>
-			</div>
-			<div class="paytable-modal-list">
-				<div class="pay-item bonus-item">
-					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.bonus} alt={SYMBOL_LABEL.bonus} />
-					<span class="pay-item-name">{SYMBOL_LABEL.bonus} (land 3)</span>
-					<span class="pay-item-mult">10 Free Scratches</span>
-				</div>
-				<div class="pay-item kraken-item">
-					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.kraken} alt={SYMBOL_LABEL.kraken} />
-					<span class="pay-item-name">{SYMBOL_LABEL.kraken} (match its number)</span>
-					<span class="pay-item-mult">×2 – ×{maxWin}</span>
-				</div>
-				<div class="pay-item">
-					<span class="pay-item-name">Extra matches (4th, 5th, …)</span>
-					<span class="pay-item-mult">
-						{EXTRA_MATCH_LADDER[betMode].map((v) => `+${v}`).join(', ')}{'x…'}
-					</span>
-				</div>
-				<div class="pay-item">
-					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.skull} alt="" />
-					<span class="pay-item-name">Full grid of skulls</span>
-					<span class="pay-item-mult">+{SKULL_GRID_PRIZE[betMode]}x</span>
-				</div>
-				<div class="pay-item shark-item">
-					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />
-					<span class="pay-item-name">{SYMBOL_LABEL.shark} (rolls the bar)</span>
-					<span class="pay-item-mult">Kraken · Octopus · Pirate · Key · Bonus</span>
-				</div>
-				{#each payEntries as [name, sym] (name)}
-					<div class="pay-item">
-						<img class="pay-item-icon" src={SYMBOL_IMAGE_URL[name]} alt={SYMBOL_LABEL[name]} />
-						<span class="pay-item-name">{SYMBOL_LABEL[name]}</span>
-						<span class="pay-item-mult">×{sym.mult}</span>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</div>
+	<RulesModal {betMode} onClose={togglePaytable} />
 {/if}
 
 {#if activeFeatureOverlay?.kind === 'kraken'}
