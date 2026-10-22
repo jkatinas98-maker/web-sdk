@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { extraMatchBonus } from '../game/mockBet';
+	import { buildWinSchedule } from '../game/winTiming';
 	import type * as PIXI from 'pixi.js';
 	import { Container, Circle, Graphics } from 'pixi-svelte';
 	import { getContext } from '../game/context';
@@ -23,7 +23,7 @@
 		frameless?: boolean;
 		// The symbol id that won this round (null before resolution / on a
 		// loss) — cells matching it get the green pulsing "winning" treatment.
-		winningSymbol?: SymbolName | null;
+		winningSymbols?: SymbolName[];
 		onRevealIndex: (index: number) => void;
 	};
 
@@ -35,7 +35,7 @@
 		right = 0,
 		interactive,
 		frameless = false,
-		winningSymbol = null,
+		winningSymbols = [],
 		onRevealIndex,
 	}: Props = $props();
 
@@ -128,31 +128,9 @@
 	const panels = $derived(context.stateGame.panels);
 	const revealed = $derived(context.stateGame.revealed);
 
-	// Reading order of the winning symbol's tiles: 4th onward are extras
-	// (1 = first extra, 2 = second, ...).
-	const extraOrder = $derived.by(() => {
-		const m = new Map<number, number>();
-		if (!winningSymbol) return m;
-		let n = 0;
-		panels.forEach((p, i) => {
-			if (p?.name !== winningSymbol) return;
-			n += 1;
-			if (n > 3) m.set(i, n - 3);
-		});
-		return m;
-	});
-	// The three tiles that make the match (1, 2, 3 in reading order).
-	const matchOrder = $derived.by(() => {
-		const m = new Map<number, number>();
-		if (!winningSymbol) return m;
-		let n = 0;
-		panels.forEach((p, i) => {
-			if (p?.name !== winningSymbol || n >= 3) return;
-			n += 1;
-			m.set(i, n);
-		});
-		return m;
-	});
+	// Per-tile win animation info (which match/extra it is and when it
+	// plays) for every winning symbol, played one after another.
+	const winCells = $derived(buildWinSchedule(panels, winningSymbols, betMode).cells);
 
 	const cellPositions = $derived(
 		Array.from({ length: cols * rows }, (_, index) => {
@@ -205,13 +183,10 @@
 			size={tileSize}
 			panel={panels[cell.index]}
 			revealed={revealed.has(cell.index)}
-			winning={revealed.has(cell.index) && panels[cell.index]?.name === winningSymbol}
+			winning={revealed.has(cell.index) && !!panels[cell.index] && winningSymbols.includes(panels[cell.index]!.name)}
 			jackpot={revealed.has(cell.index) && panels[cell.index]?.name === jackpotSymbol}
 			interactive={interactive && !revealed.has(cell.index)}
-			extraIndex={extraOrder.get(cell.index) ?? 0}
-			matchIndex={matchOrder.get(cell.index) ?? 0}
-			matchMult={winningSymbol ? config.symbols[winningSymbol].mult : 0}
-			extraStep={(extraOrder.get(cell.index) ?? 0) > 0 ? extraMatchBonus(betMode, extraOrder.get(cell.index)!) : 0}
+			win={winCells.get(cell.index)}
 			onReveal={() => onRevealIndex(cell.index)}
 		/>
 	{/each}

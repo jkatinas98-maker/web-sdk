@@ -3,7 +3,7 @@
 	import { Container, Graphics, Text } from 'pixi-svelte';
 
 	import AnimatedSymbol from './AnimatedSymbol.svelte';
-	import { MATCH_GAP_MS, EXTRA_START_MS, EXTRA_GAP_MS } from '../game/winTiming';
+	import type { CellWinInfo } from '../game/winTiming';
 	import config from '../game/config';
 	import { playSound } from '../game/sound';
 	import type { RawSymbol } from '../game/types';
@@ -20,18 +20,16 @@
 		// landing a scratcher's jackpot icon before you know if it's a win).
 		jackpot: boolean;
 		interactive: boolean;
-		// 1, 2, ... if this tile is the 4th, 5th, ... of the winning symbol
-		// (0 otherwise); extraStep is the bonus it adds (+0.25x etc).
-		extraIndex?: number;
-		extraStep?: number;
-		// 1..3 for the three tiles that make the match; matchMult is the
-		// symbol's multiplier (shown off the 3rd).
-		matchIndex?: number;
-		matchMult?: number;
+		// Win animation for this tile (match 1..3 / extra), with timing.
+		win?: CellWinInfo;
 		onReveal: () => void;
 	};
 
-	const { x, y, size, panel, revealed, winning, jackpot, interactive, extraIndex = 0, extraStep = 0, matchIndex = 0, matchMult = 0, onReveal }: Props = $props();
+	const { x, y, size, panel, revealed, winning, jackpot, interactive, win, onReveal }: Props = $props();
+	const extraIndex = $derived(win?.extraIndex ?? 0);
+	const extraStep = $derived(win?.extraStep ?? 0);
+	const matchIndex = $derived(win?.matchIndex ?? 0);
+	const matchMult = $derived(win?.matchMult ?? 0);
 
 	// Extra-match animation: each extra tile, in turn, bursts a gold ring
 	// and fires a "+0.25x" that floats up and away, then keeps a small
@@ -42,7 +40,7 @@
 			extraT = -1;
 			return;
 		}
-		const start = performance.now() + EXTRA_START_MS + (extraIndex - 1) * EXTRA_GAP_MS;
+		const start = performance.now() + (win?.extraDelay ?? 0);
 		let sounded = false;
 		let raf = 0;
 		const loop = (now: number) => {
@@ -66,7 +64,7 @@
 			matchT = -1;
 			return;
 		}
-		const start = performance.now() + 150 + (matchIndex - 1) * MATCH_GAP_MS;
+		const start = performance.now() + (win?.matchDelay ?? 0);
 		let sounded = false;
 		let raf = 0;
 		const loop = (now: number) => {

@@ -2099,3 +2099,9 @@ button:disabled {
 	from { transform: translateX(-180%) scale(0.3) rotate(-30deg); opacity: 0; }
 	to { transform: none; opacity: 1; }
 }
+
+/* Several winning symbols: pills side by side, wrapping. */
+.win-tally {
+	flex-wrap: wrap;
+	gap: 6px;
+}

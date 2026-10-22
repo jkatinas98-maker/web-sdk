@@ -36,7 +36,7 @@
 	import Ticket from './Ticket.svelte';
 	import CaseReel from './CaseReel.svelte';
 	import SharkBiteBar from './SharkBiteBar.svelte';
-	import { MATCH_DONE_MS, EXTRA_START_MS, EXTRA_GAP_MS } from '../game/winTiming';
+	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
 
 	const context = getContext();
@@ -50,7 +50,7 @@
 	let totalWin: number = $state(0);
 	let showWinModal = $state(false);
 	let showPaytable = $state(false);
-	let winningSymbol: SymbolName | null = $state(null);
+	let winningSymbols: SymbolName[] = $state([]);
 	// The RGS result (including the win amount) arrives the instant the bet
 	// resolves, but the player hasn't scratched anything yet — hold it here
 	// and only surface it once they've revealed every panel themselves.
@@ -200,7 +200,7 @@
 	function dealOctoCard(i: number) {
 		octoIndex = i;
 		octoCardDone = false;
-		winningSymbol = null;
+		winningSymbols = [];
 		context.stateGameDerived.setPanels(octoCards[i].panels);
 		playSound('click');
 	}
@@ -214,7 +214,7 @@
 			const card = octoCards[octoIndex];
 			octoCardDone = true;
 			octoWinSum += card.win;
-			winningSymbol = findWinningSymbol(card.panels);
+			winningSymbols = findWinningSymbols(card.panels);
 			playSound(card.win > 0 ? 'win' : 'click');
 			clearTimeout(featureTimer);
 			featureTimer = setTimeout(() => {
@@ -229,17 +229,7 @@
 		});
 	});
 
-	// First paying symbol to reach 3 on a card -- the same rule the book
-	// resolves wins by.
-	function findWinningSymbol(panels: Array<{ name: SymbolName } | undefined>): SymbolName | null {
-		const counts: Partial<Record<SymbolName, number>> = {};
-		for (const panel of panels) {
-			if (!panel || config.symbols[panel.name].mult <= 0) continue;
-			counts[panel.name] = (counts[panel.name] ?? 0) + 1;
-			if (counts[panel.name]! >= 3) return panel.name;
-		}
-		return null;
-	}
+
 
 	// The win pop-up only shows for big wins: at least the mode's
 	// second-highest symbol multiplier (easy 16x, medium 41x, hard 130x),
@@ -344,32 +334,29 @@
 		return () => clearTimeout(t);
 	});
 
-	// Win tally over the grid when the winning symbol landed more than 3
-	// times: starts at the symbol's multiplier and steps up by the mode's
-	// extra-match bonus in time with each extra tile's "+0.25x" burst.
-	let tally: { name: SymbolName; value: number; step: number; extras: number } | null = $state(null);
+	// Win tally pills over the grid: one per winning symbol, appearing as
+	// its 3rd matching tile ticks in (green "3 match"), turning gold and
+	// bumping for each extra -- in step with the tiles (see winTiming.ts).
+	type TallyPill = { name: SymbolName; value: number; step: number };
+	let tallies: TallyPill[] = $state([]);
 	$effect(() => {
-		const ws = winningSymbol;
+		const winners = winningSymbols;
 		const panels = context.stateGame.panels;
 		const mode = betMode;
-		if (!ws) {
-			tally = null;
-			return;
-		}
-		const count = panels.filter((p) => p?.name === ws).length;
-		const extras = Math.max(0, count - 3);
-		const base = config.symbols[ws].mult;
-		tally = null;
+		tallies = [];
+		if (winners.length === 0) return;
+		const { segments } = buildWinSchedule(panels, winners, mode);
 		const timers: ReturnType<typeof setTimeout>[] = [];
-		// Appears once the 3rd matching tile has ticked in...
-		timers.push(setTimeout(() => (tally = { name: ws, value: base, step: 0, extras }), MATCH_DONE_MS));
-		// ...then bumps for each extra.
-		for (let k = 1; k <= extras; k++) {
-			timers.push(
-				setTimeout(() => {
-					tally = { name: ws, value: Math.round((base + extraMatchTotal(mode, k)) * 100) / 100, step: k, extras };
-				}, EXTRA_START_MS + (k - 1) * EXTRA_GAP_MS + 150),
-			);
+		const setPill = (pill: TallyPill) => {
+			const rest = tallies.filter((p) => p.name !== pill.name);
+			const order = segments.map((g) => g.symbol);
+			tallies = [...rest, pill].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+		};
+		for (const seg of segments) {
+			timers.push(setTimeout(() => setPill({ name: seg.symbol, value: seg.mult, step: 0 }), seg.showAt));
+			for (const b of seg.bumps) {
+				timers.push(setTimeout(() => setPill({ name: seg.symbol, value: b.value, step: b.step }), b.at));
+			}
 		}
 		return () => timers.forEach(clearTimeout);
 	});
@@ -462,7 +449,7 @@
 		viewState = 'start';
 		totalWin = 0;
 		showWinModal = false;
-		winningSymbol = null;
+		winningSymbols = [];
 		pendingWin = null;
 		pendingFeatureEvents = [];
 		featureOverlayQueue = [];
@@ -605,7 +592,7 @@
 		viewState = 'playing';
 		totalWin = 0;
 		showWinModal = false;
-		winningSymbol = null;
+		winningSymbols = [];
 		pendingWin = null;
 		pendingFreeScratches = 0;
 		awardedFreeScratches = 0;
@@ -707,7 +694,7 @@
 				// ambiguous: several ids are shared across difficulties, e.g.
 				// mult2 is "2x" in every mode, so a win amount alone can't
 				// tell you which actual symbol hit.)
-				winningSymbol = findWinningSymbol(panels);
+				winningSymbols = findWinningSymbols(panels);
 			}
 			// Surface whatever chest/kraken events this round's bet produced
 			// NOW (reveal just completed) rather than when they arrived
@@ -791,7 +778,7 @@
 			right={gridRect.right}
 			frameless
 			interactive={viewState === 'playing' || octoScratching}
-			{winningSymbol}
+			{winningSymbols}
 			onRevealIndex={revealPanel}
 		/>
 	</App>
@@ -961,18 +948,21 @@
 	</div>
 {/if}
 
-{#if tally}
-	<!-- Extra-match tally: "Crab x2 -> x2.25 -> x2.5" -->
+{#if tallies.length > 0}
+	<!-- Win tally: one pill per winning symbol ("3 match · Crab x2", gold
+	     "3 + 2 extra · x2.5" once extras land) -->
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
-		<div class="win-tally-pill" class:extra={tally.step > 0}>
-			<img src={SYMBOL_IMAGE_URL[tally.name]} alt="" />
-			<span class="win-tally-label">
-				{tally.step > 0 ? `3 + ${tally.step} extra` : '3 match'} · {SYMBOL_LABEL[tally.name]}
-			</span>
-			{#key tally.value}
-				<span class="win-tally-value" class:bumped={tally.step > 0}>x{tally.value}</span>
-			{/key}
-		</div>
+		{#each tallies as t (t.name)}
+			<div class="win-tally-pill" class:extra={t.step > 0}>
+				<img src={SYMBOL_IMAGE_URL[t.name]} alt="" />
+				<span class="win-tally-label">
+					{t.step > 0 ? `3 + ${t.step} extra` : '3 match'} · {SYMBOL_LABEL[t.name]}
+				</span>
+				{#key t.value}
+					<span class="win-tally-value" class:bumped={t.step > 0}>x{t.value}</span>
+				{/key}
+			</div>
+		{/each}
 	</div>
 {/if}
 

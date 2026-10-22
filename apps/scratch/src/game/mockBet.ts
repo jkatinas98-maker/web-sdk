@@ -166,16 +166,19 @@ const rollSharkOutcome = (): SharkOutcome => {
 	return SHARK_OUTCOMES[0].outcome;
 };
 
-// First paying symbol to reach 3 on the card, same rule as the main card.
-const cardWinMult = (panels: RawSymbol[]): number => {
+// Every paying symbol with 3+ on the card pays its multiplier plus its own
+// extra-match bonus; all of them add up.
+const cardWinMult = (panels: RawSymbol[], betMode: BetMode): number => {
 	const counts: Partial<Record<SymbolName, number>> = {};
 	for (const { name } of panels) {
-		const mult = config.symbols[name].mult;
-		if (mult <= 0) continue;
+		if (config.symbols[name].mult <= 0) continue;
 		counts[name] = (counts[name] ?? 0) + 1;
-		if (counts[name] === 3) return mult;
 	}
-	return 0;
+	let total = 0;
+	for (const [name, c] of Object.entries(counts) as Array<[SymbolName, number]>) {
+		if (c >= 3) total += config.symbols[name].mult + extraMatchTotal(betMode, c - 3);
+	}
+	return Math.round(total * 100) / 100;
 };
 
 // Octopus bonus card: plain skull + multiplier symbols only (no features
@@ -189,7 +192,7 @@ const dealPlainCard = (betMode: BetMode): OctopusCard => {
 		while (FEATURE_SYMBOLS.includes(name)) name = weightedPick(betMode);
 		panels.push({ name });
 	}
-	return { panels, win: cardWinMult(panels) };
+	return { panels, win: cardWinMult(panels, betMode) };
 };
 
 const weightedPick = (betMode: BetMode): SymbolName => {
@@ -299,14 +302,9 @@ export const createMockBet = (
 	// scaling happens in bookEventHandlerMap.ts, in one place, for both this
 	// mock path and the real RGS path -- baking the multiply in here too
 	// used to double it for mock mode once that fix landed.
-	let winSymbol: SymbolName | null = null;
-	for (const [name, c] of Object.entries(counts) as Array<[SymbolName, number]>) {
-		if (c >= 3 && config.symbols[name].mult === winMult) winSymbol = name;
-	}
-	// Each matching symbol beyond the 3rd adds a flat bonus to the win
-	// (+0.25x easy, +0.5x medium, +1x hard). Replaces the Treasure Meter.
-	const extras = winSymbol ? Math.max(0, counts[winSymbol]! - 3) : 0;
-	let amount = winMult + extraMatchTotal(betMode, extras);
+	// Every symbol with 3+ pays (its multiplier + its own extra-match
+	// bonus); several winning symbols on one card all add up.
+	let amount = cardWinMult(panels, betMode);
 	if (panels.every((p) => p.name === 'skull')) amount += SKULL_GRID_PRIZE[betMode];
 	let freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
