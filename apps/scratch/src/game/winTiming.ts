@@ -48,7 +48,7 @@ export const buildWinSchedule = (
 	panels: Array<{ name: SymbolName } | undefined>,
 	winners: SymbolName[],
 	betMode: BetMode,
-): { cells: Map<number, CellWinInfo>; segments: WinSegment[] } => {
+): { cells: Map<number, CellWinInfo>; segments: WinSegment[]; total: number } => {
 	const cells = new Map<number, CellWinInfo>();
 	const segments: WinSegment[] = [];
 	let t = 0;
@@ -87,5 +87,6 @@ export const buildWinSchedule = (
 		segments.push({ symbol, mult, extras, showAt: matchDone, bumps });
 		t = (extras > 0 ? extraStart + (extras - 1) * EXTRA_GAP_MS + 700 : matchDone) + SEGMENT_GAP_MS;
 	}
-	return { cells, segments };
+	// total: when the last segment has finished playing (ms from reveal).
+	return { cells, segments, total: segments.length ? t - SEGMENT_GAP_MS : 0 };
 };

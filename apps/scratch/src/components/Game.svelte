@@ -296,6 +296,7 @@
 	let pendingBonusSummary = $state(false);
 	let showBonusSummary = $state(false);
 	let roundIsFree = false;
+	let winAnimUntil = 0;
 	let bonusWinSum = $state(0);
 	// Arrives with the book; shown once the card is scratched.
 	let pendingBonusMult: number | null = null;
@@ -330,7 +331,8 @@
 			showBonusSummary
 		)
 			return;
-		const t = setTimeout(() => playGame(), 1100);
+		const wait = Math.max(1100, winAnimUntil - performance.now() + 1300);
+		const t = setTimeout(() => playGame(), wait);
 		return () => clearTimeout(t);
 	});
 
@@ -668,7 +670,13 @@
 			if (roundIsFree) {
 				bonusPlayed += 1;
 				bonusWinSum += totalWin;
-				if (pendingBonusMult !== null) bonusMult = pendingBonusMult;
+				// Let this card's whole win reveal (3-match + every extra) play
+				// before the medallion updates and before the next free card is
+				// dealt -- otherwise the extras get cut off.
+				const animMs = buildWinSchedule(panels, findWinningSymbols(panels), betMode).total;
+				winAnimUntil = performance.now() + animMs;
+				const newMult = pendingBonusMult;
+				if (newMult !== null) setTimeout(() => (bonusMult = newMult), animMs + 200);
 			}
 			if (pendingFreeScratches > 0) {
 				freeScratchesRemaining += pendingFreeScratches;
