@@ -15,6 +15,7 @@
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
 	import frameUrl from '../assets/frame.webp';
+	import frameBandUrl from '../assets/frame_band.webp';
 	import frameCrestUrl from '../assets/frame_crest.webp';
 	import krakenPanelUrl from '../assets/kraken_panel.webp';
 	import krakenSceneUrl from '../assets/kraken_scene.webp';
@@ -750,6 +751,11 @@
 
 	const wideScale = $derived(Math.min(vw / VIEW_W, (vh - 8) / STACK_H_PER_S, MAX_SCALE));
 	const wide = $derived((vw - VIEW_W * wideScale) / 2 >= SIDE_MIN);
+	// Phones (portrait): bigger logo + max-win sign on top, bar + frame
+	// filling the middle, mode signs under the frame.
+	const mobile = $derived(!wide && vh > vw * 1.25);
+	const MOBILE_TOP_H = 150;
+	const MOBILE_BOTTOM_H = 56;
 	const frameScale = $derived(
 		Math.max(
 			0.12,
@@ -761,11 +767,25 @@
 	const stackH = $derived(STACK_H_PER_S * frameScale);
 	// Wide: center the bar+frame stack vertically. Narrow: right under the
 	// header band.
-	const sharkTop = $derived(wide ? Math.max(2, (vh - stackH) / 2) : NARROW_HEADER_H);
+	const sharkTop = $derived(wide ? Math.max(2, (vh - stackH) / 2) : mobile ? MOBILE_TOP_H : NARROW_HEADER_H);
 	// Side column width for the logo + tabs in wide mode.
 	const sideW = $derived(Math.min(280, (vw - sharkBarW) / 2 - 24));
 	const frameLeft = $derived(vw / 2 - (FRAME.w / 2) * frameScale);
 	const frameTop = $derived(sharkTop + sharkBarH - FRAME.contentY0 * frameScale);
+	// Phones (portrait): the frame is width-limited, so its window ends up
+	// short and wide with tiny tiles. Use the spare screen height to make
+	// the frame TALLER: it's cut at FRAME_CUT.y1..y2 and the gap is filled by
+	// repeating a band of the rope-wrapped pillars (frame_band.webp), so the
+	// window grows and the grid stacks 3 wide with much bigger tiles. Desktop
+	// is untouched (stretch 0).
+	const FRAME_CUT = { y1: 330, y2: 600, band: 120 }; // source px
+	const frameStretch = $derived(
+		mobile
+			? Math.min(1400, Math.max(0, (vh - MOBILE_BOTTOM_H - (sharkTop + sharkBarH) - 4) / frameScale - FRAME.contentY1))
+			: 0,
+	);
+	const frameH = $derived(FRAME.h + frameStretch); // frame height in source px incl. stretch
+
 	// Shark bar's glass tube on screen (the Octopus banner sits there).
 	const sharkTube = $derived.by(() => {
 		const k = sharkBarW / SHARK_BAR.w;
@@ -780,7 +800,7 @@
 	// the pixi grid and the in-card Kraken overlay both fill exactly this.
 	const gridRect = $derived({
 		top: frameTop + FRAME.win.y0 * frameScale,
-		bottom: vh - (frameTop + FRAME.win.y1 * frameScale),
+		bottom: vh - (frameTop + (FRAME.win.y1 + frameStretch) * frameScale),
 		left: frameLeft + FRAME.win.x0 * frameScale,
 		right: vw - (frameLeft + FRAME.win.x1 * frameScale),
 	});
@@ -800,9 +820,14 @@
 
 	// Absolutely position an overlay (hit area / text) on the frame art by
 	// its center + size in source-image pixels.
-	const at = (cx: number, cy: number, w: number, h: number) =>
-		`left:${((cx - w / 2) / FRAME.w) * 100}%;top:${((cy - h / 2) / FRAME.h) * 100}%;` +
-		`width:${(w / FRAME.w) * 100}%;height:${(h / FRAME.h) * 100}%;`;
+	// (Anything below the stretch cut moves down by the stretch.)
+	const at = (cx: number, cy: number, w: number, h: number) => {
+		const y = cy > FRAME_CUT.y2 ? cy + frameStretch : cy;
+		return (
+			`left:${((cx - w / 2) / FRAME.w) * 100}%;top:${((y - h / 2) / frameH) * 100}%;` +
+			`width:${(w / FRAME.w) * 100}%;height:${(h / frameH) * 100}%;`
+		);
+	};
 
 	// Difficulty and bet amount lock while a round is live AND while free
 	// scratches are owed — a free scratch replays at whatever mode/bet
@@ -1026,9 +1051,26 @@
      window is transparent, so the pixi grid underneath shows through. -->
 <div
 	class="frame-layer"
-	style={`left:${frameLeft}px;top:${frameTop}px;width:${FRAME.w * frameScale}px;height:${FRAME.h * frameScale}px;font-size:${Math.max(13, frameScale * 44)}px;`}
+	style={`left:${frameLeft}px;top:${frameTop}px;width:${FRAME.w * frameScale}px;height:${frameH * frameScale}px;font-size:${Math.max(13, frameScale * 44)}px;`}
 >
-	<img class="frame-img" src={frameUrl} alt="" draggable="false" />
+	{#if frameStretch > 0}
+		<!-- top part / repeating pillar band / bottom part -->
+		{@const W = FRAME.w * frameScale}
+		<div
+			class="frame-part"
+			style={`top:0;height:${FRAME_CUT.y1 * frameScale}px;background-image:url(${frameUrl});background-size:${W}px ${FRAME.h * frameScale}px;background-position:0 0;`}
+		></div>
+		<div
+			class="frame-part"
+			style={`top:${FRAME_CUT.y1 * frameScale}px;height:${(FRAME_CUT.y2 - FRAME_CUT.y1 + frameStretch) * frameScale}px;background-image:url(${frameBandUrl});background-size:${W}px ${FRAME_CUT.band * frameScale}px;background-repeat:repeat-y;`}
+		></div>
+		<div
+			class="frame-part"
+			style={`top:${(FRAME_CUT.y2 + frameStretch) * frameScale}px;height:${(FRAME.h - FRAME_CUT.y2) * frameScale}px;background-image:url(${frameUrl});background-size:${W}px ${FRAME.h * frameScale}px;background-position:0 ${-FRAME_CUT.y2 * frameScale}px;`}
+		></div>
+	{:else}
+		<img class="frame-img" src={frameUrl} alt="" draggable="false" />
+	{/if}
 
 	<button
 		class="frame-btn"
@@ -1107,7 +1149,8 @@
 	<header
 		class="header-bar"
 		class:wide
-		style={wide ? `width:${sideW}px;top:${Math.max(10, sharkTop)}px;` : `height:${NARROW_HEADER_H}px;`}
+		class:mobile
+		style={wide ? `width:${sideW}px;top:${Math.max(10, sharkTop)}px;` : `height:${mobile ? MOBILE_TOP_H : NARROW_HEADER_H}px;`}
 	>
 		<img class="logo" src={logoUrl} alt="Pirate Scratch" />
 		<!-- Wooden max-win sign (text is live, so it follows the mode / free
@@ -1120,6 +1163,10 @@
 					: `Win up to ${maxWin}x bet`}
 			</span>
 		</div>
+		{#if !mobile}{@render modeSigns()}{/if}
+	</header>
+
+	{#snippet modeSigns()}
 		<div class="mode-signs">
 			{#each Object.keys(config.betModes) as mode}
 				{@const m = config.betModes[mode as BetMode]}
@@ -1134,7 +1181,14 @@
 				</button>
 			{/each}
 		</div>
-	</header>
+	{/snippet}
+
+	{#if mobile}
+		<!-- Phones: mode signs under the frame -->
+		<div class="mode-signs-bottom" style={`top:${frameTop + (FRAME.contentY1 + frameStretch) * frameScale + 2}px;`}>
+			{@render modeSigns()}
+		</div>
+	{/if}
 
 	<div class="sound-group">
 		<button

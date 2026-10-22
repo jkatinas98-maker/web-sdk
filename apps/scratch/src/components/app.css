@@ -2535,3 +2535,42 @@ button:disabled {
 	font-size: clamp(13px, 1.9vw, 20px);
 	animation: chest-prize-pop 0.45s cubic-bezier(0.3, 1.8, 0.5, 1);
 }
+
+/* Phone layout: frame drawn in three parts (top / repeating pillars / bottom). */
+.frame-part {
+	position: absolute;
+	left: 0;
+	right: 0;
+	background-repeat: no-repeat;
+	pointer-events: none;
+	filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+}
+
+/* Phone header: logo bigger than the max-win sign, nothing else. */
+.header-bar.mobile {
+	justify-content: flex-start;
+	padding-top: 6px;
+	gap: 0;
+}
+.header-bar.mobile .logo {
+	height: 86px;
+}
+.header-bar.mobile .maxwin-sign {
+	width: min(190px, 50vw);
+	margin-top: -4px;
+}
+
+/* Phone: mode signs row under the frame. */
+.mode-signs-bottom {
+	position: fixed;
+	left: 0;
+	right: 0;
+	display: flex;
+	justify-content: center;
+	padding: 0 8px;
+	pointer-events: none;
+	z-index: 7;
+}
+.mode-signs-bottom .mode-signs {
+	max-width: 420px;
+}

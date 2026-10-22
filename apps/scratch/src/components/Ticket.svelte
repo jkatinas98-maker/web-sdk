@@ -51,8 +51,17 @@
 	// wide x 5 tall.
 	const cols = $derived(config.betModes[betMode].cols);
 	const rows = $derived(config.betModes[betMode].rows);
-	const displayCols = $derived(Math.max(cols, rows));
-	const displayRows = $derived(Math.min(cols, rows));
+	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
+	const availableWidth = $derived(canvas.width - left - right);
+	const windowHeight = $derived(canvas.height - top - bottom);
+
+	// Wide window (desktop): the longer side across. Tall window (phones):
+	// whichever orientation gives the bigger tiles.
+	const tileFor = (c: number, r: number) =>
+		Math.min((availableWidth - 8 - 24 - 8 * (c - 1)) / c, (windowHeight - 24 - 8 * (r - 1)) / r);
+	const flip = $derived(tileFor(Math.min(cols, rows), Math.max(cols, rows)) > tileFor(Math.max(cols, rows), Math.min(cols, rows)));
+	const displayCols = $derived(flip ? Math.min(cols, rows) : Math.max(cols, rows));
+	const displayRows = $derived(flip ? Math.max(cols, rows) : Math.min(cols, rows));
 
 	// This difficulty's own top-paying symbol — landing it gets a gold
 	// glow+blink the instant it's revealed, regardless of whether it ends
@@ -63,8 +72,6 @@
 		),
 	);
 
-	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
-	const availableWidth = $derived(canvas.width - left - right);
 	const cardWidth = $derived(frameless ? availableWidth - 8 : Math.min(availableWidth - 24, 400));
 	const cardX = $derived(left + (availableWidth - cardWidth) / 2);
 	const pad = 12;
@@ -72,7 +79,7 @@
 	const gridWidth = $derived(cardWidth - pad * 2);
 	const gap = 8;
 
-	const availableHeight = $derived(Math.max(140, canvas.height - top - bottom - pad * 2));
+	const availableHeight = $derived(Math.max(40, canvas.height - top - bottom - pad * 2));
 
 	// The tile actually drawn can never be wider than the column slot or
 	// taller than the row slot — take whichever constraint is tighter so
@@ -87,7 +94,6 @@
 	const gridOffsetX = $derived(pad + (gridWidth - gridActualWidth) / 2);
 
 	const cardHeight = $derived(pad * 2 + gridActualHeight);
-	const windowHeight = $derived(canvas.height - top - bottom);
 	const cardY = $derived(frameless ? top + Math.max(0, (windowHeight - cardHeight) / 2) : top);
 
 	// Dark sea-wood backing for the frame's (transparent) window so the
