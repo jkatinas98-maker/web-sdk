@@ -526,7 +526,7 @@
 		const { panels, revealed } = context.stateGame;
 		let n = 0;
 		for (const i of revealed) if (panels[i]?.name === 'bonus') n += 1;
-		if (n > bonusSeen) playSound('bonusLand', 1 + 0.16 * (n - 1));
+		if (n > bonusSeen) playSound('bonusLand', 1 + 0.08 * (n - 1));
 		bonusSeen = n;
 	});
 

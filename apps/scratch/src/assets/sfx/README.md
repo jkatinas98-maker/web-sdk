@@ -11,5 +11,6 @@ long ones shortened with a fade, peak-normalized to -1 dB.
   wheelSpin    ship's wheel -- Shark Bite roll, Kraken treasure reel
   krakenMatch krakenMiss (+_2) krakenTreasure -- Kraken number match
   win jackpot chestOpen splash cannon krakenRoar octopus crab
+  bonusLand (scatter hit, pitch rises 1st->3rd)
   bonus bonusCoins bonusComplete tropicalBirds tavern
   pirateArr (+_2) pirateCheer pirateLaugh parrot parrotNiceWin
