@@ -241,6 +241,14 @@ const getNoise = (ctx: AudioContext) => {
 	return noiseBuffer;
 };
 
+// Reveal-all flips every tile within a split second; the per-tile 'reveal'
+// sound is muted for that window so it doesn't pile up (one sweep plays
+// instead). Special tiles (bell / coins) still sound.
+let revealMutedUntil = 0;
+export const muteTileReveals = (ms: number) => {
+	revealMutedUntil = performance.now() + ms;
+};
+
 // While the bonus runs (island beach), scratching uses the wet-sand sound.
 let beachMode = false;
 export const setBeachMode = (on: boolean) => {
@@ -248,6 +256,7 @@ export const setBeachMode = (on: boolean) => {
 };
 
 export const playSound = (type: SoundType, pitch = 1) => {
+	if (type === 'reveal' && performance.now() < revealMutedUntil) return;
 	if (type === 'scratch' && beachMode) type = 'scratchSand';
 	if (volume <= 0) return;
 
