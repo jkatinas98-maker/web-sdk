@@ -2431,7 +2431,8 @@ button:disabled {
 
 .octo-bar {
 	position: fixed;
-	z-index: 6;
+	/* inside .ui-layer: above the Shark Bite bar (6) and the crest (7) */
+	z-index: 8;
 	pointer-events: none;
 	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
 	animation: octo-bar-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);

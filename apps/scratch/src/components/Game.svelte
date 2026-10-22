@@ -1112,6 +1112,47 @@
 	<div class="shark-bar-slot" class:away={octoActive} style={`top:${sharkTop}px;`}>
 		<SharkBiteBar width={sharkBarW} rollId={sharkRollId} outcome={sharkOutcome} onLanded={handleSharkLanded} />
 	</div>
+
+	<!-- Skull crest of the frame, drawn over the Shark Bite bar as its pointer -->
+	<div
+		class="frame-crest"
+		style={`left:${frameLeft + CREST.x0 * frameScale}px;top:${frameTop}px;width:${(CREST.x1 - CREST.x0) * frameScale}px;height:${CREST.y1 * frameScale}px;`}
+	>
+		{#key crestHits}
+			<img src={frameCrestUrl} alt="" draggable="false" class:hit={crestHits > 0} />
+		{/key}
+	</div>
+
+	{#if octoActive}
+		<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same
+		     size and spot); the live text sits in the banner's red plaque. -->
+		{@const k = sharkBarW / 1983}
+		<div
+			class="octo-bar"
+			style={`left:${vw / 2 - sharkBarW / 2}px;top:${sharkTop - 80 * k}px;width:${sharkBarW}px;height:${793 * k}px;`}
+		>
+			<img src={octopusBarUrl} alt="Octopus Bonus" draggable="false" />
+			<div
+				class="octo-bar-text"
+				style={`left:${(628 / 1983) * 100}%;right:${((1983 - 1614) / 1983) * 100}%;top:${(518 / 793) * 100}%;bottom:${((793 - 690) / 793) * 100}%;font-size:${Math.max(9, 54 * k)}px;`}
+			>
+				{#if octoIndex < 0}
+					<div class="octo-bar-title">3 Bonus Cards!</div>
+					<div class="octo-bar-sub">Every win adds up</div>
+				{:else}
+					<div class="octo-bar-title">Bonus card {octoIndex + 1}/{octoCards.length}</div>
+					<div class="octo-bar-sub">
+						{#if octoCardDone}
+							{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'}
+						{:else}
+							Scratch it!
+						{/if}
+						<span class="octo-bar-dot">•</span> Bonus total: <span class="octo-bar-total">${octoWinSum.toFixed(2)}</span>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{/if}
 </div>
 
 {#if skullGrid}
@@ -1154,47 +1195,6 @@
 			<div class="octo-banner-sub">{SYMBOL_LABEL[pb.symbol]} · x{pb.multiplier} · +${pb.amount.toFixed(2)}</div>
 		</div>
 		<img class="octo-banner-icon pirate-loot" src={SYMBOL_IMAGE_URL[pb.symbol]} alt="" />
-	</div>
-{/if}
-
-<!-- Skull crest of the frame, drawn over the Shark Bite bar as its pointer -->
-<div
-	class="frame-crest"
-	style={`left:${frameLeft + CREST.x0 * frameScale}px;top:${frameTop}px;width:${(CREST.x1 - CREST.x0) * frameScale}px;height:${CREST.y1 * frameScale}px;`}
->
-	{#key crestHits}
-		<img src={frameCrestUrl} alt="" draggable="false" class:hit={crestHits > 0} />
-	{/key}
-</div>
-
-{#if octoActive}
-	<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same
-	     size and spot); the live text sits in the banner's red plaque. -->
-	{@const k = sharkBarW / 1983}
-	<div
-		class="octo-bar"
-		style={`left:${vw / 2 - sharkBarW / 2}px;top:${sharkTop - 80 * k}px;width:${sharkBarW}px;height:${793 * k}px;`}
-	>
-		<img src={octopusBarUrl} alt="Octopus Bonus" draggable="false" />
-		<div
-			class="octo-bar-text"
-			style={`left:${(628 / 1983) * 100}%;right:${((1983 - 1614) / 1983) * 100}%;top:${(518 / 793) * 100}%;bottom:${((793 - 690) / 793) * 100}%;font-size:${Math.max(9, 54 * k)}px;`}
-		>
-			{#if octoIndex < 0}
-				<div class="octo-bar-title">3 Bonus Cards!</div>
-				<div class="octo-bar-sub">Every win adds up</div>
-			{:else}
-				<div class="octo-bar-title">Bonus card {octoIndex + 1}/{octoCards.length}</div>
-				<div class="octo-bar-sub">
-					{#if octoCardDone}
-						{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'}
-					{:else}
-						Scratch it!
-					{/if}
-					<span class="octo-bar-dot">•</span> Bonus total: <span class="octo-bar-total">${octoWinSum.toFixed(2)}</span>
-				</div>
-			{/if}
-		</div>
 	</div>
 {/if}
 
