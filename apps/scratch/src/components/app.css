@@ -2329,3 +2329,69 @@ button:disabled {
 	color: var(--gold);
 	font-weight: 800;
 }
+
+/* ---------- Loading / start screen ---------- */
+
+.loader {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: clamp(14px, 3vh, 28px);
+	background:
+		radial-gradient(ellipse at 50% 45%, rgba(4, 12, 16, 0.25), rgba(4, 12, 16, 0.85) 75%),
+		var(--loader-bg) center / cover no-repeat,
+		#06101a;
+	cursor: pointer;
+	outline: none;
+}
+
+.loader-logo {
+	width: min(70vw, 52vh, 520px);
+	height: auto;
+	filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.7));
+	animation: shark-idle-bob 3s ease-in-out infinite;
+}
+
+/* Rope-and-gold progress bar. */
+.loader-bar {
+	width: min(70vw, 420px);
+	height: 16px;
+	padding: 3px;
+	border-radius: 999px;
+	background: repeating-linear-gradient(115deg, #7a5530 0 6px, #a77b47 6px 12px);
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 0 2px #3d2614, 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.loader-bar-fill {
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(180deg, #fff1b8, #f2c744 45%, #b8860b);
+	box-shadow: 0 0 10px rgba(242, 199, 68, 0.8);
+	transition: width 0.15s linear;
+}
+
+.loader-text {
+	font-family: var(--font-ui);
+	font-weight: 700;
+	font-size: 0.85rem;
+	letter-spacing: 0.08em;
+	color: #e7dcc5;
+	text-shadow: 0 2px 4px #000;
+}
+
+.loader-start {
+	padding: 0.7em 2em;
+	border-radius: 999px;
+	font-family: var(--font-display);
+	font-size: clamp(20px, 3vw, 30px);
+	color: #3d2614;
+	background: linear-gradient(180deg, #fff1b8, #f2c744 50%, #b8860b);
+	border: 3px solid #3d2614;
+	box-shadow: 0 0 22px rgba(242, 199, 68, 0.7), 0 6px 14px rgba(0, 0, 0, 0.6);
+	cursor: pointer;
+	animation: chest-prize-pop 0.5s cubic-bezier(0.3, 1.8, 0.5, 1), medallion-glow 1.2s 0.5s ease-in-out infinite alternate;
+}

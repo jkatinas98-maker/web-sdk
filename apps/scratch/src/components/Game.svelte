@@ -472,6 +472,33 @@
 		return () => clearTimeout(t);
 	});
 
+	// --- Loading screen ------------------------------------------------
+	// Logo + rope progress bar on the harbor until the art, fonts and a
+	// minimum beat are ready, then "Tap to set sail" (that tap also unlocks
+	// audio and starts the music).
+	let loaderVisible = $state(true);
+	let loaderProgress = $state(0);
+	let fontsReady = $state(false);
+	$effect(() => {
+		document.fonts?.ready.then(() => (fontsReady = true)).catch(() => (fontsReady = true));
+		const start = performance.now();
+		let raf = 0;
+		const tick = () => {
+			const t = (performance.now() - start) / 1600;
+			const done = context.stateApp.loaded && fontsReady && t >= 1;
+			loaderProgress = done ? 1 : Math.min(0.92, t * 0.92);
+			if (!done) raf = requestAnimationFrame(tick);
+		};
+		raf = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(raf);
+	});
+	function startGame() {
+		if (loaderProgress < 1) return;
+		loaderVisible = false;
+		startMusic(musicUrl);
+		playSound('scatterLand');
+	}
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet
@@ -1287,5 +1314,26 @@
 			<div class="bigwin-mult">{bonusSpins} free scratches</div>
 			<div class="win-modal-hint">Tap anywhere to continue</div>
 		</div>
+	</div>
+{/if}
+
+{#if loaderVisible}
+	<div
+		class="loader"
+		style={`--loader-bg:url(${bgPosterUrl});`}
+		role="button"
+		tabindex="0"
+		onclick={startGame}
+		onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && startGame()}
+	>
+		<img class="loader-logo" src={logoUrl} alt="Pirate Scratch" />
+		<div class="loader-bar" aria-label="Loading">
+			<div class="loader-bar-fill" style={`width:${loaderProgress * 100}%;`}></div>
+		</div>
+		{#if loaderProgress >= 1}
+			<button class="loader-start" onclick={(e) => { e.stopPropagation(); startGame(); }}>Tap to set sail</button>
+		{:else}
+			<div class="loader-text">Hoisting the sails… {Math.round(loaderProgress * 100)}%</div>
+		{/if}
 	</div>
 {/if}
