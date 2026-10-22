@@ -58,8 +58,8 @@
 	let landed = $state(false);
 	let strip: HTMLDivElement;
 
-	// Settle somewhere inside the winning tile, not dead-center every time.
-	const jitter = (Math.random() - 0.5) * 0.55;
+	// Settle dead-center in the winning window.
+	const jitter = 0;
 
 	// Strip x offset (frame px) that puts tile i's center under the center
 	// window, plus the jitter.

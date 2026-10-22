@@ -89,7 +89,7 @@
 		landed = false;
 		spinning = false;
 		offset = offsetFor(2);
-		const jitter = (Math.random() - 0.5) * PITCH * 0.4;
+		const jitter = 0; // land dead-center in the window
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
 				spinning = true;

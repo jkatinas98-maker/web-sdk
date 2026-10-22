@@ -1059,6 +1059,17 @@ button:disabled {
 	overflow: hidden;
 }
 
+/* Phone zoom: the reel is drawn wider than the screen and its sides are
+   cropped, keeping the center window in the middle. */
+.case-reel-zoom {
+	width: 100%;
+	overflow: hidden;
+}
+.case-reel-zoom-inner {
+	width: calc(var(--reel-zoom, 1) * 100%);
+	margin-left: calc((1 - var(--reel-zoom, 1)) * 50%);
+}
+
 /* Dark backing visible through the frame windows. */
 .case-reel::before {
 	content: '';

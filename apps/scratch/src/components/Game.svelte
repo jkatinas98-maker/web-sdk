@@ -821,6 +821,14 @@
 	// Absolutely position an overlay (hit area / text) on the frame art by
 	// its center + size in source-image pixels.
 	// (Anything below the stretch cut moves down by the stretch.)
+	// $1,234.56 — and long amounts shrink so they stay inside the plaque.
+	const money = (v: number) =>
+		'$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const valueFit = (v: number) => {
+		const len = money(v).length;
+		return len <= 9 ? '' : `font-size:${(0.66 * 9) / len}em;`;
+	};
+
 	const at = (cx: number, cy: number, w: number, h: number) => {
 		const y = cy > FRAME_CUT.y2 ? cy + frameStretch : cy;
 		return (
@@ -1094,11 +1102,11 @@
 	<div class="frame-text frame-plaque" style={at(768, 818, 290, 104)}>
 		<div class="frame-plaque-row">
 			<span class="frame-label">Balance</span>
-			<span class="frame-value">${displayBalance.toFixed(2)}</span>
+			<span class="frame-value" style={valueFit(displayBalance)}>{money(displayBalance)}</span>
 		</div>
 		<div class="frame-plaque-row">
 			<span class="frame-label">Win</span>
-			<span class="frame-value win">${displayLastWin.toFixed(2)}</span>
+			<span class="frame-value win" style={valueFit(displayLastWin)}>{money(displayLastWin)}</span>
 		</div>
 	</div>
 
@@ -1252,7 +1260,7 @@
 		<!-- Smaller than the Shark Bite bar (its art is much taller), lifted so
 		     its plaque ends just above the frame's skull hat (fully visible). -->
 		{@const k = sharkBarW / 1983}
-		{@const ow = sharkBarW * 0.72}
+		{@const ow = sharkBarW * 0.88}
 		{@const k2 = ow / 1983}
 		<div
 			class="octo-bar"
@@ -1352,7 +1360,13 @@
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
 			<div class="kraken-case" style={`width:${krakenReelW}px;`}>
 				<div class="feature-modal-title kraken-case-title">The Kraken's Treasure</div>
-				<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
+				<!-- Phones: the reel is zoomed in (sides of the frame cropped) so
+				     the rolling tiles and the prize are big enough to read. -->
+				<div class="case-reel-zoom" style={`--reel-zoom:${mobile ? 1.75 : 1};`}>
+					<div class="case-reel-zoom-inner">
+						<CaseReel {betMode} mult={k.multiplier} onLanded={() => (krakenStage = 'landed')} />
+					</div>
+				</div>
 				{#if krakenStage === 'landed'}
 					<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +${k.amount.toFixed(2)}</div>
 					<div class="kraken-card-hint">Tap to continue</div>

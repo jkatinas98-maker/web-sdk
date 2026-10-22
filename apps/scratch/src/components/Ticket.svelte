@@ -49,6 +49,11 @@
 	// just swap whichever of cols/rows is larger into the horizontal axis,
 	// so "easy" (3x5 = 15 cells) renders as 5 wide x 3 tall instead of 3
 	// wide x 5 tall.
+	// Inside the illustrated frame the window is already bordered, so the
+	// tiles get almost all of it (tight padding/gaps = bigger tiles).
+	const pad = $derived(frameless ? 4 : 12);
+	const gap = $derived(frameless ? 5 : 8);
+
 	const cols = $derived(config.betModes[betMode].cols);
 	const rows = $derived(config.betModes[betMode].rows);
 	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
@@ -58,7 +63,7 @@
 	// Wide window (desktop): the longer side across. Tall window (phones):
 	// whichever orientation gives the bigger tiles.
 	const tileFor = (c: number, r: number) =>
-		Math.min((availableWidth - 8 - 24 - 8 * (c - 1)) / c, (windowHeight - 24 - 8 * (r - 1)) / r);
+		Math.min((availableWidth - 8 - pad * 2 - gap * (c - 1)) / c, (windowHeight - pad * 2 - gap * (r - 1)) / r);
 	const flip = $derived(tileFor(Math.min(cols, rows), Math.max(cols, rows)) > tileFor(Math.max(cols, rows), Math.min(cols, rows)));
 	const displayCols = $derived(flip ? Math.min(cols, rows) : Math.max(cols, rows));
 	const displayRows = $derived(flip ? Math.max(cols, rows) : Math.min(cols, rows));
@@ -74,10 +79,8 @@
 
 	const cardWidth = $derived(frameless ? availableWidth - 8 : Math.min(availableWidth - 24, 400));
 	const cardX = $derived(left + (availableWidth - cardWidth) / 2);
-	const pad = 12;
 
 	const gridWidth = $derived(cardWidth - pad * 2);
-	const gap = 8;
 
 	const availableHeight = $derived(Math.max(40, canvas.height - top - bottom - pad * 2));
 
