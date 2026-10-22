@@ -64,7 +64,7 @@ type BookEventKrakenResult = {
 //   octopus -> octopusCards (3 bonus cards, all wins summed)
 //   key     -> chestSequence
 //   bonus   -> free scratches (counted like the 3-scatter award)
-//   pirate  -> nothing yet (placeholder, "coming soon")
+//   pirate  -> pirateBounty (top multiplier on the card)
 export type SharkOutcome = 'kraken' | 'octopus' | 'pirate' | 'key' | 'bonus';
 
 type BookEventSharkBite = {
