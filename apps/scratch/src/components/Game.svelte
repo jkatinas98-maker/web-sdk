@@ -731,7 +731,7 @@
 	// The Kraken feature takes over the whole screen: panel fitted to the
 	// viewport (with some breathing room), reel as wide as fits.
 	const krakenPanel = $derived.by(() => {
-		const w = Math.min(vw * 0.94, (vh * 0.8 * KRAKEN_PANEL.w) / KRAKEN_PANEL.h, 1150);
+		const w = Math.min(vw * 0.94, (vh * 0.72 * KRAKEN_PANEL.w) / KRAKEN_PANEL.h, 1150);
 		return { w, h: (w * KRAKEN_PANEL.h) / KRAKEN_PANEL.w };
 	});
 	const krakenReelW = $derived(Math.min(vw * 0.97, 1350));

@@ -1220,7 +1220,8 @@ button:disabled {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: 83%;
+	/* below the panel art, on the dark deck, not over its bright frame */
+	top: 101%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -1233,7 +1234,20 @@ button:disabled {
 }
 
 .kraken-panel-foot .kraken-card-hint {
-	font-size: 0.75em;
+	font-size: 0.85em;
+	font-weight: 800;
+	color: #f2fbff;
+	padding: 0.35em 1.1em;
+	border-radius: 999px;
+	background: rgba(4, 14, 24, 0.82);
+	border: 1px solid rgba(242, 199, 68, 0.7);
+	box-shadow: 0 0 12px rgba(34, 211, 238, 0.35), 0 3px 8px rgba(0, 0, 0, 0.6);
+	text-shadow: 0 1px 2px #000;
+	animation: kraken-hint-pulse 1.6s ease-in-out infinite;
+}
+@keyframes kraken-hint-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.75; }
 }
 
 .kraken-case {
