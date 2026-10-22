@@ -475,7 +475,7 @@
 	function selectMode(mode: BetMode) {
 		if (mode === betMode || freeScratchesRemaining > 0) return;
 		betMode = mode;
-		playSound('click');
+		playSound('scatterLand');
 		// Clear the previous round's panels — otherwise the last mode's
 		// (wrong-sized, wrong-symbol-set) grid stays on screen, stale, until
 		// the next bet is placed. The difficulty buttons are disabled while
