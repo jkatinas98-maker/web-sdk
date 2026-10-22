@@ -1,5 +1,5 @@
 import config from './config';
-import { extraMatchBonus, extraMatchTotal } from './mockBet';
+import { extraMatchBonus, extraMatchTotal } from './rules';
 import type { BetMode, SymbolName } from './types';
 
 // Shared timing for the win reveal so the tiles (Cell.svelte) and the tally

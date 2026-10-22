@@ -2,7 +2,7 @@
 	import config from '../game/config';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
-	import { EXTRA_MATCH_LADDER, SKULL_GRID_PRIZE } from '../game/mockBet';
+	import { EXTRA_MATCH_LADDER, SKULL_GRID_PRIZE } from '../game/rules';
 	import { KRAKEN_NUMBER_RANGE, KRAKEN_PRIZE_TABLE } from '../game/kraken';
 	import octopusUrl from '../assets/symbols/octopus.png';
 	import pirateUrl from '../assets/symbols/pirate.png';

@@ -7,8 +7,9 @@ import { bookEventHandlerMap } from './bookEventHandlerMap';
 
 export const { playBookEvent, playBookEvents } = createPlayBookUtils({ bookEventHandlerMap });
 
+// A bet's book is a whole round (base card + any free cards). Game.svelte
+// plays it card by card (roundBook), so the events aren't run here.
 export const playBet = async (bet: Bet) => {
 	stateBet.winBookEventAmount = 0;
-	await playBookEvents(bet.state);
-	eventEmitter.broadcast({ type: 'stopButtonEnable' });
+	eventEmitter.broadcast({ type: 'roundBook', data: bet.state });
 };

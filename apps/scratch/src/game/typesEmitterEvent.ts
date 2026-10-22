@@ -1,4 +1,4 @@
-import type { BookEventOfType } from './typesBookEvent';
+import type { BookEvent, BookEventOfType } from './typesBookEvent';
 
 // Scratch has no reel board, free-spin intro/counter/outro, or win-celebration
 // pixi components (yet) — those component-typed emitter events from the reel
@@ -17,4 +17,7 @@ export type EmitterEventGame =
 	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> }
 	| { type: 'chestPick'; data: BookEventOfType<'chestPick'> }
 	| { type: 'bonusMultiplier'; data: BookEventOfType<'bonusMultiplier'> }
-	| { type: 'pirateBounty'; data: BookEventOfType<'pirateBounty'> };
+	| { type: 'pirateBounty'; data: BookEventOfType<'pirateBounty'> }
+	| { type: 'freeScratchesAwarded'; data: BookEventOfType<'freeScratchesAwarded'> }
+	// A whole round's book from the RGS, played card by card by Game.svelte.
+	| { type: 'roundBook'; data: BookEvent[] };

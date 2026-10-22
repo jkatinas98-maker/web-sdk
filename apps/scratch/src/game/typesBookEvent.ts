@@ -113,6 +113,14 @@ type BookEventPirateBounty = {
 	amount: number;
 };
 
+// A card awarded free scratches (3 scatters and/or Shark Bite -> Bonus).
+// The free cards themselves follow later in the same book.
+type BookEventFreeScratchesAwarded = {
+	index: number;
+	type: 'freeScratchesAwarded';
+	count: number;
+};
+
 export type BookEvent =
 	| BookEventRevealPanels
 	| BookEventSetTotalWin
@@ -123,7 +131,8 @@ export type BookEvent =
 	| BookEventOctopusCards
 	| BookEventChestPick
 	| BookEventBonusMultiplier
-	| BookEventPirateBounty;
+	| BookEventPirateBounty
+	| BookEventFreeScratchesAwarded;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;

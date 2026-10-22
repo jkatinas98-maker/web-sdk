@@ -6,37 +6,9 @@ import type { BetMode, SymbolName } from './types';
 // number vs. the Kraken's, each 1..KRAKEN_NUMBER_RANGE); a match opens a
 // CS2-style case reel that lands on one of these multipliers of the bet,
 // 2x up to the mode's max win, big values rare (avg ~4x).
-export const KRAKEN_NUMBER_RANGE = 10;
-
-export const KRAKEN_PRIZE_TABLE: Record<BetMode, Array<[mult: number, weight: number]>> = {
-	easy: [
-		[2, 4785.1],
-		[3, 2830.7],
-		[5, 1461.0],
-		[10, 595.5],
-		[20, 242.7],
-		[45, 84.9],
-	],
-	medium: [
-		[2, 4967.8],
-		[3, 2845.1],
-		[5, 1409.7],
-		[10, 543.6],
-		[25, 154.3],
-		[50, 59.5],
-		[110, 20.1],
-	],
-	hard: [
-		[2, 4986.9],
-		[3, 2859.3],
-		[5, 1418.8],
-		[10, 548.2],
-		[25, 156.0],
-		[100, 23.3],
-		[250, 6.6],
-		[1000, 1.0],
-	],
-};
+// Tables live in rules.ts (mirrors the certified math); re-exported here.
+import { KRAKEN_NUMBER_RANGE, KRAKEN_PRIZE_TABLE } from './rules';
+export { KRAKEN_NUMBER_RANGE, KRAKEN_PRIZE_TABLE };
 
 export const rollKrakenPrize = (betMode: BetMode, random = Math.random): number => {
 	const table = KRAKEN_PRIZE_TABLE[betMode];

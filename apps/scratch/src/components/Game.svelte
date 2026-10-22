@@ -6,8 +6,8 @@
 	import { stateBet, stateUrlDerived } from 'state-shared';
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
-	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
-	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
+	import type { BookEvent, BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
+	import { createMockRound, cardMatchWin, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, stopSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
@@ -73,6 +73,67 @@
 	let pendingFreeScratches = 0;
 	let freeScratchesRemaining = $state(0);
 	let awardedFreeScratches = $state(0);
+
+	// --- Round books ----------------------------------------------------
+	// One bet = one book = the whole round: the base card, then every free
+	// card the bonus deals (same from the RGS and from the local demo).
+	// It's split into cards at each revealPanels and played one card at a
+	// time; the free cards are dealt from it instead of new bets.
+	let roundCards: BookEvent[][] = [];
+	let roundFinal = 0; // round payout per $1 (already capped at max win)
+	let roundPaidSoFar = 0; // per $1, credited by the round's earlier cards
+
+	function startRound(events: BookEvent[]) {
+		// (also the RGS resume path: make sure we're in a live round)
+		viewState = 'playing';
+		isProcessing = true;
+		roundCards = [];
+		roundFinal = 0;
+		roundPaidSoFar = 0;
+		for (const e of events) {
+			if (e.type === 'revealPanels') roundCards.push([e]);
+			else if (e.type === 'finalWin') roundFinal = e.amount;
+			else if (e.type !== 'setTotalWin' && roundCards.length) roundCards[roundCards.length - 1].push(e);
+		}
+		playNextCard();
+	}
+
+	// What one card pays, per $1: base card = its matches (+ skull grid) +
+	// everything its features won; free card = bet x the bonus multiplier
+	// when it wins. The round's last card settles to the book's (capped)
+	// total so the sum always equals what the round actually pays.
+	function cardPay(card: BookEvent[], isLast: boolean): number {
+		if (isLast) return Math.max(0, Math.round((roundFinal - roundPaidSoFar) * 100) / 100);
+		const reveal = card[0];
+		if (reveal.type !== 'revealPanels') return 0;
+		if (reveal.gameType === 'freegame') {
+			const bm = card.find((e) => e.type === 'bonusMultiplier');
+			return bm && bm.type === 'bonusMultiplier' ? bm.total : 0;
+		}
+		const names = reveal.panels.map((p) => p.name);
+		let pay = cardMatchWin(betMode, names);
+		if (names.every((n) => n === 'skull')) pay += SKULL_GRID_PRIZE[betMode];
+		for (const e of card) {
+			if (e.type === 'krakenResult' || e.type === 'pirateBounty') pay += e.amount;
+			else if (e.type === 'chestPick') pay += e.win;
+			else if (e.type === 'octopusCards') pay += e.cards.reduce((t, c) => t + c.win, 0);
+		}
+		return Math.round(pay * 100) / 100;
+	}
+
+	function playNextCard() {
+		const card = roundCards.shift();
+		if (!card) {
+			freeScratchesRemaining = 0;
+			isProcessing = false;
+			viewState = 'revealed';
+			return;
+		}
+		const pay = cardPay(card, roundCards.length === 0);
+		roundPaidSoFar = Math.round((roundPaidSoFar + pay) * 100) / 100;
+		pendingWin = Math.round(pay * betAmount * 100) / 100;
+		playBookEvents(card);
+	}
 
 	// Treasure Chest / Kraken results: PLACEHOLDER overlays (reused win-modal
 	// styling, no real art/animation yet -- see the artist brief for what
@@ -153,6 +214,9 @@
 		if (isMockMode) {
 			mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
 			mockLastWin = totalWin;
+		} else if (roundCards.length === 0) {
+			// Round fully shown: the Win plaque shows what the round paid.
+			stateBet.winBookEventAmount = Math.round(roundFinal * betAmount * 100) / 100;
 		}
 		if (totalWin > 0 || awardedFreeScratches > 0) {
 			showWinModal = isBigWin();
@@ -786,17 +850,17 @@
 		stateBet.activeBetModeKey = betMode;
 		stateBet.betAmount = betAmount;
 
+		// Free scratches are already in this round's book: deal the next card.
+		if (isFreeRound) {
+			playSound('scatterLand'); // ship's bell marks each free scratch
+			freeScratchesRemaining -= 1;
+			playNextCard();
+			return;
+		}
+
 		if (isMockMode) {
-			if (isFreeRound) {
-				// Ship's bell marks each free scratch being dealt.
-				playSound('scatterLand');
-				freeScratchesRemaining -= 1;
-			} else {
-				mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
-			}
-			const { events, freeScratches } = createMockBet(betMode, betAmount, isFreeRound);
-			pendingFreeScratches = freeScratches;
-			playBookEvents(events);
+			mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
+			startRound(createMockRound(betMode).events);
 			return;
 		}
 
@@ -892,9 +956,6 @@
 	});
 
 	context.eventEmitter.subscribeOnMount({
-		finalWin: ({ data }: { data: BookEventOfType<'finalWin'> }) => {
-			pendingWin = data.amount;
-		},
 		chestSequence: ({ data }: { data: BookEventOfType<'chestSequence'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'chest', data: data.chests }];
 		},
@@ -903,6 +964,12 @@
 		},
 		sharkBite: ({ data }: { data: BookEventOfType<'sharkBite'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'shark', data: data.outcome }];
+		},
+		roundBook: ({ data }: { data: BookEvent[] }) => {
+			startRound(data);
+		},
+		freeScratchesAwarded: ({ data }: { data: BookEventOfType<'freeScratchesAwarded'> }) => {
+			pendingFreeScratches += data.count;
 		},
 		bonusMultiplier: ({ data }: { data: BookEventOfType<'bonusMultiplier'> }) => {
 			pendingBonusMult = data.total;

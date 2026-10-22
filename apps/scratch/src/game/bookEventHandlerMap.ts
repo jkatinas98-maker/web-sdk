@@ -78,6 +78,9 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 			data: { ...bookEvent, amount: bookEvent.amount * stateBet.betAmount },
 		});
 	},
+	freeScratchesAwarded: async (bookEvent: BookEventOfType<'freeScratchesAwarded'>) => {
+		await eventEmitter.broadcastAsync({ type: 'freeScratchesAwarded', data: bookEvent });
+	},
 	krakenResult: async (bookEvent: BookEventOfType<'krakenResult'>) => {
 		const dollarAmount = bookEvent.amount * stateBet.betAmount;
 		await eventEmitter.broadcastAsync({
