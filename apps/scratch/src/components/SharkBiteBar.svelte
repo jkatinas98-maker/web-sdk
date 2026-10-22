@@ -43,7 +43,8 @@
 		bonus: SYMBOL_IMAGE_URL.bonus,
 	};
 	const ORDER: SharkOutcome[] = ['kraken', 'octopus', 'pirate', 'key', 'bonus'];
-	const SHARK_OUTCOME_LABEL: Record<SharkOutcome, string> = {
+	// (The landed label is shown by Game.svelte, above the frame's crest.)
+	export const SHARK_OUTCOME_LABEL_UNUSED: Record<SharkOutcome, string> = {
 		kraken: 'Kraken!',
 		octopus: 'Octopus — 3 bonus cards!',
 		pirate: 'Pirate — plunders the top prize!',
@@ -182,10 +183,4 @@
 		{/each}
 		<div class="shark-center-mark" style={`left:${px(centerInTube - PITCH / 2)};width:${px(PITCH)};`}></div>
 	</div>
-
-	{#if landed && outcome}
-		<div class={`shark-result shark-result--${outcome}`} style={`top:${px(TUBE.y1 - BAR.y0 - 18)};`}>
-			{SHARK_OUTCOME_LABEL[outcome]}
-		</div>
-	{/if}
 </div>

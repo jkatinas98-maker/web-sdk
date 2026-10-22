@@ -213,8 +213,21 @@
 	const CREST = { x0: 520, x1: 1016, y1: 104 };
 	let crestHits = $state(0);
 
+	let sharkLanded: SharkOutcome | null = $state(null);
+	$effect(() => {
+		if (sharkOutcome === null) sharkLanded = null;
+	});
+	const SHARK_OUTCOME_LABEL: Record<SharkOutcome, string> = {
+		kraken: 'Kraken!',
+		octopus: 'Octopus — 3 bonus cards!',
+		pirate: 'Pirate — plunders the top prize!',
+		key: 'Key — treasure chests!',
+		bonus: 'Bonus — free scratches!',
+	};
+
 	function handleSharkLanded(outcome: SharkOutcome) {
 		crestHits += 1;
+		sharkLanded = outcome;
 		clearTimeout(featureTimer);
 		// Let the landed icon + label sit for a beat.
 		featureTimer = setTimeout(advanceFeatureOverlay, 1600);
@@ -1122,6 +1135,14 @@
 			<img src={frameCrestUrl} alt="" draggable="false" class:hit={crestHits > 0} />
 		{/key}
 	</div>
+
+	{#if sharkLanded}
+		<!-- What Shark Bite landed on: over the top of the card, in front of
+		     the frame and its crest. -->
+		<div class="shark-result-slot" style={`top:${gridRect.top + 6}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
+			<div class={`shark-result shark-result--${sharkLanded}`}>{SHARK_OUTCOME_LABEL[sharkLanded]}</div>
+		</div>
+	{/if}
 
 	{#if octoActive}
 		<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same

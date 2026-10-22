@@ -2500,3 +2500,18 @@ button:disabled {
 .octo-bg.on {
 	opacity: 1;
 }
+
+/* Shark Bite result label: top of the card, above frame + crest. */
+.shark-result-slot {
+	position: fixed;
+	z-index: 9;
+	display: flex;
+	justify-content: center;
+	pointer-events: none;
+}
+.shark-result-slot .shark-result {
+	position: static;
+	transform: none;
+	font-size: clamp(13px, 1.9vw, 20px);
+	animation: chest-prize-pop 0.45s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
