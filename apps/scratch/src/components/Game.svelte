@@ -24,6 +24,8 @@
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
+	import octopusBarUrl from '../assets/octopus_bar.webp';
+	import octopusBgUrl from '../assets/octopus_bg.webp';
 	import pirateIconUrl from '../assets/symbols/pirate.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
 	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
@@ -933,6 +935,8 @@
 	<source src={bonusWebmUrl} type="video/webm" />
 	<source src={bonusMp4Url} type="video/mp4" />
 </video>
+<!-- Sunken ruins while the Octopus bonus cards play. -->
+<div class="octo-bg" class:on={octoActive} style={`background-image:url(${octopusBgUrl});`} aria-hidden="true"></div>
 <div class="bg-dim" aria-hidden="true"></div>
 
 <div class="pixi-layer">
@@ -1104,7 +1108,7 @@
 	</div>
 
 	<!-- SHARK BITE bar: same width as the frame, sitting right on top of it -->
-	<div class="shark-bar-slot" style={`top:${sharkTop}px;`}>
+	<div class="shark-bar-slot" class:away={octoActive} style={`top:${sharkTop}px;`}>
 		<SharkBiteBar width={sharkBarW} rollId={sharkRollId} outcome={sharkOutcome} onLanded={handleSharkLanded} />
 	</div>
 </div>
@@ -1163,25 +1167,30 @@
 </div>
 
 {#if octoActive}
-	<!-- Octopus bonus cards: banner in the Shark Bite bar's tube, so the
-	     grid stays fully visible; the cards are dealt into the normal grid. -->
+	<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same
+	     size and spot); the live text sits in the banner's red plaque. -->
+	{@const k = sharkBarW / 1983}
 	<div
-		class="octo-banner"
-		style={`top:${sharkTube.top}px;left:${sharkTube.left}px;width:${sharkTube.width}px;height:${sharkTube.height}px;font-size:${Math.max(10, sharkTube.height * 0.2)}px;`}
+		class="octo-bar"
+		style={`left:${vw / 2 - sharkBarW / 2}px;top:${sharkTop - 80 * k}px;width:${sharkBarW}px;height:${793 * k}px;`}
 	>
-		<img class="octo-banner-icon" src={octopusIconUrl} alt="" />
-		<div class="octo-banner-text">
+		<img src={octopusBarUrl} alt="Octopus Bonus" draggable="false" />
+		<div
+			class="octo-bar-text"
+			style={`left:${(628 / 1983) * 100}%;right:${((1983 - 1614) / 1983) * 100}%;top:${(518 / 793) * 100}%;bottom:${((793 - 690) / 793) * 100}%;font-size:${Math.max(9, 54 * k)}px;`}
+		>
 			{#if octoIndex < 0}
-				<div class="octo-banner-title">Octopus bonus!</div>
-				<div class="octo-banner-sub">3 bonus cards — every win adds up</div>
+				<div class="octo-bar-title">3 Bonus Cards!</div>
+				<div class="octo-bar-sub">Every win adds up</div>
 			{:else}
-				<div class="octo-banner-title">Bonus card {octoIndex + 1} / {octoCards.length}</div>
-				<div class="octo-banner-sub">
+				<div class="octo-bar-title">Bonus card {octoIndex + 1}/{octoCards.length}</div>
+				<div class="octo-bar-sub">
 					{#if octoCardDone}
-						{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'} · bonus total ${octoWinSum.toFixed(2)}
+						{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'}
 					{:else}
-						Scratch it! · bonus total ${octoWinSum.toFixed(2)}
+						Scratch it!
 					{/if}
+					<span class="octo-bar-dot">•</span> Bonus total: <span class="octo-bar-total">${octoWinSum.toFixed(2)}</span>
 				</div>
 			{/if}
 		</div>

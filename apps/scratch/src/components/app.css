@@ -2418,3 +2418,84 @@ button:disabled {
 	35% { transform: translateY(-12%) scale(1.06); filter: drop-shadow(0 0 14px rgba(255, 210, 90, 0.95)); }
 	100% { transform: translateY(0) scale(1); filter: drop-shadow(0 -2px 6px rgba(0, 0, 0, 0.6)); }
 }
+
+/* ---------- Octopus bonus banner (replaces the Shark Bite bar) ---------- */
+
+.shark-bar-slot {
+	transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.shark-bar-slot.away {
+	opacity: 0;
+	transform: scale(0.92);
+}
+
+.octo-bar {
+	position: fixed;
+	z-index: 6;
+	pointer-events: none;
+	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
+	animation: octo-bar-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.octo-bar img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	user-select: none;
+}
+@keyframes octo-bar-in {
+	from { transform: translateY(-8%) scale(0.85); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+
+.octo-bar-text {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap;
+	line-height: 1.05;
+}
+.octo-bar-title {
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+	font-size: 1.35em;
+	background: linear-gradient(180deg, #fff6c8, #ffd04a 50%, #e08a10);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 2px 0 #4a0a05) drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
+}
+.octo-bar-sub {
+	margin-top: 0.15em;
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 800;
+	font-size: 0.85em;
+	color: #fff1e0;
+	text-shadow: 0 2px 0 #3a0503, 0 0 6px rgba(0, 0, 0, 0.7);
+}
+.octo-bar-dot {
+	margin: 0 0.4em;
+	opacity: 0.8;
+}
+.octo-bar-total {
+	color: #ffd04a;
+	font-size: 1.15em;
+}
+
+/* Sunken ruins background while the Octopus cards play. */
+.octo-bg {
+	position: fixed;
+	inset: -3%;
+	z-index: 0;
+	pointer-events: none;
+	background-size: cover;
+	background-position: center;
+	opacity: 0;
+	transition: opacity 1s ease;
+	animation: bonus-bg-drift 24s ease-in-out infinite alternate;
+}
+.octo-bg.on {
+	opacity: 1;
+}
