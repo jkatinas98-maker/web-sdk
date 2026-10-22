@@ -44,13 +44,6 @@
 	};
 	const ORDER: SharkOutcome[] = ['kraken', 'octopus', 'pirate', 'key', 'bonus'];
 	// (The landed label is shown by Game.svelte, above the frame's crest.)
-	export const SHARK_OUTCOME_LABEL_UNUSED: Record<SharkOutcome, string> = {
-		kraken: 'Kraken!',
-		octopus: 'Octopus — 3 bonus cards!',
-		pirate: 'Pirate — plunders the top prize!',
-		key: 'Key — treasure chests!',
-		bonus: 'Bonus — free scratches!',
-	};
 
 	const k = $derived(width / BAR.w);
 	const tubeW = TUBE.x1 - TUBE.x0;
