@@ -80,7 +80,7 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	scratch: 0.5, // wet-sand scratch (same as the bonus one now)
 	reveal: 0.4,
 	woodTick: 0.35,
-	match: 0.55, // gunshot 2: the 3 matching tiles
+	match: 0.3, // gunshot 2: the 3 matching tiles
 	matchExtra: 0.55, // gunshot 1: every extra match
 	wheelSpin: 0.6,
 	pirateLaugh: 0.8,
@@ -94,7 +94,7 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	krakenMatch: 0.8,
 	krakenMiss: 0.6,
 	krakenTreasure: 0.7,
-	bonusLand: 0.7, // scatter hit; pitched up for the 2nd / 3rd
+	bonusLand: 1, // scatter hit; pitched up for the 2nd / 3rd
 	keyLand: 0.7, // key revealed
 	woodCrack: 0.7,
 	oldChestOpen: 0.6,
