@@ -47,7 +47,7 @@
 			const t = (now - start) / 1300;
 			if (t >= 0 && !sounded) {
 				sounded = true;
-				playSound('scatterLand');
+				playSound('match', 1.1 + extraIndex * 0.04);
 			}
 			extraT = t < 0 ? -1 : Math.min(1, t);
 			if (t < 1) raf = requestAnimationFrame(loop);
@@ -71,7 +71,7 @@
 			const t = (now - start) / 1100;
 			if (t >= 0 && !sounded) {
 				sounded = true;
-				playSound('match', 1 + (matchIndex - 1) * 0.26);
+				playSound('match', 1 + (matchIndex - 1) * 0.04);
 			}
 			matchT = t < 0 ? -1 : Math.min(1, t);
 			if (t < 1) raf = requestAnimationFrame(loop);

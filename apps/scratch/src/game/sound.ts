@@ -63,7 +63,7 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	scratch: 0.35,
 	reveal: 0.4,
 	woodTick: 0.35,
-	match: 0.5,
+	match: 0.55, // gunshot per matching tile
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features

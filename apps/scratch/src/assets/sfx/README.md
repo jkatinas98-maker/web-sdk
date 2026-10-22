@@ -5,7 +5,7 @@ game/sound.ts. Per-type volume: SAMPLE_GAIN in game/sound.ts.
 Processed from the ElevenLabs originals: leading/trailing silence trimmed,
 long ones shortened with a fade, peak-normalized to -1 dB.
 
-  click scratch reveal match woodTick woodThunk scatterLand
+  click scratch reveal match(gunshot, every matching tile) woodTick woodThunk scatterLand
   win jackpot chestOpen splash cannon
   bonus (free scratches awarded) bonusCoins (bonus multiplier goes up)
   bonusComplete (bonus summary)
