@@ -129,7 +129,8 @@
 		cancelAnimationFrame(raf);
 		playSound('woodThunk');
 		const landed_ = outcome;
-		setTimeout(() => playSound(landed_ === 'pirate' ? 'pirateArr' : 'jackpot'), 120);
+		setTimeout(() => playSound('scatterLand'), 60);
+		setTimeout(() => playSound(landed_ === 'pirate' ? 'pirateArr' : 'jackpot'), 350);
 		onLanded(outcome);
 	}
 

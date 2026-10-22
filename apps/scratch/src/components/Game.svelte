@@ -642,6 +642,8 @@
 
 		if (isMockMode) {
 			if (isFreeRound) {
+				// Ship's bell marks each free scratch being dealt.
+				playSound('scatterLand');
 				freeScratchesRemaining -= 1;
 			} else {
 				mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
