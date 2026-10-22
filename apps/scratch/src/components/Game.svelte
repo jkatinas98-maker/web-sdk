@@ -7,7 +7,7 @@
 	import config from '../game/config';
 	import type { BetMode } from '../game/types';
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
-	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal } from '../game/mockBet';
+	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
 	import { playSound, setVolume, startMusic, setMusicEnabled } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
@@ -359,6 +359,18 @@
 			);
 		}
 		return () => timers.forEach(clearTimeout);
+	});
+
+	// Whole grid of skulls: a "Cursed!" consolation pill once revealed.
+	let skullGrid = $state(false);
+	$effect(() => {
+		const { panels, revealed } = context.stateGame;
+		const done = panels.length > 0 && revealed.size >= panels.length;
+		const all = done && panels.every((p) => p?.name === 'skull');
+		untrack(() => {
+			if (all && !skullGrid) playSound('cannon');
+			skullGrid = all;
+		});
 	});
 
 	// Local demo wallet, used only while there's no RGS backend to talk to
@@ -923,6 +935,16 @@
 	</div>
 </div>
 
+{#if skullGrid}
+	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
+		<div class="win-tally-pill cursed">
+			<img src={SYMBOL_IMAGE_URL.skull} alt="" />
+			<span class="win-tally-label">Cursed! Full grid of skulls</span>
+			<span class="win-tally-value">+{SKULL_GRID_PRIZE[betMode]}x</span>
+		</div>
+	</div>
+{/if}
+
 {#if tally}
 	<!-- Extra-match tally: "Crab x2 -> x2.25 -> x2.5" -->
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
@@ -993,6 +1015,11 @@
 					<span class="pay-item-mult">
 						{EXTRA_MATCH_LADDER[betMode].map((v) => `+${v}`).join(', ')}{'x…'}
 					</span>
+				</div>
+				<div class="pay-item">
+					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.skull} alt="" />
+					<span class="pay-item-name">Full grid of skulls</span>
+					<span class="pay-item-mult">+{SKULL_GRID_PRIZE[betMode]}x</span>
 				</div>
 				<div class="pay-item shark-item">
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />

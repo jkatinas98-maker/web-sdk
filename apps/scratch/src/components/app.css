@@ -2066,3 +2066,20 @@ button:disabled {
 	color: #ffd75e;
 	text-shadow: 0 2px 0 #3a1f08, 0 0 10px rgba(255, 170, 40, 0.8);
 }
+
+/* Full skull grid: blood-red cursed pill. */
+.win-tally-pill.cursed {
+	background: linear-gradient(180deg, rgba(110, 14, 14, 0.95), rgba(40, 4, 4, 0.95));
+	border-color: #f2c744;
+	box-shadow: 0 0 20px rgba(220, 38, 38, 0.7), 0 4px 10px rgba(0, 0, 0, 0.6);
+	animation: chest-prize-pop 0.5s cubic-bezier(0.3, 1.8, 0.5, 1), cursed-shake 0.5s 0.5s ease-in-out 2;
+}
+.win-tally-pill.cursed .win-tally-value {
+	color: #ffd75e;
+	text-shadow: 0 2px 0 #3a0505, 0 0 12px rgba(255, 80, 40, 0.9);
+}
+@keyframes cursed-shake {
+	0%, 100% { transform: translateX(0); }
+	25% { transform: translateX(-4px) rotate(-1deg); }
+	75% { transform: translateX(4px) rotate(1deg); }
+}

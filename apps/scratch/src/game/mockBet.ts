@@ -78,11 +78,19 @@ const FREE_SCRATCHES_AWARDED = 10;
 // this much to the win multiplier. PLACEHOLDER until the math is redone.
 // Escalating: each list entry is what the 4th, 5th, 6th ... match adds;
 // past the end of the list the last value repeats.
+// Sized to each grid: the list covers every possible extra (easy 15 cells
+// = 12 extras, medium 12 = 9, hard 9 = 6), escalating, with the last one
+// (a whole grid of one symbol) a big jump.
 export const EXTRA_MATCH_LADDER: Record<BetMode, number[]> = {
-	easy: [0.25, 0.25, 0.5, 0.5, 1],
-	medium: [0.5, 0.5, 1, 1, 2],
+	easy: [0.25, 0.25, 0.5, 0.5, 1, 1, 1, 1, 1.5, 1.5, 2, 5],
+	medium: [0.5, 0.5, 1, 1, 1.5, 1.5, 2, 3, 5],
 	hard: [1, 1.5, 2, 2.5, 3, 5],
 };
+
+// A whole grid of skulls pays this (PLACEHOLDER -- math later). Odds at
+// the current weights: about 1 in 450 cards on easy and medium, 1 in 110
+// on hard, hence the smaller hard value.
+export const SKULL_GRID_PRIZE: Record<BetMode, number> = { easy: 5, medium: 5, hard: 2 };
 // What the k-th extra (1 = the 4th match) adds.
 export const extraMatchBonus = (betMode: BetMode, k: number): number => {
 	const l = EXTRA_MATCH_LADDER[betMode];
@@ -299,6 +307,7 @@ export const createMockBet = (
 	// (+0.25x easy, +0.5x medium, +1x hard). Replaces the Treasure Meter.
 	const extras = winSymbol ? Math.max(0, counts[winSymbol]! - 3) : 0;
 	let amount = winMult + extraMatchTotal(betMode, extras);
+	if (panels.every((p) => p.name === 'skull')) amount += SKULL_GRID_PRIZE[betMode];
 	let freeScratches = bonusCount >= BONUS_SCATTER_COUNT ? FREE_SCRATCHES_AWARDED : 0;
 
 	const events: BookEvent[] = [{ index: 0, type: 'revealPanels', panels, gameType: 'basegame' }];
