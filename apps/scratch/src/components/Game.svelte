@@ -1147,14 +1147,14 @@
 	{#if octoActive}
 		<!-- Octopus bonus: its own banner takes the Shark Bite bar's place (same
 		     size and spot); the live text sits in the banner's red plaque. -->
-		<!-- Smaller than the Shark Bite bar (its art is much taller), with its
-		     plaque's bottom edge sitting where the bar's bottom rim was. -->
+		<!-- Smaller than the Shark Bite bar (its art is much taller), lifted so
+		     its plaque ends just above the frame's skull hat (fully visible). -->
 		{@const k = sharkBarW / 1983}
 		{@const ow = sharkBarW * 0.72}
 		{@const k2 = ow / 1983}
 		<div
 			class="octo-bar"
-			style={`left:${vw / 2 - ow / 2}px;top:${sharkTop + (690 - 80) * k - 700 * k2}px;width:${ow}px;height:${793 * k2}px;`}
+			style={`left:${vw / 2 - ow / 2}px;top:${frameTop + 12 * frameScale - 4 - 706 * k2}px;width:${ow}px;height:${793 * k2}px;`}
 		>
 			<img src={octopusBarUrl} alt="Octopus Bonus" draggable="false" />
 			<div
