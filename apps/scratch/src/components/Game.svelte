@@ -1131,9 +1131,7 @@
 		class="frame-crest"
 		style={`left:${frameLeft + CREST.x0 * frameScale}px;top:${frameTop}px;width:${(CREST.x1 - CREST.x0) * frameScale}px;height:${CREST.y1 * frameScale}px;`}
 	>
-		{#key crestHits}
-			<img src={frameCrestUrl} alt="" draggable="false" class:hit={crestHits > 0} />
-		{/key}
+		<img src={frameCrestUrl} alt="" draggable="false" />
 	</div>
 
 	{#if sharkLanded}
