@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { type Snippet } from 'svelte';
 	import { GlobalStyle } from 'components-ui-html';
-	import { Authenticate, LoaderStakeEngine, LoaderExample, LoadI18n } from 'components-shared';
+	import { Authenticate, LoaderStakeEngine, LoadI18n } from 'components-shared';
 	import Game from '../components/Game.svelte';
 	import { setContext } from '../game/context';
 
@@ -11,9 +11,7 @@
 
 	const props: Props = $props();
 
-	let showYourLoader = $state(false);
-
-	// These two gifs live in static/, which adapter-static copies verbatim
+	// This gif lives in static/, which adapter-static copies verbatim
 	// next to index.html — a plain relative path resolves correctly against
 	// the deployed page's own URL no matter what subpath it's served under.
 	// (The previous `new URL(..., import.meta.url)` form is for Vite-bundled
@@ -21,7 +19,6 @@
 	// too high, so the gif never loaded and the loading overlay never
 	// cleared — the loader only clears via the gif's onload callback.)
 	const loaderUrlStakeEngine = 'stake-engine-loader.gif';
-	const loaderUrl = 'loader.gif';
 
 	setContext();
 </script>
@@ -34,12 +31,9 @@
 	</Authenticate>
 </GlobalStyle>
 
-<LoaderStakeEngine src={loaderUrlStakeEngine} oncomplete={() => (showYourLoader = true)} />
-
-{#if showYourLoader}
-	<LoaderExample src={loaderUrl} />
-	<!-- '/loader.gif' is served from static folder of sveltekit -->
-	<!-- File location: apps/scatter/static/loader.gif -->
-{/if}
+<!-- Stake Engine's "Powered by Stake Engine" intro (standard on Engine
+     games); the game's own loading screen (Game.svelte) follows it. The
+     template's generic spinner loader was removed. -->
+<LoaderStakeEngine src={loaderUrlStakeEngine} />
 
 {@render props.children()}
