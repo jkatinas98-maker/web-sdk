@@ -9,7 +9,7 @@
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode, muteTileReveals } from '../game/sound';
+	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -793,11 +793,7 @@
 
 	function revealEverything() {
 		playSound('click');
-		// One sweep instead of a tile-by-tile clatter (see muteTileReveals).
-		const unrevealed = context.stateGame.panels.length - context.stateGame.revealed.size;
-		muteTileReveals(unrevealed * 45 + 200);
-		playSound('scratch', 0.9);
-		if (unrevealed > 6) setTimeout(() => playSound('scratch', 1.05), Math.min(400, unrevealed * 20));
+
 		// Stagger each panel's reveal instead of flipping them all in the same
 		// frame — reuses the same per-index reveal() action a manual tap
 		// uses, so each tile still gets its own pop-in + reveal sound, just
@@ -806,7 +802,12 @@
 		let delay = 0;
 		for (let i = 0; i < panels.length; i++) {
 			if (revealed.has(i)) continue;
-			setTimeout(() => context.stateGameDerived.reveal(i), delay);
+			// Each tile gets its scratch + its own reveal sound (Cell plays
+			// the reveal), like scratching it by hand.
+			setTimeout(() => {
+				playSound('scratch');
+				context.stateGameDerived.reveal(i);
+			}, delay);
 			delay += 45;
 		}
 	}
