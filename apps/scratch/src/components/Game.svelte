@@ -107,8 +107,39 @@
 	function advanceFeatureOverlay() {
 		playSound('click');
 		featureOverlayQueue = featureOverlayQueue.slice(1);
-		if (featureOverlayQueue.length === 0 && (totalWin > 0 || awardedFreeScratches > 0)) {
+		if (featureOverlayQueue.length === 0) finishPresentation();
+	}
+
+	// The round's result is shown in order: the card's win reveal first,
+	// then any features (Shark Bite, Kraken, chests, ...), and only after
+	// all of that the payout lands -- free scratches are credited (and the
+	// bonus background switches) here too, so nothing gives away a feature
+	// before it plays.
+	let presentPending = $state(false);
+	let pendingAward = 0;
+	function finishPresentation() {
+		if (pendingAward > 0) {
+			freeScratchesRemaining += pendingAward;
+			awardedFreeScratches = pendingAward;
+			if (!bonusActive) {
+				bonusActive = true;
+				bonusMult = 0;
+				bonusWinSum = 0;
+				bonusPlayed = 0;
+				bonusSpins = pendingAward;
+			} else {
+				bonusSpins += pendingAward;
+			}
+			pendingAward = 0;
+		}
+		if (roundIsFree && bonusActive && freeScratchesRemaining === 0) pendingBonusSummary = true;
+		if (isMockMode) {
+			mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
+			mockLastWin = totalWin;
+		}
+		if (totalWin > 0 || awardedFreeScratches > 0) {
 			showWinModal = isBigWin();
+			// Bonus gets its own fanfare instead of the regular win jingle.
 			playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
 		}
 	}
@@ -326,6 +357,7 @@
 			freeScratchesRemaining <= 0 ||
 			viewState === 'playing' ||
 			isProcessing ||
+			presentPending ||
 			featureOverlayQueue.length > 0 ||
 			showWinModal ||
 			showBonusSummary
@@ -569,7 +601,9 @@
 	// Difficulty and bet amount lock while a round is live AND while free
 	// scratches are owed — a free scratch replays at whatever mode/bet
 	// triggered it, so they have to be used up before either can change.
-	const locked = $derived(viewState === 'playing' || freeScratchesRemaining > 0 || featureOverlayQueue.length > 0);
+	const locked = $derived(
+		viewState === 'playing' || presentPending || freeScratchesRemaining > 0 || featureOverlayQueue.length > 0,
+	);
 
 	const maxWin = $derived(config.betModes[betMode].max_win);
 
@@ -583,7 +617,7 @@
 	);
 
 	function playGame() {
-		if (isProcessing || featureOverlayQueue.length > 0) return;
+		if (isProcessing || presentPending || featureOverlayQueue.length > 0) return;
 		const isFreeRound = freeScratchesRemaining > 0;
 		roundIsFree = isFreeRound;
 		pendingBonusMult = null;
@@ -663,10 +697,6 @@
 			totalWin = pendingWin;
 			viewState = 'revealed';
 			isProcessing = false;
-			if (isMockMode) {
-				mockBalance = Math.round((mockBalance + totalWin) * 100) / 100;
-				mockLastWin = totalWin;
-			}
 			if (roundIsFree) {
 				bonusPlayed += 1;
 				bonusWinSum += totalWin;
@@ -682,22 +712,6 @@
 						bonusMult = newMult;
 					}, animMs + 200);
 			}
-			if (pendingFreeScratches > 0) {
-				freeScratchesRemaining += pendingFreeScratches;
-				awardedFreeScratches = pendingFreeScratches;
-				if (!bonusActive) {
-					bonusActive = true;
-					bonusMult = 0;
-					bonusWinSum = 0;
-					bonusPlayed = 0;
-					bonusSpins = pendingFreeScratches;
-				} else {
-					bonusSpins += pendingFreeScratches;
-				}
-			}
-			if (roundIsFree && bonusActive && freeScratchesRemaining === 0) {
-				pendingBonusSummary = true;
-			}
 			if (totalWin > 0) {
 				// Re-derive which symbol actually won by scanning the resolved
 				// panels for the first paying symbol to reach 3 occurrences —
@@ -708,22 +722,20 @@
 				// tell you which actual symbol hit.)
 				winningSymbols = findWinningSymbols(panels);
 			}
-			// Surface whatever chest/kraken events this round's bet produced
-			// NOW (reveal just completed) rather than when they arrived
-			// (bet resolution, before any scratching) -- see the buffer's
-			// own comment above.
-			featureOverlayQueue = pendingFeatureEvents;
-			if (totalWin > 0 || awardedFreeScratches > 0) {
-				// Feature overlays (if any landed this round) play first; the
-				// win modal follows once the player taps through them --
-				// advanceFeatureOverlay() shows it once the queue is empty.
-				if (featureOverlayQueue.length === 0) {
-					showWinModal = isBigWin();
-					// Bonus gets its own fanfare instead of the regular win jingle,
-					// even when it lands alongside a cash win the same round.
-					playSound(awardedFreeScratches > 0 ? 'bonus' : 'win');
-				}
-			}
+			// Features (Kraken, Shark Bite, chests, ...) and the payout wait
+			// until the card's own win reveal has finished playing.
+			const events = pendingFeatureEvents;
+			pendingAward = pendingFreeScratches;
+			const animMs =
+				winningSymbols.length > 0
+					? buildWinSchedule(panels, winningSymbols, betMode).total + 500
+					: 0;
+			presentPending = true;
+			setTimeout(() => {
+				presentPending = false;
+				featureOverlayQueue = events;
+				if (events.length === 0) finishPresentation();
+			}, animMs);
 		}
 	});
 
@@ -838,7 +850,7 @@
 
 	<button
 		class="frame-btn frame-btn--anchor"
-		class:ready={(viewState !== 'playing' && !isProcessing && freeScratchesRemaining === 0 && featureOverlayQueue.length === 0) || octoScratching}
+		class:ready={(viewState !== 'playing' && !isProcessing && !presentPending && freeScratchesRemaining === 0 && featureOverlayQueue.length === 0) || octoScratching}
 		class:free={viewState !== 'playing' && freeScratchesRemaining > 0}
 		style={at(1041, 875, 184, 184)}
 		disabled={viewState !== 'playing' && isProcessing}
