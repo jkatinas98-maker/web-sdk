@@ -15,6 +15,7 @@
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import logoUrl from '../assets/logo.png';
 	import frameUrl from '../assets/frame.webp';
+	import frameCrestUrl from '../assets/frame_crest.webp';
 	import krakenPanelUrl from '../assets/kraken_panel.webp';
 	import krakenSceneUrl from '../assets/kraken_scene.webp';
 	import krakenMp4Url from '../assets/kraken_loop.mp4';
@@ -204,7 +205,13 @@
 		});
 	});
 
+	// The frame's skull crest sits on top of the Shark Bite bar, its hat
+	// pointing into the centre window; it jumps when the roll lands.
+	const CREST = { x0: 520, x1: 1016, y1: 104 };
+	let crestHits = $state(0);
+
 	function handleSharkLanded(outcome: SharkOutcome) {
+		crestHits += 1;
 		clearTimeout(featureTimer);
 		// Let the landed icon + label sit for a beat.
 		featureTimer = setTimeout(advanceFeatureOverlay, 1600);
@@ -656,7 +663,7 @@
 	// rim (the splash below it overlaps the frame), and a little higher
 	// still so the bar sits over the top of the frame's skull crest.
 	const BAR_RIM_Y = 690;
-	const FRAME_TUCK = 34; // frame source px hidden under the bar
+	const FRAME_TUCK = 55; // frame source px under the bar: the skull's hat pokes into the centre window
 	const BAR_H_PER_S = (VIEW_W * (BAR_RIM_Y - SHARK_BAR.y0)) / SHARK_BAR.w - FRAME_TUCK;
 	const STACK_H_PER_S = BAR_H_PER_S + contentH;
 	const MAX_SCALE = 1;
@@ -1143,6 +1150,16 @@
 		<img class="octo-banner-icon pirate-loot" src={SYMBOL_IMAGE_URL[pb.symbol]} alt="" />
 	</div>
 {/if}
+
+<!-- Skull crest of the frame, drawn over the Shark Bite bar as its pointer -->
+<div
+	class="frame-crest"
+	style={`left:${frameLeft + CREST.x0 * frameScale}px;top:${frameTop}px;width:${(CREST.x1 - CREST.x0) * frameScale}px;height:${CREST.y1 * frameScale}px;`}
+>
+	{#key crestHits}
+		<img src={frameCrestUrl} alt="" draggable="false" class:hit={crestHits > 0} />
+	{/key}
+</div>
 
 {#if octoActive}
 	<!-- Octopus bonus cards: banner in the Shark Bite bar's tube, so the
