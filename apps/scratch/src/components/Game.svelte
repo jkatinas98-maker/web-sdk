@@ -519,6 +519,17 @@
 		playSound('scatterLand');
 	}
 
+	// Bonus scatters: a chime that climbs with each one revealed (1st, 2nd,
+	// 3rd...), like a slot's scatter build-up.
+	let bonusSeen = 0;
+	$effect(() => {
+		const { panels, revealed } = context.stateGame;
+		let n = 0;
+		for (const i of revealed) if (panels[i]?.name === 'bonus') n += 1;
+		if (n > bonusSeen) playSound('bonusLand', 1 + 0.16 * (n - 1));
+		bonusSeen = n;
+	});
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet

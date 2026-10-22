@@ -207,7 +207,9 @@
 			// their own distinct chime instead of the plain reveal blip. Key
 			// reuses the scatter chime for now (TODO: a dedicated "keyLand"
 			// synth once the feature it triggers is built).
-			playSound(jackpot ? 'jackpot' : isBonus || isKey || isKraken || isShark ? 'scatterLand' : 'reveal');
+			// Bonus scatters get their own rising chime from Game.svelte (it
+			// knows how many have landed).
+			if (!isBonus) playSound(jackpot ? 'jackpot' : isKey ? 'keyLand' : isKraken || isShark ? 'scatterLand' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 

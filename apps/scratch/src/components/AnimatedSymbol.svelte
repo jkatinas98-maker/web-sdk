@@ -82,6 +82,15 @@
 	let winSplash = 0;
 	let winStart = -1;
 
+	// Feature symbols that should always look special once revealed: a
+	// breathing colored aura, slow sunburst, orbiting sparkles and a
+	// livelier bob (the key swings like it's hanging from a ring).
+	const SPECIAL: Partial<Record<SymbolName, { aura: number; ray: number; sparkle: number }>> = {
+		bonus: { aura: 0xff3a2a, ray: 0xffd75e, sparkle: 0xfff1b8 },
+		key: { aura: 0xffb21f, ray: 0xfff1b8, sparkle: 0xffffff },
+	};
+	const special = SPECIAL[props.name];
+
 	$effect(() => {
 		size = props.size;
 		winning = props.winning;
@@ -221,6 +230,34 @@
 		}
 	};
 
+	const drawSpecialBack = (g: PIXI.Graphics) => {
+		if (!special || revealing || isWin) return;
+		const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
+		g.circle(0, 0, size * (0.78 + 0.06 * pulse));
+		g.fill({ color: special.aura, alpha: 0.12 + 0.06 * pulse });
+		g.circle(0, 0, size * (0.55 + 0.05 * pulse));
+		g.fill({ color: special.aura, alpha: 0.2 + 0.1 * pulse });
+		rays(g, 12, size * 0.22, size * (0.85 + 0.08 * pulse), t * 0.7, special.ray, 0.18 + 0.1 * pulse);
+		rays(g, 12, size * 0.18, size * 0.62, -t * 0.5 + 0.26, special.aura, 0.16);
+	};
+
+	const drawSpecialFront = (g: PIXI.Graphics) => {
+		if (!special || revealing || isWin) return;
+		// three sparkles orbiting, twinkling
+		for (let i = 0; i < 3; i++) {
+			const a = t * 1.3 + (i / 3) * TAU;
+			const tw2 = 0.5 + 0.5 * Math.sin(t * 6 + i * 2.1);
+			const r = size * (0.46 + 0.04 * Math.sin(t * 2 + i));
+			star(g, Math.cos(a) * r, Math.sin(a) * r * 0.85, size * (0.05 + 0.06 * tw2), 0.5 + 0.5 * tw2, special.sparkle);
+		}
+		// a bright shine glint across the icon every ~1.6s
+		const cycle = 1.6;
+		const p = ((t + seed) % cycle) / 0.5;
+		if (p < 1) {
+			star(g, size * (-0.22 + 0.44 * p), -size * (0.18 - 0.2 * p), size * 0.14 * Math.sin(p * Math.PI), Math.sin(p * Math.PI));
+		}
+	};
+
 	// In front: bursts, idle glints, win embers.
 	const drawFront = (g: PIXI.Graphics) => {
 		burst(g, revealP < 1 ? revealP : 0);
@@ -304,6 +341,10 @@
 				scale = winSplash * 0.25 + 1.08 + 0.12 * Math.abs(Math.sin(tw * 5));
 				rotation = 0.035 * Math.sin(tw * 9);
 				y = -Math.abs(Math.sin(tw * 5)) * size * 0.08;
+			} else if (special) {
+				scale = 1.04 + 0.06 * Math.sin(t * 3.2);
+				rotation = props.name === 'key' ? 0.16 * Math.sin(t * 2.4) : 0.05 * Math.sin(t * 1.8 + seed);
+				y = Math.sin(t * 2.4 + seed) * size * 0.04;
 			} else {
 				scale = 1 + 0.025 * Math.sin(t * 2.3 + seed);
 				rotation = 0.025 * Math.sin(t * 1.4 + seed);
@@ -319,9 +360,11 @@
 			iconHolder.y = y;
 
 			back.clear();
+			drawSpecialBack(back);
 			drawBack(back);
 			front.clear();
 			drawFront(front);
+			drawSpecialFront(front);
 		} catch (error) {
 			if (!reported) {
 				reported = true;

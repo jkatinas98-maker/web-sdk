@@ -32,7 +32,9 @@ type SoundType =
 	| 'scratchSand' // scratching a tile during the bonus (beach)
 	| 'krakenMatch' // numbers match
 	| 'krakenMiss' // numbers don't match (+ _2 variant)
-	| 'krakenTreasure'; // the treasure reel rises
+	| 'krakenTreasure' // the treasure reel rises
+	| 'bonusLand' // a Bonus scatter is revealed (pitch rises 1st -> 3rd)
+	| 'keyLand'; // a Key is revealed
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -406,7 +408,19 @@ export const playSound = (type: SoundType, pitch = 1) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'krakenMatch') {
+		if (type === 'bonusLand') {
+			// Ship's bell (pitched by the caller) + a magical sparkle arpeggio.
+			playSample(ctx, 'scatterLand', 0, pitch);
+			[1318, 1760, 2349].forEach((f, i) => tone(f * pitch, 0.08, 0.35, 'sine', i * 0.06));
+			coinShower(4, 0.25, 0.07, 0.1);
+		} else if (type === 'keyLand') {
+			// Keys jingling.
+			clink(2600, 0.14, 0);
+			clink(3300, 0.12, 0.07);
+			clink(2900, 0.12, 0.15);
+			clink(3700, 0.1, 0.22);
+			tone(1568, 0.07, 0.6, 'sine', 0.05);
+		} else if (type === 'krakenMatch') {
 			bell(880, 0.12);
 			coinShower(10, 0.5, 0.1, 0.2);
 		} else if (type === 'krakenMiss') {
