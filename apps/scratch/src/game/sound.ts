@@ -185,50 +185,78 @@ const getContext = (): AudioContext | null => {
 // so ~0.33 puts it ~30% quieter than the effects at full volume. Tweak
 // MUSIC_GAIN if the balance needs adjusting by ear.
 const MUSIC_GAIN = 0.33;
-const FADE_MS = 900;
-// One <audio> per soundtrack (main / bonus); only `currentSrc` plays.
-const tracks = new Map<string, HTMLAudioElement>();
+const FADE_S = 0.9;
+// Music plays through Web Audio (decoded buffers, looped) -- the same path
+// as the sound effects. Stake's hosting blocks inlined audio in <audio>
+// elements, which is what the music used before.
+type Track = { buffer: AudioBuffer | null; loading: boolean; src: AudioBufferSourceNode | null; gain: GainNode | null };
+const tracks = new Map<string, Track>();
 let currentSrc: string | null = null;
 let musicStarted = false;
 let musicEnabled = true;
-const fades = new Map<HTMLAudioElement, ReturnType<typeof setInterval>>();
 
-const getTrack = (src: string) => {
-	let a = tracks.get(src);
-	if (!a) {
-		a = new Audio(src);
-		a.loop = true;
-		a.preload = 'auto';
-		a.volume = 0;
-		tracks.set(src, a);
+const ensureTrack = (url: string) => {
+	let t = tracks.get(url);
+	if (!t) {
+		t = { buffer: null, loading: false, src: null, gain: null };
+		tracks.set(url, t);
 	}
-	return a;
+	const ctx = getContext();
+	if (ctx && !t.buffer && !t.loading) {
+		t.loading = true;
+		const track = t;
+		fetch(url)
+			.then((r) => r.arrayBuffer())
+			.then((data) => ctx.decodeAudioData(data))
+			.then((buf) => {
+				track.buffer = buf;
+				track.loading = false;
+				applyMusicState(); // start it now if it should be playing
+			})
+			.catch((e) => {
+				track.loading = false;
+				console.warn('music load failed', e);
+			});
+	}
+	return t;
 };
 
-// Smoothly move a track's volume to `to` (pausing it at 0).
-const fadeTo = (a: HTMLAudioElement, to: number) => {
-	clearInterval(fades.get(a));
-	const from = a.volume;
-	const start = performance.now();
-	if (to > 0 && a.paused) a.play().catch(() => {});
-	fades.set(
-		a,
-		setInterval(() => {
-			const t = Math.min(1, (performance.now() - start) / FADE_MS);
-			a.volume = Math.max(0, Math.min(1, from + (to - from) * t));
-			if (t >= 1) {
-				clearInterval(fades.get(a));
-				if (to === 0) a.pause();
-			}
-		}, 30),
-	);
+const fadeTrack = (t: Track, on: boolean) => {
+	const ctx = getContext();
+	if (!ctx) return;
+	const now = ctx.currentTime;
+	if (on) {
+		if (!t.buffer) return; // starts when decoded
+		if (!t.src) {
+			const g = ctx.createGain();
+			g.gain.value = 0;
+			g.connect(ctx.destination);
+			const src = ctx.createBufferSource();
+			src.buffer = t.buffer;
+			src.loop = true;
+			src.connect(g);
+			src.start();
+			t.src = src;
+			t.gain = g;
+		}
+		t.gain!.gain.cancelScheduledValues(now);
+		t.gain!.gain.setValueAtTime(t.gain!.gain.value, now);
+		t.gain!.gain.linearRampToValueAtTime(MUSIC_GAIN, now + FADE_S);
+	} else if (t.src && t.gain) {
+		const { src, gain } = t;
+		gain.gain.cancelScheduledValues(now);
+		gain.gain.setValueAtTime(gain.gain.value, now);
+		gain.gain.linearRampToValueAtTime(0, now + FADE_S);
+		src.stop(now + FADE_S + 0.05);
+		t.src = null;
+		t.gain = null;
+	}
 };
 
 const applyMusicState = () => {
-	for (const [src, a] of tracks) {
-		const on = musicEnabled && musicStarted && src === currentSrc;
-		fadeTo(a, on ? MUSIC_GAIN : 0);
-	}
+	const ctx = getContext();
+	if (ctx && ctx.state === 'suspended' && musicStarted) ctx.resume();
+	for (const [url, t] of tracks) fadeTrack(t, musicEnabled && musicStarted && url === currentSrc);
 };
 
 // Browsers block audio until the player interacts with the page, so this
@@ -238,7 +266,7 @@ export const startMusic = (src: string) => {
 	if (musicStarted || typeof window === 'undefined') return;
 	musicStarted = true;
 	if (!currentSrc) currentSrc = src;
-	getTrack(currentSrc);
+	ensureTrack(currentSrc);
 	applyMusicState();
 };
 
@@ -246,7 +274,7 @@ export const startMusic = (src: string) => {
 export const setMusicTrack = (src: string) => {
 	if (typeof window === 'undefined' || src === currentSrc) return;
 	currentSrc = src;
-	getTrack(src);
+	if (musicStarted) ensureTrack(src);
 	applyMusicState();
 };
 

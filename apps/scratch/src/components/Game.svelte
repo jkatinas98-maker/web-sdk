@@ -18,20 +18,16 @@
 	import frameCrestUrl from '../assets/frame_crest.webp';
 	import krakenPanelUrl from '../assets/kraken_panel.webp';
 	import krakenSceneUrl from '../assets/kraken_scene.webp';
-	import krakenMp4Url from '../assets/kraken_loop.mp4';
-	import krakenWebmUrl from '../assets/kraken_loop.webm';
+	import krakenAnimUrl from '../assets/kraken_anim.webp';
 	import bgPosterUrl from '../assets/background.jpg';
-	import bgMp4Url from '../assets/bg_loop.mp4';
-	import bgWebmUrl from '../assets/bg_loop.webm';
+	import bgAnimUrl from '../assets/bg_anim.webp';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
 	import octopusBarUrl from '../assets/octopus_bar.webp';
 	import octopusBgUrl from '../assets/octopus_bg.webp';
 	import pirateIconUrl from '../assets/symbols/pirate.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
 	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
-	import bonusBgUrl from '../assets/bonus_bg.webp';
-	import bonusMp4Url from '../assets/bonus_loop.mp4';
-	import bonusWebmUrl from '../assets/bonus_loop.webm';
+	import bonusAnimUrl from '../assets/bonus_anim.webp';
 	import bonusMusicUrl from '../assets/music_bonus.mp3';
 	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
@@ -997,25 +993,12 @@
      glints, lantern flicker) encoded as a ~0.5 MB looping video. The
      painted still underneath (body background) is the poster/fallback,
      e.g. while it loads or under prefers-reduced-motion. -->
-<video class="bg-video" autoplay muted loop playsinline preload="auto" poster={bgPosterUrl} aria-hidden="true">
-	<source src={bgWebmUrl} type="video/webm" />
-	<source src={bgMp4Url} type="video/mp4" />
-</video>
+<!-- Animated backgrounds are looping animated WebP images, not <video>:
+     Stake's hosting blocks inlined media in <video>/<audio> but allows
+     images. -->
+<img class="bg-video" src={bgAnimUrl} alt="" aria-hidden="true" draggable="false" />
 <!-- Sunny beach cove while the free-scratch bonus runs (cross-fades). -->
-<video
-	class="bonus-bg"
-	class:on={bonusActive}
-	autoplay
-	muted
-	loop
-	playsinline
-	preload="auto"
-	poster={bonusBgUrl}
-	aria-hidden="true"
->
-	<source src={bonusWebmUrl} type="video/webm" />
-	<source src={bonusMp4Url} type="video/mp4" />
-</video>
+<img class="bonus-bg" class:on={bonusActive} src={bonusAnimUrl} alt="" aria-hidden="true" draggable="false" />
 <!-- Sunken ruins while the Octopus bonus cards play. -->
 <div class="octo-bg" class:on={octoActive} style={`background-image:url(${octopusBgUrl});`} aria-hidden="true"></div>
 <div class="bg-dim" aria-hidden="true"></div>
@@ -1310,10 +1293,7 @@
 		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
 	>
 		<!-- Animated storm scene (the still is the poster / fallback) -->
-		<video class="kraken-scene-video" autoplay muted loop playsinline preload="auto" poster={krakenSceneUrl} aria-hidden="true">
-			<source src={krakenWebmUrl} type="video/webm" />
-			<source src={krakenMp4Url} type="video/mp4" />
-		</video>
+		<img class="kraken-scene-video" src={krakenAnimUrl} alt="" aria-hidden="true" draggable="false" />
 		<div class="kraken-scene-vignette" aria-hidden="true"></div>
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
 			<div class="kraken-case" style={`width:${krakenReelW}px;`}>
