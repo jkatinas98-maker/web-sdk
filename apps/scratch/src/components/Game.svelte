@@ -9,7 +9,7 @@
 	import type { BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockBet, EXTRA_MATCH_LADDER, extraMatchTotal, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack } from '../game/sound';
+	import { playSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -365,6 +365,7 @@
 	let wasBonus = false;
 	$effect(() => {
 		setMusicTrack(bonusActive ? bonusMusicUrl : musicUrl);
+		setBeachMode(bonusActive);
 		if (bonusActive && !wasBonus) playSound('tropicalBirds');
 		wasBonus = bonusActive;
 	});

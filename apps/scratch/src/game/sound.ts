@@ -28,7 +28,8 @@ type SoundType =
 	| 'crab' // crab scuttling: crab win
 	| 'tavern' // crew celebrating in a tavern: Mega/Epic win, bonus done
 	| 'krakenRoar' // Kraken appears
-	| 'tropicalBirds'; // bonus island starts
+	| 'tropicalBirds' // bonus island starts
+	| 'scratchSand'; // scratching a tile during the bonus (beach)
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -82,6 +83,7 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	tavern: 0.6,
 	krakenRoar: 0.75,
 	tropicalBirds: 0.45,
+	scratchSand: 0.5,
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features
@@ -239,7 +241,14 @@ const getNoise = (ctx: AudioContext) => {
 	return noiseBuffer;
 };
 
+// While the bonus runs (island beach), scratching uses the wet-sand sound.
+let beachMode = false;
+export const setBeachMode = (on: boolean) => {
+	beachMode = on;
+};
+
 export const playSound = (type: SoundType, pitch = 1) => {
+	if (type === 'scratch' && beachMode) type = 'scratchSand';
 	if (volume <= 0) return;
 
 	try {
@@ -249,7 +258,7 @@ export const playSound = (type: SoundType, pitch = 1) => {
 		loadSamples(ctx);
 		// Small random pitch wobble on the frequent sounds so repeats don't
 		// sound robotic; 'match' uses the caller's rising pitch.
-		const FREQUENT: SoundType[] = ['click', 'scratch', 'reveal', 'woodTick'];
+		const FREQUENT: SoundType[] = ['click', 'scratch', 'scratchSand', 'reveal', 'woodTick'];
 		const rate = pitch !== 1 ? pitch : FREQUENT.includes(type) ? 0.93 + Math.random() * 0.14 : 1;
 		if (playSample(ctx, type, 0, rate)) {
 			// Extra layers that go with the recorded version too.
@@ -382,7 +391,9 @@ export const playSound = (type: SoundType, pitch = 1) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'matchExtra') {
+		if (type === 'scratchSand') {
+			noise('bandpass', 1400, 0.8, 0.18, 0.08, 0, 700);
+		} else if (type === 'matchExtra') {
 			tone(1046 * pitch, 0.12, 0.25, 'sine');
 			knock(1800, 0.15, 400 * pitch);
 		} else if (type === 'match') {
