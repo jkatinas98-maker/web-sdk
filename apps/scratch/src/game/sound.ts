@@ -93,6 +93,7 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	krakenMiss: 0.6,
 	krakenTreasure: 0.7,
 	bonusLand: 0.7, // scatter hit; pitched up for the 2nd / 3rd
+	keyLand: 0.7, // key revealed
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features
