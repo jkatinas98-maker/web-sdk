@@ -754,8 +754,8 @@
 	// Phones (portrait): bigger logo + max-win sign on top, bar + frame
 	// filling the middle, mode signs under the frame.
 	const mobile = $derived(!wide && vh > vw * 1.25);
-	const MOBILE_TOP_H = 150;
-	const MOBILE_BOTTOM_H = 56;
+	const MOBILE_TOP_H = 112;
+	const MOBILE_BOTTOM_H = 50;
 	const frameScale = $derived(
 		Math.max(
 			0.12,

@@ -2553,11 +2553,15 @@ button:disabled {
 	gap: 0;
 }
 .header-bar.mobile .logo {
-	height: 86px;
+	height: 74px;
 }
+/* small plaque tucked under the logo */
 .header-bar.mobile .maxwin-sign {
-	width: min(190px, 50vw);
-	margin-top: -4px;
+	width: min(128px, 34vw);
+	margin-top: -6px;
+}
+.mode-signs-bottom .mode-signs {
+	max-width: 330px;
 }
 
 /* Phone: mode signs row under the frame. */
