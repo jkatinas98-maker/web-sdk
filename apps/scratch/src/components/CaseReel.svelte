@@ -70,6 +70,7 @@
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => {
 				spinning = true;
+				playSound('wheelSpin', 0.7); // slowed to ~5.6s, matches SPIN_MS
 				progress = 1;
 			});
 		});
@@ -83,7 +84,7 @@
 				const centerFramePx = (-m.m41) / k + CENTER_X;
 				const tile = Math.floor(centerFramePx / PITCH);
 				if (tile !== lastTile) {
-					if (lastTile >= 0) playSound('woodTick');
+					// (ticks now come from the ship's-wheel sound)
 					lastTile = tile;
 				}
 			}

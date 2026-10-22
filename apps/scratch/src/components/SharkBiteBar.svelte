@@ -99,6 +99,7 @@
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
 				spinning = true;
+				playSound('wheelSpin', 0.93); // ~4.2s, matches SPIN_MS
 				offset = offsetFor(WIN_INDEX, jitter);
 				watchTicks();
 			}),
@@ -114,7 +115,7 @@
 				const x = (centerInTube - m.m41 / k) / PITCH;
 				const tile = Math.floor(x);
 				if (tile !== lastTile) {
-					if (lastTile >= 0) playSound('woodTick');
+					// (ticks now come from the ship's-wheel sound)
 					lastTile = tile;
 				}
 			}

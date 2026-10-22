@@ -5,8 +5,10 @@ game/sound.ts. Per-type volume: SAMPLE_GAIN in game/sound.ts.
 Processed from the ElevenLabs originals: leading/trailing silence trimmed,
 long ones shortened with a fade, peak-normalized to -1 dB.
 
-  click scratch reveal match(gunshot, every matching tile) woodTick woodThunk scatterLand
-  win jackpot chestOpen splash cannon
-  bonus (free scratches awarded) bonusCoins (bonus multiplier goes up)
-  bonusComplete (bonus summary)
-  pirateArr pirateCheer parrot
+  click scratch reveal woodTick woodThunk scatterLand (ship's bell)
+  match        gunshot 2 -- the 3 matching tiles
+  matchExtra   gunshot 1 -- every extra match (4th, 5th, ...)
+  wheelSpin    ship's wheel -- Shark Bite roll, Kraken treasure reel
+  win jackpot chestOpen splash cannon krakenRoar octopus crab
+  bonus bonusCoins bonusComplete tropicalBirds tavern
+  pirateArr (+_2) pirateCheer pirateLaugh parrot parrotNiceWin

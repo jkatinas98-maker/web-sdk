@@ -19,7 +19,16 @@ type SoundType =
 	| 'pirateCheer' // voice: crew cheering (recorded sample only)
 	| 'parrot' // parrot squawk (recorded sample only)
 	| 'bonusCoins' // bonus multiplier goes up
-	| 'bonusComplete'; // bonus summary fanfare
+	| 'bonusComplete' // bonus summary fanfare
+	| 'matchExtra' // gunshot for each extra match (4th, 5th, ...)
+	| 'wheelSpin' // ship's wheel spinning: Shark Bite roll, Kraken reel
+	| 'pirateLaugh' // cursed mocking laugh: full skull grid, some Kraken misses
+	| 'octopus' // tentacles: Octopus feature starts
+	| 'parrotNiceWin' // parrot "nice win!"
+	| 'crab' // crab scuttling: crab win
+	| 'tavern' // crew celebrating in a tavern: Mega/Epic win, bonus done
+	| 'krakenRoar' // Kraken appears
+	| 'tropicalBirds'; // bonus island starts
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -63,7 +72,16 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	scratch: 0.35,
 	reveal: 0.4,
 	woodTick: 0.35,
-	match: 0.55, // gunshot per matching tile
+	match: 0.55, // gunshot 2: the 3 matching tiles
+	matchExtra: 0.55, // gunshot 1: every extra match
+	wheelSpin: 0.6,
+	pirateLaugh: 0.8,
+	octopus: 0.7,
+	parrotNiceWin: 0.7,
+	crab: 0.6,
+	tavern: 0.6,
+	krakenRoar: 0.75,
+	tropicalBirds: 0.45,
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features
@@ -232,10 +250,13 @@ export const playSound = (type: SoundType, pitch = 1) => {
 		// Small random pitch wobble on the frequent sounds so repeats don't
 		// sound robotic; 'match' uses the caller's rising pitch.
 		const FREQUENT: SoundType[] = ['click', 'scratch', 'reveal', 'woodTick'];
-		const rate = type === 'match' ? pitch : FREQUENT.includes(type) ? 0.93 + Math.random() * 0.14 : 1;
+		const rate = pitch !== 1 ? pitch : FREQUENT.includes(type) ? 0.93 + Math.random() * 0.14 : 1;
 		if (playSample(ctx, type, 0, rate)) {
 			// Extra layers that go with the recorded version too.
-			if (type === 'win' && Math.random() < 0.45) playSample(ctx, Math.random() < 0.6 ? 'pirateArr' : 'parrot', 0.5);
+			if (type === 'win' && Math.random() < 0.5) {
+				const voices: SoundType[] = ['pirateArr', 'parrot', 'parrotNiceWin'];
+				playSample(ctx, voices[Math.floor(Math.random() * voices.length)], 0.5);
+			}
 			if (type === 'bonus') playSample(ctx, 'pirateArr', 1.6);
 			if (type === 'chestOpen' && Math.random() < 0.5) playSample(ctx, 'parrot', 1.2);
 			return;
@@ -361,7 +382,10 @@ export const playSound = (type: SoundType, pitch = 1) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'match') {
+		if (type === 'matchExtra') {
+			tone(1046 * pitch, 0.12, 0.25, 'sine');
+			knock(1800, 0.15, 400 * pitch);
+		} else if (type === 'match') {
 			// Bright silver "ting" + a soft wood tap under it.
 			tone(1046 * pitch, 0.12, 0.25, 'sine');
 			tone(2093 * pitch, 0.05, 0.15, 'sine', 0.005);

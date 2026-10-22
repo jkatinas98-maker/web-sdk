@@ -106,6 +106,7 @@
 		if (activeFeatureOverlay?.kind === 'kraken') {
 			krakenStage = 'numbers';
 			playSound('splash');
+			setTimeout(() => playSound('krakenRoar'), 250);
 		}
 	});
 	const krakenRevealed = $derived(krakenStage !== 'numbers');
@@ -162,7 +163,7 @@
 		const hit = activeFeatureOverlay?.kind === 'kraken' && activeFeatureOverlay.data.hit;
 		if (krakenStage === 'numbers') {
 			krakenStage = 'revealed';
-			playSound(hit ? 'scatterLand' : 'click');
+			playSound(hit ? 'scatterLand' : Math.random() < 0.4 ? 'pirateLaugh' : 'click');
 		} else if (krakenStage === 'revealed') {
 			if (hit) {
 				krakenStage = 'case';
@@ -234,7 +235,7 @@
 			octoIndex = -1;
 			octoCardDone = false;
 			octoWinSum = 0;
-			playSound('bonus');
+			playSound('octopus');
 			clearTimeout(featureTimer);
 			featureTimer = setTimeout(() => dealOctoCard(0), 1800);
 		});
@@ -309,7 +310,8 @@
 		if (!showWinModal) return;
 		if (untrack(() => winTier !== null && awardedFreeScratches === 0)) {
 			playSound('cannon');
-			setTimeout(() => playSound('pirateCheer'), 450);
+			const tier = untrack(() => winTier);
+			setTimeout(() => playSound(tier === 'big' ? 'pirateCheer' : 'tavern'), 450);
 		}
 		const target = untrack(() => totalWin);
 		const start = performance.now();
@@ -353,13 +355,18 @@
 				pendingBonusSummary = false;
 				showBonusSummary = true;
 				playSound('bonusComplete');
+				setTimeout(() => playSound('tavern'), 1500);
 			});
 		}
 	});
 
-	// Bonus soundtrack while the bonus runs, main theme otherwise.
+	// Bonus soundtrack while the bonus runs, main theme otherwise; tropical
+	// birds as the island fades in.
+	let wasBonus = false;
 	$effect(() => {
 		setMusicTrack(bonusActive ? bonusMusicUrl : musicUrl);
+		if (bonusActive && !wasBonus) playSound('tropicalBirds');
+		wasBonus = bonusActive;
 	});
 
 	function closeBonusSummary() {
@@ -405,7 +412,13 @@
 			tallies = [...rest, pill].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 		};
 		for (const seg of segments) {
-			timers.push(setTimeout(() => setPill({ name: seg.symbol, value: seg.mult, step: 0 }), seg.showAt));
+			timers.push(
+				setTimeout(() => {
+					setPill({ name: seg.symbol, value: seg.mult, step: 0 });
+					// The crab scuttles off with its win.
+					if (seg.symbol === 'mult2') playSound('crab');
+				}, seg.showAt),
+			);
 			for (const b of seg.bumps) {
 				timers.push(setTimeout(() => setPill({ name: seg.symbol, value: b.value, step: b.step }), b.at));
 			}
@@ -420,7 +433,7 @@
 		const done = panels.length > 0 && revealed.size >= panels.length;
 		const all = done && panels.every((p) => p?.name === 'skull');
 		untrack(() => {
-			if (all && !skullGrid) playSound('cannon');
+			if (all && !skullGrid) playSound('pirateLaugh');
 			skullGrid = all;
 		});
 	});
