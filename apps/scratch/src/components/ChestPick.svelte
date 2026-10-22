@@ -45,7 +45,7 @@
 		next[others[1]] = missed[1];
 		prizes = next;
 		stage = 'opening';
-		playSound('click');
+		playSound('woodCrack');
 		// Shake, then burst open.
 		timers.push(
 			setTimeout(() => {
@@ -55,7 +55,7 @@
 			setTimeout(() => {
 				stage = 'revealOthers';
 				opened = [true, true, true];
-				playSound('woodThunk');
+				playSound('oldChestOpen');
 			}, 2100),
 			setTimeout(() => (stage = 'done'), 2700),
 		);

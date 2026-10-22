@@ -34,7 +34,9 @@ type SoundType =
 	| 'krakenMiss' // numbers don't match (+ _2 variant)
 	| 'krakenTreasure' // the treasure reel rises
 	| 'bonusLand' // a Bonus scatter is revealed (pitch rises 1st -> 3rd)
-	| 'keyLand'; // a Key is revealed
+	| 'keyLand' // a Key is revealed
+	| 'woodCrack' // picked chest shaking before it bursts
+	| 'oldChestOpen'; // the other two chests creaking open
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -94,6 +96,8 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	krakenTreasure: 0.7,
 	bonusLand: 0.7, // scatter hit; pitched up for the 2nd / 3rd
 	keyLand: 0.7, // key revealed
+	woodCrack: 0.7,
+	oldChestOpen: 0.6,
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features
@@ -410,7 +414,12 @@ export const playSound = (type: SoundType, pitch = 1) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'bonusLand') {
+		if (type === 'woodCrack') {
+			knock(900, 0.5, 180);
+			knock(1300, 0.4, 230, 0.15);
+		} else if (type === 'oldChestOpen') {
+			knock(600, 0.5, 130, 0.2);
+		} else if (type === 'bonusLand') {
 			// Ship's bell (pitched by the caller) + a magical sparkle arpeggio.
 			playSample(ctx, 'scatterLand', 0, pitch);
 			[1318, 1760, 2349].forEach((f, i) => tone(f * pitch, 0.08, 0.35, 'sine', i * 0.06));
