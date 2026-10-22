@@ -2125,3 +2125,29 @@ button:disabled {
 	position: relative;
 	z-index: 1;
 }
+
+/* Autoplay toggle (circular arrows on the frame). */
+.frame-btn--auto.auto-on {
+	background: radial-gradient(circle, rgba(120, 255, 160, 0.28), rgba(120, 255, 160, 0) 70%);
+	box-shadow: 0 0 0.4em rgba(120, 255, 160, 0.8), inset 0 0 0.3em rgba(120, 255, 160, 0.6);
+	animation: auto-spin-glow 1.4s ease-in-out infinite alternate;
+}
+@keyframes auto-spin-glow {
+	from { box-shadow: 0 0 0.25em rgba(120, 255, 160, 0.6), inset 0 0 0.2em rgba(120, 255, 160, 0.4); }
+	to { box-shadow: 0 0 0.6em rgba(120, 255, 160, 1), inset 0 0 0.35em rgba(120, 255, 160, 0.7); }
+}
+.auto-badge {
+	position: absolute;
+	left: 50%;
+	bottom: -0.35em;
+	translate: -50% 0;
+	padding: 0 0.35em;
+	border-radius: 0.3em;
+	font-family: var(--font-ui);
+	font-weight: 900;
+	font-size: 0.32em;
+	letter-spacing: 0.06em;
+	color: #052e16;
+	background: #86efac;
+	pointer-events: none;
+}

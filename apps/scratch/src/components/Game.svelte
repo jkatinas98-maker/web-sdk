@@ -417,6 +417,53 @@
 		});
 	});
 
+	// --- Autoplay (the circular-arrows button) ---------------------------
+	// Plays card after card on its own: deals, reveals everything, waits
+	// for the win reveal and any features to finish, then goes again.
+	// Big-win pop-ups close by themselves; features that need a choice
+	// (Kraken taps, chest pick) still wait for the player. Stops when the
+	// balance can't cover the bet, or when tapped again.
+	let autoplay = $state(false);
+	function toggleAutoplay() {
+		autoplay = !autoplay;
+		playSound('click');
+	}
+	// Deal the next card when everything is idle.
+	$effect(() => {
+		if (
+			!autoplay ||
+			viewState === 'playing' ||
+			isProcessing ||
+			presentPending ||
+			featureOverlayQueue.length > 0 ||
+			showWinModal ||
+			showBonusSummary ||
+			freeScratchesRemaining > 0 // the bonus deals itself
+		)
+			return;
+		if (isMockMode && mockBalance < betAmount) {
+			autoplay = false;
+			return;
+		}
+		const t = setTimeout(() => playGame(), 900);
+		return () => clearTimeout(t);
+	});
+	// Reveal the card (and Octopus bonus cards) automatically.
+	$effect(() => {
+		if (!autoplay || !(viewState === 'playing' || octoScratching)) return;
+		const t = setTimeout(() => revealEverything(), 500);
+		return () => clearTimeout(t);
+	});
+	// Close win / bonus pop-ups after a moment.
+	$effect(() => {
+		if (!autoplay || !(showWinModal || showBonusSummary)) return;
+		const t = setTimeout(() => {
+			if (showBonusSummary) closeBonusSummary();
+			else showWinModal = false;
+		}, 3200);
+		return () => clearTimeout(t);
+	});
+
 	// Local demo wallet, used only while there's no RGS backend to talk to
 	// (see playGame below) so the footer stat bar has something real to show
 	// during dev. Once rgs_url is present, the real balance from stateBet
@@ -892,12 +939,15 @@
 	{/if}
 
 	<button
-		class="frame-btn"
+		class="frame-btn frame-btn--auto"
+		class:auto-on={autoplay}
 		style={at(1210, 875, 100, 100)}
-		disabled={viewState !== 'playing' && !octoScratching}
-		aria-label="Reveal all"
-		onclick={revealEverything}
-	></button>
+		aria-label={autoplay ? 'Stop autoplay' : 'Start autoplay'}
+		aria-pressed={autoplay}
+		onclick={toggleAutoplay}
+	>
+		{#if autoplay}<span class="auto-badge">AUTO</span>{/if}
+	</button>
 	<button
 		class="frame-btn"
 		style={at(1334, 875, 100, 100)}
