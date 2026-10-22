@@ -21,6 +21,7 @@
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
 	import octopusIconUrl from '../assets/symbols/octopus.png';
+	import pirateIconUrl from '../assets/symbols/pirate.png';
 	import bigWinUrl from '../assets/winpop/big_win.webp';
 	import epicBonusUrl from '../assets/winpop/epic_bonus.webp';
 	import bonusBgUrl from '../assets/bonus_bg.webp';
@@ -81,6 +82,7 @@
 		| { kind: 'shark'; data: SharkOutcome }
 		| { kind: 'octopus'; data: OctopusCard[] }
 		| { kind: 'chestPick'; data: BookEventOfType<'chestPick'> }
+		| { kind: 'pirate'; data: BookEventOfType<'pirateBounty'> }
 	> = [];
 	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
@@ -155,10 +157,21 @@
 
 	function handleSharkLanded(outcome: SharkOutcome) {
 		clearTimeout(featureTimer);
-		// Let the landed icon + label sit for a beat; the pirate placeholder
-		// a little longer so "coming soon" can be read.
-		featureTimer = setTimeout(advanceFeatureOverlay, outcome === 'pirate' ? 2400 : 1600);
+		// Let the landed icon + label sit for a beat.
+		featureTimer = setTimeout(advanceFeatureOverlay, 1600);
 	}
+
+	// --- Pirate: plunders the top multiplier on the card ------------------
+	// Banner in the Shark Bite tube for a moment, then moves on.
+	$effect(() => {
+		const active = activeFeatureOverlay;
+		if (active?.kind !== 'pirate') return;
+		untrack(() => {
+			playSound('jackpot');
+			clearTimeout(featureTimer);
+			featureTimer = setTimeout(advanceFeatureOverlay, 2800);
+		});
+	});
 
 	// --- Octopus: 3 bonus cards dealt into the same grid -----------------
 	// octoIndex -1 = intro banner, 0..2 = which bonus card is up.
@@ -731,6 +744,9 @@
 		bonusMultiplier: ({ data }: { data: BookEventOfType<'bonusMultiplier'> }) => {
 			pendingBonusMult = data.total;
 		},
+		pirateBounty: ({ data }: { data: BookEventOfType<'pirateBounty'> }) => {
+			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'pirate', data }];
+		},
 		chestPick: ({ data }: { data: BookEventOfType<'chestPick'> }) => {
 			pendingFeatureEvents = [...pendingFeatureEvents, { kind: 'chestPick', data }];
 		},
@@ -960,6 +976,21 @@
 	</div>
 {/if}
 
+{#if activeFeatureOverlay?.kind === 'pirate'}
+	{@const pb = activeFeatureOverlay.data}
+	<div
+		class="octo-banner pirate-banner"
+		style={`top:${sharkTube.top}px;left:${sharkTube.left}px;width:${sharkTube.width}px;height:${sharkTube.height}px;font-size:${Math.max(10, sharkTube.height * 0.2)}px;`}
+	>
+		<img class="octo-banner-icon" src={pirateIconUrl} alt="" />
+		<div class="octo-banner-text">
+			<div class="octo-banner-title">The Pirate plunders!</div>
+			<div class="octo-banner-sub">{SYMBOL_LABEL[pb.symbol]} · x{pb.multiplier} · +${pb.amount.toFixed(2)}</div>
+		</div>
+		<img class="octo-banner-icon pirate-loot" src={SYMBOL_IMAGE_URL[pb.symbol]} alt="" />
+	</div>
+{/if}
+
 {#if octoActive}
 	<!-- Octopus bonus cards: banner in the Shark Bite bar's tube, so the
 	     grid stays fully visible; the cards are dealt into the normal grid. -->
@@ -1024,7 +1055,7 @@
 				<div class="pay-item shark-item">
 					<img class="pay-item-icon" src={SYMBOL_IMAGE_URL.shark} alt={SYMBOL_LABEL.shark} />
 					<span class="pay-item-name">{SYMBOL_LABEL.shark} (rolls the bar)</span>
-					<span class="pay-item-mult">Kraken · Octopus · Key · Bonus</span>
+					<span class="pay-item-mult">Kraken · Octopus · Pirate · Key · Bonus</span>
 				</div>
 				{#each payEntries as [name, sym] (name)}
 					<div class="pay-item">

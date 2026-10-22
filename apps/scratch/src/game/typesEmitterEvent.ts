@@ -16,4 +16,5 @@ export type EmitterEventGame =
 	| { type: 'sharkBite'; data: BookEventOfType<'sharkBite'> }
 	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> }
 	| { type: 'chestPick'; data: BookEventOfType<'chestPick'> }
-	| { type: 'bonusMultiplier'; data: BookEventOfType<'bonusMultiplier'> };
+	| { type: 'bonusMultiplier'; data: BookEventOfType<'bonusMultiplier'> }
+	| { type: 'pirateBounty'; data: BookEventOfType<'pirateBounty'> };

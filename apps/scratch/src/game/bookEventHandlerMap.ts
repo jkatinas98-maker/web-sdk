@@ -72,6 +72,12 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 	bonusMultiplier: async (bookEvent: BookEventOfType<'bonusMultiplier'>) => {
 		await eventEmitter.broadcastAsync({ type: 'bonusMultiplier', data: bookEvent });
 	},
+	pirateBounty: async (bookEvent: BookEventOfType<'pirateBounty'>) => {
+		await eventEmitter.broadcastAsync({
+			type: 'pirateBounty',
+			data: { ...bookEvent, amount: bookEvent.amount * stateBet.betAmount },
+		});
+	},
 	krakenResult: async (bookEvent: BookEventOfType<'krakenResult'>) => {
 		const dollarAmount = bookEvent.amount * stateBet.betAmount;
 		await eventEmitter.broadcastAsync({

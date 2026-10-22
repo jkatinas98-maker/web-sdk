@@ -46,7 +46,7 @@
 	const SHARK_OUTCOME_LABEL: Record<SharkOutcome, string> = {
 		kraken: 'Kraken!',
 		octopus: 'Octopus — 3 bonus cards!',
-		pirate: 'Pirate — coming soon',
+		pirate: 'Pirate — plunders the top prize!',
 		key: 'Key — treasure chests!',
 		bonus: 'Bonus — free scratches!',
 	};
@@ -129,7 +129,7 @@
 		cancelAnimationFrame(raf);
 		playSound('woodThunk');
 		const landed_ = outcome;
-		setTimeout(() => playSound(landed_ === 'pirate' ? 'scatterLand' : 'jackpot'), 120);
+		setTimeout(() => playSound(landed_ === 'pirate' ? 'pirateArr' : 'jackpot'), 120);
 		onLanded(outcome);
 	}
 

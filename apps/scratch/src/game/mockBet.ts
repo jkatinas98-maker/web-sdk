@@ -356,8 +356,19 @@ export const createMockBet = (
 			keyPicks += 1;
 		} else if (outcome === 'bonus') {
 			freeScratches += FREE_SCRATCHES_AWARDED;
+		} else if (outcome === 'pirate') {
+			// Plunder the best multiplier symbol on the card (any count); if
+			// there's none, the mode's lowest symbol.
+			const modeSyms = config.betModes[betMode].symbols as SymbolName[];
+			let best: SymbolName = modeSyms.reduce((a, b) => (config.symbols[a].mult <= config.symbols[b].mult ? a : b));
+			for (const { name } of panels) {
+				if (config.symbols[name].mult > config.symbols[best].mult) best = name;
+			}
+			const multiplier = config.symbols[best].mult;
+			amount += multiplier;
+			events.push({ index: idx, type: 'pirateBounty', symbol: best, multiplier, amount: multiplier });
+			idx += 1;
 		}
-		// 'pirate': placeholder, no payout yet.
 	}
 
 	for (let p = 0; p < keyPicks; p++) {

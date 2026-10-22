@@ -103,6 +103,16 @@ type BookEventBonusMultiplier = {
 	total: number;
 };
 
+// Shark Bite -> Pirate: plunders the highest-paying symbol on the card
+// (any count), paying its multiplier. `amount` is per-$1 like the rest.
+type BookEventPirateBounty = {
+	index: number;
+	type: 'pirateBounty';
+	symbol: SymbolName;
+	multiplier: number;
+	amount: number;
+};
+
 export type BookEvent =
 	| BookEventRevealPanels
 	| BookEventSetTotalWin
@@ -112,7 +122,8 @@ export type BookEvent =
 	| BookEventSharkBite
 	| BookEventOctopusCards
 	| BookEventChestPick
-	| BookEventBonusMultiplier;
+	| BookEventBonusMultiplier
+	| BookEventPirateBounty;
 
 export type Bet = BetType<BookEvent>;
 export type BookEventOfType<T> = Extract<BookEvent, { type: T }>;
