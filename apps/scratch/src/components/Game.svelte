@@ -485,7 +485,8 @@
 		let raf = 0;
 		const tick = () => {
 			const t = (performance.now() - start) / 1600;
-			const done = context.stateApp.loaded && fontsReady && t >= 1;
+			// (8s safety net so a slow/failed asset never traps the player here)
+			const done = (context.stateApp.loaded && fontsReady && t >= 1) || t >= 5;
 			loaderProgress = done ? 1 : Math.min(0.92, t * 0.92);
 			if (!done) raf = requestAnimationFrame(tick);
 		};
