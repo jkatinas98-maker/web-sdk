@@ -2103,3 +2103,25 @@ button:disabled {
 	flex-wrap: wrap;
 	gap: 6px;
 }
+
+/* Animated Kraken storm behind the feature (over the still background). */
+.kraken-scene-video,
+.kraken-scene-vignette {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+	pointer-events: none;
+}
+.kraken-scene-video {
+	object-fit: cover;
+	object-position: center 45%;
+}
+.kraken-scene-vignette {
+	background: radial-gradient(ellipse at 50% 55%, rgba(2, 8, 16, 0.05), rgba(2, 8, 16, 0.55) 80%);
+}
+.kraken-card-overlay > :not(.kraken-scene-video):not(.kraken-scene-vignette) {
+	position: relative;
+	z-index: 1;
+}

@@ -17,6 +17,8 @@
 	import frameUrl from '../assets/frame.webp';
 	import krakenPanelUrl from '../assets/kraken_panel.webp';
 	import krakenSceneUrl from '../assets/kraken_scene.webp';
+	import krakenMp4Url from '../assets/kraken_loop.mp4';
+	import krakenWebmUrl from '../assets/kraken_loop.webm';
 	import bgPosterUrl from '../assets/background.jpg';
 	import bgMp4Url from '../assets/bg_loop.mp4';
 	import bgWebmUrl from '../assets/bg_loop.webm';
@@ -1118,6 +1120,12 @@
 		onclick={handleKrakenTap}
 		onkeydown={(e) => e.key === 'Enter' && handleKrakenTap()}
 	>
+		<!-- Animated storm scene (the still is the poster / fallback) -->
+		<video class="kraken-scene-video" autoplay muted loop playsinline preload="auto" poster={krakenSceneUrl} aria-hidden="true">
+			<source src={krakenWebmUrl} type="video/webm" />
+			<source src={krakenMp4Url} type="video/mp4" />
+		</video>
+		<div class="kraken-scene-vignette" aria-hidden="true"></div>
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
 			<div class="kraken-case" style={`width:${krakenReelW}px;`}>
 				<div class="feature-modal-title kraken-case-title">The Kraken's Treasure</div>
