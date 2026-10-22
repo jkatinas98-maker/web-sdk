@@ -29,7 +29,10 @@ type SoundType =
 	| 'tavern' // crew celebrating in a tavern: Mega/Epic win, bonus done
 	| 'krakenRoar' // Kraken appears
 	| 'tropicalBirds' // bonus island starts
-	| 'scratchSand'; // scratching a tile during the bonus (beach)
+	| 'scratchSand' // scratching a tile during the bonus (beach)
+	| 'krakenMatch' // numbers match
+	| 'krakenMiss' // numbers don't match (+ _2 variant)
+	| 'krakenTreasure'; // the treasure reel rises
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -84,6 +87,9 @@ const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
 	krakenRoar: 0.75,
 	tropicalBirds: 0.45,
 	scratchSand: 0.5,
+	krakenMatch: 0.8,
+	krakenMiss: 0.6,
+	krakenTreasure: 0.7,
 	scatterLand: 0.55,
 	woodThunk: 0.6,
 	// wins and features
@@ -400,7 +406,14 @@ export const playSound = (type: SoundType, pitch = 1) => {
 
 		const r = 0.9 + Math.random() * 0.2; // per-play pitch variation
 
-		if (type === 'scratchSand') {
+		if (type === 'krakenMatch') {
+			bell(880, 0.12);
+			coinShower(10, 0.5, 0.1, 0.2);
+		} else if (type === 'krakenMiss') {
+			noise('lowpass', 500, 0.8, 0.3, 0.7, 0, 150, 0.05);
+		} else if (type === 'krakenTreasure') {
+			noise('lowpass', 300, 0.8, 0.3, 1.2, 0, 1200, 0.3);
+		} else if (type === 'scratchSand') {
 			noise('bandpass', 1400, 0.8, 0.18, 0.08, 0, 700);
 		} else if (type === 'matchExtra') {
 			tone(1046 * pitch, 0.12, 0.25, 'sine');

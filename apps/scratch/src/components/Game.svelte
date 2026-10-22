@@ -163,11 +163,16 @@
 		const hit = activeFeatureOverlay?.kind === 'kraken' && activeFeatureOverlay.data.hit;
 		if (krakenStage === 'numbers') {
 			krakenStage = 'revealed';
-			playSound(hit ? 'scatterLand' : Math.random() < 0.4 ? 'pirateLaugh' : 'click');
+			if (hit) {
+				playSound('krakenMatch');
+			} else {
+				playSound('krakenMiss');
+				if (Math.random() < 0.25) setTimeout(() => playSound('pirateLaugh'), 700);
+			}
 		} else if (krakenStage === 'revealed') {
 			if (hit) {
 				krakenStage = 'case';
-				playSound('click');
+				playSound('krakenTreasure');
 			} else {
 				advanceFeatureOverlay();
 			}

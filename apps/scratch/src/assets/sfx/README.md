@@ -9,6 +9,7 @@ long ones shortened with a fade, peak-normalized to -1 dB.
   match        gunshot 2 -- the 3 matching tiles
   matchExtra   gunshot 1 -- every extra match (4th, 5th, ...)
   wheelSpin    ship's wheel -- Shark Bite roll, Kraken treasure reel
+  krakenMatch krakenMiss (+_2) krakenTreasure -- Kraken number match
   win jackpot chestOpen splash cannon krakenRoar octopus crab
   bonus bonusCoins bonusComplete tropicalBirds tavern
   pirateArr (+_2) pirateCheer pirateLaugh parrot parrotNiceWin
