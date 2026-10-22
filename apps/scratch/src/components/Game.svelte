@@ -308,7 +308,7 @@
 			untrack(() => {
 				pendingBonusSummary = false;
 				showBonusSummary = true;
-				playSound('jackpot');
+				playSound('bonusComplete');
 			});
 		}
 	});
@@ -676,7 +676,11 @@
 				const animMs = buildWinSchedule(panels, findWinningSymbols(panels), betMode).total;
 				winAnimUntil = performance.now() + animMs;
 				const newMult = pendingBonusMult;
-				if (newMult !== null) setTimeout(() => (bonusMult = newMult), animMs + 200);
+				if (newMult !== null)
+					setTimeout(() => {
+						if (newMult > bonusMult) playSound('bonusCoins');
+						bonusMult = newMult;
+					}, animMs + 200);
 			}
 			if (pendingFreeScratches > 0) {
 				freeScratchesRemaining += pendingFreeScratches;

@@ -17,7 +17,9 @@ type SoundType =
 	| 'match' // a winning tile ticks in (pitch rises 1st -> 3rd)
 	| 'pirateArr' // voice: pirate "Arrr!" (recorded sample only)
 	| 'pirateCheer' // voice: crew cheering (recorded sample only)
-	| 'parrot'; // parrot squawk (recorded sample only)
+	| 'parrot' // parrot squawk (recorded sample only)
+	| 'bonusCoins' // bonus multiplier goes up
+	| 'bonusComplete'; // bonus summary fanfare
 
 // ---------- Recorded samples ----------
 // Drop audio files into src/assets/sfx/ named after a sound type, with
@@ -56,14 +58,31 @@ const loadSamples = (ctx: AudioContext) => {
 
 // Per-type loudness for samples (tweak by ear).
 const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
+	// frequent / small -- kept well under the big moments
+	click: 0.35,
+	scratch: 0.35,
+	reveal: 0.4,
+	woodTick: 0.35,
+	match: 0.5,
+	scatterLand: 0.55,
+	woodThunk: 0.6,
+	// wins and features
+	win: 0.6,
+	jackpot: 0.65,
+	chestOpen: 0.7,
+	splash: 0.55,
+	cannon: 0.75,
+	bonus: 0.7,
+	bonusCoins: 0.55,
+	bonusComplete: 0.7,
+	// voices
 	pirateArr: 0.9,
-	pirateCheer: 0.8,
-	parrot: 0.7,
-	cannon: 0.9,
+	pirateCheer: 0.7,
+	parrot: 0.6,
 };
 
 // Returns true if a recorded sample was played.
-const playSample = (ctx: AudioContext, type: SoundType, delay = 0): boolean => {
+const playSample = (ctx: AudioContext, type: SoundType, delay = 0, rate = 1): boolean => {
 	const urls = sampleUrls[type];
 	if (!urls?.length) return false;
 	const ready = urls.map((u) => sampleBuffers.get(u)).filter((b): b is AudioBuffer => !!b);
@@ -74,6 +93,7 @@ const playSample = (ctx: AudioContext, type: SoundType, delay = 0): boolean => {
 	const g = ctx.createGain();
 	g.gain.value = (SAMPLE_GAIN[type] ?? 0.8) * volume;
 	src.connect(g).connect(ctx.destination);
+	src.playbackRate.value = rate;
 	src.start(ctx.currentTime + delay);
 	return true;
 };
@@ -169,7 +189,17 @@ export const playSound = (type: SoundType, pitch = 1) => {
 		if (!ctx) return;
 		if (ctx.state === 'suspended') ctx.resume();
 		loadSamples(ctx);
-		if (playSample(ctx, type)) return;
+		// Small random pitch wobble on the frequent sounds so repeats don't
+		// sound robotic; 'match' uses the caller's rising pitch.
+		const FREQUENT: SoundType[] = ['click', 'scratch', 'reveal', 'woodTick'];
+		const rate = type === 'match' ? pitch : FREQUENT.includes(type) ? 0.93 + Math.random() * 0.14 : 1;
+		if (playSample(ctx, type, 0, rate)) {
+			// Extra layers that go with the recorded version too.
+			if (type === 'win' && Math.random() < 0.45) playSample(ctx, Math.random() < 0.6 ? 'pirateArr' : 'parrot', 0.5);
+			if (type === 'bonus') playSample(ctx, 'pirateArr', 1.6);
+			if (type === 'chestOpen' && Math.random() < 0.5) playSample(ctx, 'parrot', 1.2);
+			return;
+		}
 
 		const now = ctx.currentTime;
 
@@ -351,6 +381,13 @@ export const playSound = (type: SoundType, pitch = 1) => {
 			knock(600, 0.7, 130, 0.36);
 			coinShower(16, 0.7, 0.13, 0.42);
 			if (hasSample('parrot') && Math.random() < 0.5) playSample(ctx, 'parrot', 0.9);
+		} else if (type === 'bonusCoins') {
+			coinShower(8, 0.4, 0.11);
+		} else if (type === 'bonusComplete') {
+			bell(659, 0.11, 0, 1);
+			horn(262, 0.09, 0.3, 0.3);
+			horn(392, 0.1, 0.6, 0.9);
+			coinShower(14, 0.9, 0.1, 0.6);
 		} else if (type === 'pirateArr' || type === 'pirateCheer' || type === 'parrot') {
 			// Voices need recordings (no synth version) -- silent until the
 			// files are added.
