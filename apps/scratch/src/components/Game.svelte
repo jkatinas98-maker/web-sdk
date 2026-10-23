@@ -402,34 +402,31 @@
 
 
 
-	// The win pop-up only shows for big wins: at least the mode's
-	// second-highest symbol multiplier (easy 16x, medium 41x, hard 130x),
-	// or when free scratches were awarded. Smaller wins just show in the
-	// Win plaque, with the win sound.
-	function isBigWin(): boolean {
-		if (awardedFreeScratches > 0) return true;
-		const mults = (config.betModes[betMode].symbols as SymbolName[])
-			.map((name) => config.symbols[name].mult)
-			.sort((a, b) => b - a);
-		return betAmount > 0 && totalWin / betAmount >= mults[1];
-	}
-
-	// Big / Mega / Epic tier for the win pop-up, by multiple of the bet:
-	// Big from the mode's second-highest symbol, Epic at its top symbol
-	// (= the mode's max win), Mega in between (geometric midpoint).
+	// Win pop-up thresholds, as multiples of the bet. Only wins of at least
+	// "big" get a pop-up (smaller wins just show in the Win plaque with the
+	// win sound); the tiers above it escalate the art. Hitting the mode's
+	// max win gets the MAX WIN banner.
 	type WinTier = 'big' | 'mega' | 'epic' | 'max';
 	const WIN_TIER_ART: Record<WinTier, string> = { big: bigWinUrl, mega: megaWinUrl, epic: epicWinUrl, max: maxWinUrl };
+	const WIN_TIERS: Record<string, { big: number; mega: number; epic: number }> = {
+		easy: { big: 16, mega: 27, epic: 45 },
+		medium: { big: 41, mega: 110, epic: 300 },
+		hard: { big: 130, mega: 400, epic: 1000 },
+	};
+
+	function isBigWin(): boolean {
+		if (awardedFreeScratches > 0) return true;
+		return betAmount > 0 && totalWin / betAmount >= WIN_TIERS[betMode].big;
+	}
+
 	const winTier = $derived.by((): WinTier | null => {
 		if (totalWin <= 0 || betAmount <= 0) return null;
-		const mults = (config.betModes[betMode].symbols as SymbolName[])
-			.map((name) => config.symbols[name].mult)
-			.sort((a, b) => b - a);
 		const x = totalWin / betAmount;
-		// Hitting the mode's max win gets its own MAX WIN banner.
+		const t = WIN_TIERS[betMode];
 		if (x >= config.betModes[betMode].max_win - 1e-9) return 'max';
-		if (x >= mults[0]) return 'epic';
-		if (x >= Math.sqrt(mults[0] * mults[1])) return 'mega';
-		if (x >= mults[1]) return 'big';
+		if (x >= t.epic) return 'epic';
+		if (x >= t.mega) return 'mega';
+		if (x >= t.big) return 'big';
 		return null;
 	});
 
