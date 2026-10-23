@@ -113,6 +113,9 @@
 </script>
 
 <div class="case-reel" bind:clientWidth={width} style={`height:${FRAME_H * k}px;`}>
+	<!-- Clip the strip to the frame's window (between the two end caps) so
+	     tiles never show past the sides of the banner. -->
+	<div class="case-clip">
 	<div
 		class="case-strip"
 		bind:this={strip}
@@ -129,6 +132,7 @@
 				<span class="case-tile-mult">×{m}</span>
 			</div>
 		{/each}
+	</div>
 	</div>
 	<img class="case-frame" src={reelFrameUrl} alt="" draggable="false" />
 </div>

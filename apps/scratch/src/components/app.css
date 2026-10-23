@@ -3285,3 +3285,10 @@ button:disabled {
 	from { filter: drop-shadow(0 0 10px rgba(132, 204, 22, 0.6)); transform: scale(1); }
 	to { filter: drop-shadow(0 0 34px rgba(132, 204, 22, 1)) drop-shadow(0 0 60px rgba(34, 197, 94, 0.6)); transform: scale(1.04); }
 }
+
+/* Kraken treasure reel: tiles only inside the frame's window. */
+.case-clip {
+	position: absolute;
+	inset: 0;
+	clip-path: inset(6% 10.4% 14% 10.6%);
+}
