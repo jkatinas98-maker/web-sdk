@@ -3607,3 +3607,20 @@ button:disabled {
 	animation: bigwin-art-in 0.8s cubic-bezier(0.25, 1.7, 0.45, 1) both, bigwin-art-bob 2.4s 0.8s ease-in-out infinite;
 	user-select: none;
 }
+
+/* "Tap to continue" sign under pop-ups and features */
+.tap-continue {
+	position: relative;
+	z-index: 2;
+	width: min(62vw, 260px);
+	height: auto;
+	margin-top: 0.4em;
+	filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+	animation: chest-prize-pop 0.45s cubic-bezier(0.3, 1.8, 0.5, 1) both, tap-pulse 1.4s 0.45s ease-in-out infinite;
+	pointer-events: none;
+	user-select: none;
+}
+@keyframes tap-pulse {
+	0%, 100% { scale: 1; }
+	50% { scale: 1.05; }
+}

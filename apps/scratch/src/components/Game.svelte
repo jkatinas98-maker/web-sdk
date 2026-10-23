@@ -55,6 +55,7 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import tapContinueUrl from '../assets/ui/tap_continue.webp';
 	import krakensTreasureUrl from '../assets/krakens_treasure.webp';
 	import resultKrakenUrl from '../assets/shark/result_kraken.webp';
 	import resultOctopusUrl from '../assets/shark/result_octopus.webp';
@@ -1481,7 +1482,7 @@
 				</div>
 				{#if krakenStage === 'landed'}
 					<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +{money(k.amount)}</div>
-					<div class="kraken-card-hint">Tap to continue</div>
+					<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
 				{:else}
 					<div class="kraken-card-hint">Opening...</div>
 				{/if}
@@ -1516,7 +1517,7 @@
 						<div class={k.hit ? 'kraken-result kraken-result-hit' : 'kraken-result kraken-result-miss'}>
 							{k.hit ? 'MATCH!' : 'No match'}
 						</div>
-						<div class="kraken-card-hint">{k.hit ? "Tap to open the Kraken's treasure" : 'Tap to continue'}</div>
+						{#if k.hit}<div class="kraken-card-hint">Tap to open the Kraken's treasure</div>{:else}<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />{/if}
 					{:else}
 						<div class="kraken-card-hint">Tap to reveal the Kraken's number</div>
 					{/if}
@@ -1559,7 +1560,7 @@
 					</div>
 				{/each}
 			</div>
-			<div class="win-modal-hint">Tap anywhere to continue</div>
+			<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
 		</div>
 	</div>
 {/if}
@@ -1596,7 +1597,7 @@
 				{#if awardedFreeScratches > 0}
 					<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
 				{/if}
-				<div class="win-modal-hint">Tap anywhere to continue</div>
+				<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
 			</div>
 		{:else}
 			<div class="win-modal">
@@ -1608,7 +1609,7 @@
 				{#if awardedFreeScratches > 0}
 					<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
 				{/if}
-				<div class="win-modal-hint">Tap anywhere to continue</div>
+				<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
 			</div>
 		{/if}
 	</div>
@@ -1633,7 +1634,7 @@
 					<span class="bonus-win-count">{bonusSpins} Free Scratches</span>
 				</div>
 			</div>
-			<div class="win-modal-hint">Tap anywhere to continue</div>
+			<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
 		</div>
 	</div>
 {/if}

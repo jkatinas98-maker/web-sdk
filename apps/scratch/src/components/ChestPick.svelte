@@ -12,6 +12,7 @@
 	import treasureFoundUrl from '../assets/chests/ui/treasure_found.webp';
 	import { playSound } from '../game/sound';
 	import Sparkles from './Sparkles.svelte';
+	import tapContinueUrl from '../assets/ui/tap_continue.webp';
 	import { money } from '../game/money';
 
 	// Key feature: full-screen ship deck, three chests. The player picks
@@ -136,9 +137,12 @@
 		{#if stage === 'pick'}
 			Choose one — the others reveal what you missed
 		{:else if stage === 'done'}
-			You won {fmt(win)} · tap to continue
+			You won {fmt(win)}
 		{:else}
 			&nbsp;
 		{/if}
 	</div>
+	{#if stage === 'done'}
+		<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />
+	{/if}
 </div>
