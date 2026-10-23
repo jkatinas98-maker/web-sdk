@@ -44,6 +44,7 @@ const SYMBOL_NAMES: SymbolName[] = [
 	'mult110',
 	'mult130',
 	'mult1000',
+	'mult2500',
 ];
 
 // Same URL feeds both the Pixi sprite (via stateApp's asset loader) and the

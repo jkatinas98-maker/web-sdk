@@ -27,7 +27,8 @@ export const SYMBOL_PLACEHOLDER_GLYPH: Record<SymbolName, string> = {
 	mult45: '◉', // Jolly Roger flag
 	mult110: '❖', // jeweled crown / gem cluster
 	mult130: '✧', // stacked gold bars
-	mult1000: '✪', // overflowing treasure hoard (open chest, highest tier)
+	mult1000: '✪', // overflowing treasure hoard (open chest)
+	mult2500: '♛', // pirate king's crown (Hard's top tier)
 };
 
 // Human-readable label for the paytable modal -- symbol ids (mult1_5,
@@ -52,6 +53,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	mult110: 'Jeweled Crown',
 	mult130: 'Gold Bars',
 	mult1000: 'Overflowing Hoard',
+	mult2500: "Pirate King's Crown",
 };
 
 // Accent colors: `fill` is the symbol's accent hue (used for the DOM
@@ -79,5 +81,6 @@ export const SYMBOL_COLORS: Record<SymbolName, { fill: number; glow: number }> =
 	mult45: { fill: 0x1e293b, glow: 0xcbd5e1 }, // black/white Jolly Roger
 	mult110: { fill: 0x7e22ce, glow: 0xd8b4fe }, // jeweled crown
 	mult130: { fill: 0xeab308, glow: 0xfef08a }, // gold bars
-	mult1000: { fill: 0xf59e0b, glow: 0xfde68a }, // overflowing hoard -- richest, biggest glow
+	mult1000: { fill: 0xf59e0b, glow: 0xfde68a }, // overflowing hoard
+	mult2500: { fill: 0x2563eb, glow: 0x93c5fd }, // pirate king's crown -- top of Hard
 };

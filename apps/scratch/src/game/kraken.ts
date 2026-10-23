@@ -36,15 +36,14 @@ export const krakenPrizeRarity = (betMode: BetMode, mult: number): Rarity => {
 	return 'blue';
 };
 
-// Symbol art shown on each case-reel tile: the prize's tier within the
-// table mapped onto the mode's own symbols, low to high (so the top prize
-// shows the mode's top symbol, the 2x shows its lowest).
+// Symbol art shown on each case-reel tile: the mode's highest-paying symbol
+// that doesn't exceed the prize (so a 1000x prize shows the 1000x symbol,
+// a 250x prize the 130x one), falling back to the mode's lowest symbol.
 export const krakenPrizeSymbol = (betMode: BetMode, mult: number): SymbolName => {
-	const table = KRAKEN_PRIZE_TABLE[betMode];
 	const symbols = [...(config.betModes[betMode].symbols as SymbolName[])].sort(
 		(a, b) => config.symbols[a].mult - config.symbols[b].mult,
 	);
-	const i = Math.max(0, table.findIndex(([m]) => m === mult));
-	const j = table.length > 1 ? Math.round((i * (symbols.length - 1)) / (table.length - 1)) : 0;
-	return symbols[j];
+	let pick = symbols[0];
+	for (const s of symbols) if (config.symbols[s].mult <= mult) pick = s;
+	return pick;
 };

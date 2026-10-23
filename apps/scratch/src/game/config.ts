@@ -17,34 +17,34 @@ export default {
 			feature: false,
 			buyBonus: false,
 			rtp: 0.96,
-			max_win: 45,
+			max_win: 110,
 			cols: 3,
 			rows: 5,
 			// Which shared symbols (see `symbols` below) this difficulty draws
 			// from, low to high payout. Multiplier VALUES that also appear in
 			// other difficulties reuse the same id/emoji (mult2 and mult9 are
 			// every mode's "2x" and "9x", not a separate icon per mode).
-			symbols: ['mult1_5', 'mult2', 'mult4', 'mult9', 'mult16', 'mult45'],
+			symbols: ['mult1_5', 'mult2', 'mult4', 'mult16', 'mult45', 'mult110'],
 		},
 		medium: {
 			cost: 1.0,
 			feature: false,
 			buyBonus: false,
 			rtp: 0.96,
-			max_win: 110,
+			max_win: 1000,
 			cols: 3,
 			rows: 4,
-			symbols: ['mult1_5', 'mult2', 'mult5', 'mult9', 'mult41', 'mult110'],
+			symbols: ['mult1_5', 'mult2', 'mult5', 'mult41', 'mult110', 'mult1000'],
 		},
 		hard: {
 			cost: 1.0,
 			feature: false,
 			buyBonus: false,
 			rtp: 0.96,
-			max_win: 1000,
+			max_win: 2500,
 			cols: 3,
 			rows: 3,
-			symbols: ['mult2', 'mult6', 'mult9', 'mult36', 'mult130', 'mult1000'],
+			symbols: ['mult2', 'mult6', 'mult9', 'mult36', 'mult130', 'mult1000', 'mult2500'],
 		},
 	},
 	// The authoritative per-round multiplier always comes from the RGS book;
@@ -87,6 +87,7 @@ export default {
 		mult110: { paytable: [{ '3': 110 }], mult: 110 },
 		mult130: { paytable: [{ '3': 130 }], mult: 130 },
 		mult1000: { paytable: [{ '3': 1000 }], mult: 1000 },
+		mult2500: { paytable: [{ '3': 2500 }], mult: 2500 },
 	},
 	paddingReels: {
 		basegame: '',
