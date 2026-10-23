@@ -88,10 +88,10 @@
 	const SPECIAL: Partial<Record<SymbolName, { aura: number; ray: number; sparkle: number }>> = {
 		bonus: { aura: 0xff3a2a, ray: 0xffd75e, sparkle: 0xfff1b8 },
 		key: { aura: 0xffb21f, ray: 0xfff1b8, sparkle: 0xffffff },
-		mult2500: { aura: 0x8b2cff, ray: 0x5ee7ff, sparkle: 0xe9d5ff },
+		mult2500: { aura: 0x16a34a, ray: 0xa3e635, sparkle: 0xecfccb },
 	};
 	const special = SPECIAL[props.name];
-	// The 2500x cosmic kraken: always smouldering with violet/blue flames,
+	// The 2500x cosmic kraken: always smouldering with toxic-green flames,
 	// and its win is a much bigger cosmic inferno with a swirling vortex.
 	const cosmic = props.name === 'mult2500';
 
@@ -188,12 +188,12 @@
 		{ color: 0xfff6c8, scale: 0.26, width: 0.28, alpha: 0.9 },
 	];
 
-	// Cosmic fire for the 2500x: deep violet rim -> magenta -> cyan -> white core.
+	// Toxic cosmic fire for the 2500x: deep green rim -> emerald -> lime -> pale core.
 	const COSMIC_LAYERS = [
-		{ color: 0x5b0bd6, scale: 1, width: 1.1, alpha: 0.9 },
-		{ color: 0xc026ff, scale: 0.76, width: 0.8, alpha: 0.9 },
-		{ color: 0x38bdf8, scale: 0.52, width: 0.52, alpha: 0.95 },
-		{ color: 0xe0f7ff, scale: 0.28, width: 0.3, alpha: 0.9 },
+		{ color: 0x065f2a, scale: 1, width: 1.1, alpha: 0.9 },
+		{ color: 0x16a34a, scale: 0.76, width: 0.8, alpha: 0.92 },
+		{ color: 0x84cc16, scale: 0.52, width: 0.52, alpha: 0.95 },
+		{ color: 0xf0ffd8, scale: 0.28, width: 0.3, alpha: 0.9 },
 	];
 
 	const fire = (g: PIXI.Graphics, layers = FIRE_LAYERS, power = 1) => {
@@ -238,9 +238,9 @@
 			g.fill({ color: 0xffb21f, alpha: 0.22 + 0.1 * pulse });
 			if (cosmic) {
 				g.circle(0, 0, size * (1.15 + grow));
-				g.fill({ color: 0x6d28d9, alpha: 0.22 + 0.1 * pulse });
-				rays(g, 18, size * 0.25, size * (1.35 + winSplash * 0.7), tw * 1.6, 0x5ee7ff, 0.26 + 0.14 * pulse);
-				rays(g, 18, size * 0.2, size * 1.0, -tw * 1.1 + 0.17, 0xc026ff, 0.24);
+				g.fill({ color: 0x15803d, alpha: 0.22 + 0.1 * pulse });
+				rays(g, 18, size * 0.25, size * (1.35 + winSplash * 0.7), tw * 1.6, 0xbef264, 0.26 + 0.14 * pulse);
+				rays(g, 18, size * 0.2, size * 1.0, -tw * 1.1 + 0.17, 0x22c55e, 0.24);
 				vortex(g, size * 1.05, tw);
 				fire(g, COSMIC_LAYERS, 1.45);
 			} else {
@@ -260,7 +260,7 @@
 				const a = base + f * 2.6;
 				const r = radius * (0.25 + 0.75 * f);
 				g.circle(Math.cos(a) * r, Math.sin(a) * r, size * (0.045 * (1 - f) + 0.012));
-				g.fill({ color: arm % 2 ? 0xc026ff : 0x5ee7ff, alpha: 0.55 * (1 - f) });
+				g.fill({ color: arm % 2 ? 0x22c55e : 0xbef264, alpha: 0.55 * (1 - f) });
 			}
 		}
 	};
@@ -306,7 +306,7 @@
 		burst(g, revealP < 1 ? revealP : 0);
 		if (cosmic && revealP < 1) {
 			// landing: double violet/cyan shockwave
-			for (const [d, col] of [[0, 0xc026ff], [0.18, 0x5ee7ff]] as const) {
+			for (const [d, col] of [[0, 0x22c55e], [0.18, 0xbef264]] as const) {
 				const p = clamp01((revealP - d) / (1 - d));
 				if (p > 0 && p < 1) {
 					g.circle(0, 0, size * (0.3 + 1.3 * p));
@@ -338,7 +338,7 @@
 					g.fill({ color: 0xf2c744, alpha: a });
 				} else {
 					g.circle(x, y, size * e.r);
-					g.fill({ color: cosmic ? (e.phase > 0.5 ? 0xc026ff : 0x5ee7ff) : 0xff7a1a, alpha: a * 0.9 });
+					g.fill({ color: cosmic ? (e.phase > 0.5 ? 0x22c55e : 0xbef264) : 0xff7a1a, alpha: a * 0.9 });
 				}
 			}
 		} else if (!revealing) {

@@ -3272,3 +3272,16 @@ button:disabled {
 	.sparkles, .shine { display: none; }
 	.maxwin-sign, .octo-bar img, .match-bar-art, .match-bar-icon { animation: none !important; }
 }
+
+/* MAX WIN: toxic-green rays, a stronger shake-in and a breathing green glow */
+.bigwin--max .bigwin-rays {
+	background: repeating-conic-gradient(rgba(132, 204, 22, 0.42) 0 7deg, transparent 7deg 16deg);
+	animation-duration: 5s;
+}
+.bigwin--max .bigwin-art {
+	animation: bigwin-art-in 0.9s cubic-bezier(0.25, 1.7, 0.45, 1) both, maxwin-glow 1.1s 0.9s ease-in-out infinite alternate;
+}
+@keyframes maxwin-glow {
+	from { filter: drop-shadow(0 0 10px rgba(132, 204, 22, 0.6)); transform: scale(1); }
+	to { filter: drop-shadow(0 0 34px rgba(132, 204, 22, 1)) drop-shadow(0 0 60px rgba(34, 197, 94, 0.6)); transform: scale(1.04); }
+}

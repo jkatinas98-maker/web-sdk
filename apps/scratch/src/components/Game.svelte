@@ -46,6 +46,7 @@
 	import modeHardUrl from '../assets/signs/mode_hard.webp';
 	import megaWinUrl from '../assets/winpop/mega_win.webp';
 	import epicWinUrl from '../assets/winpop/epic_win.webp';
+	import maxWinUrl from '../assets/winpop/max_win.webp';
 	import type { SymbolName } from '../game/types';
 	import EnableGameActor from './EnableGameActor.svelte';
 	import Ticket from './Ticket.svelte';
@@ -416,14 +417,16 @@
 	// Big / Mega / Epic tier for the win pop-up, by multiple of the bet:
 	// Big from the mode's second-highest symbol, Epic at its top symbol
 	// (= the mode's max win), Mega in between (geometric midpoint).
-	type WinTier = 'big' | 'mega' | 'epic';
-	const WIN_TIER_ART: Record<WinTier, string> = { big: bigWinUrl, mega: megaWinUrl, epic: epicWinUrl };
+	type WinTier = 'big' | 'mega' | 'epic' | 'max';
+	const WIN_TIER_ART: Record<WinTier, string> = { big: bigWinUrl, mega: megaWinUrl, epic: epicWinUrl, max: maxWinUrl };
 	const winTier = $derived.by((): WinTier | null => {
 		if (totalWin <= 0 || betAmount <= 0) return null;
 		const mults = (config.betModes[betMode].symbols as SymbolName[])
 			.map((name) => config.symbols[name].mult)
 			.sort((a, b) => b - a);
 		const x = totalWin / betAmount;
+		// Hitting the mode's max win gets its own MAX WIN banner.
+		if (x >= config.betModes[betMode].max_win - 1e-9) return 'max';
 		if (x >= mults[0]) return 'epic';
 		if (x >= Math.sqrt(mults[0] * mults[1])) return 'mega';
 		if (x >= mults[1]) return 'big';
@@ -438,6 +441,7 @@
 			playSound('cannon');
 			const tier = untrack(() => winTier);
 			setTimeout(() => playSound(tier === 'big' ? 'pirateCheer' : 'tavern'), 450);
+			if (tier === 'max') setTimeout(() => playSound('krakenRoar'), 150);
 		}
 		const target = untrack(() => totalWin);
 		const start = performance.now();
@@ -1545,7 +1549,7 @@
 			<div class={`bigwin bigwin--${winTier}`}>
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
-				<Sparkles count={18} coins={winTier === 'big' ? 10 : 22} spread={65} />
+				<Sparkles count={winTier === 'max' ? 28 : 18} coins={winTier === 'big' ? 10 : winTier === 'max' ? 32 : 22} spread={65} color={winTier === 'max' ? '#d9f99d' : '#ffe9a0'} />
 				<div class="bigwin-amount">{money(shownWin)}</div>
 				<div class="bigwin-mult">{(totalWin / betAmount).toFixed(1)}x bet</div>
 				{#if awardedFreeScratches > 0}
