@@ -152,7 +152,7 @@
 					{#if stateConfig.jurisdiction?.disabledAutoplay}
 						<li>The circular-arrows button reveals every tile at once.</li>
 					{:else}
-						<li>The circular-arrows button turns <b>Autoplay</b> on or off. Feature choices (Kraken, chests) still wait for you.</li>
+						<li>The circular-arrows button turns <b>Autoplay</b> on or off. During autoplay the Kraken carries on by itself after 1 second if you don't tap; the treasure chest pick still waits for you.</li>
 					{/if}
 				</ul>
 

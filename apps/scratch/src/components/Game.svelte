@@ -285,6 +285,19 @@
 		}
 	}
 
+	// Autoplay: each Kraken step (reveal numbers, open the treasure reel,
+	// collect) waits 1 second for a tap, then carries on by itself.
+	const KRAKEN_AUTO_MS = 1000;
+	$effect(() => {
+		const stage = krakenStage;
+		if (!autoplay || activeFeatureOverlay?.kind !== 'kraken') return;
+		if (stage !== 'numbers' && stage !== 'revealed' && stage !== 'landed') return;
+		const timer = setTimeout(() => {
+			if (untrack(() => krakenStage) === stage) handleKrakenTap();
+		}, KRAKEN_AUTO_MS);
+		return () => clearTimeout(timer);
+	});
+
 	// --- Shark Bite -----------------------------------------------------
 	// A 'shark' queue entry rolls the bar (not a modal: the card stays
 	// visible); once it lands, the outcome's own entry (kraken / chest /
