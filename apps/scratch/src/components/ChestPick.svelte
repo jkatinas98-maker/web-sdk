@@ -6,6 +6,10 @@
 	import openBlue from '../assets/chests/open_blue.webp';
 	import openRed from '../assets/chests/open_red.webp';
 	import openGreen from '../assets/chests/open_green.webp';
+	import plaqueBlue from '../assets/chests/ui/plaque_blue.webp';
+	import plaqueRed from '../assets/chests/ui/plaque_red.webp';
+	import plaqueGreen from '../assets/chests/ui/plaque_green.webp';
+	import treasureFoundUrl from '../assets/chests/ui/treasure_found.webp';
 	import { playSound } from '../game/sound';
 
 	// Key feature: full-screen ship deck, three chests. The player picks
@@ -21,9 +25,9 @@
 	const { win, missed, betAmount, onDone }: Props = $props();
 
 	const CHESTS = [
-		{ closed: closedBlue, open: openBlue, color: 'blue' },
-		{ closed: closedRed, open: openRed, color: 'red' },
-		{ closed: closedGreen, open: openGreen, color: 'green' },
+		{ closed: closedBlue, open: openBlue, plaque: plaqueBlue, color: 'blue' },
+		{ closed: closedRed, open: openRed, plaque: plaqueRed, color: 'red' },
+		{ closed: closedGreen, open: openGreen, plaque: plaqueGreen, color: 'green' },
 	];
 
 	type Stage = 'pick' | 'opening' | 'revealOthers' | 'done';
@@ -68,7 +72,9 @@
 		}
 	}
 
-	const fmt = (v: number) => `$${v.toFixed(2)}`;
+	const fmt = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	// Amount font shrinks for long numbers so it stays on the cloth.
+	const fit = (t: string) => `font-size:${(17 * Math.min(1, 6 / t.length)).toFixed(2)}cqw;`;
 	const mult = (v: number) => (betAmount > 0 ? `×${+(v / betAmount).toFixed(2)}` : '');
 </script>
 
@@ -80,8 +86,12 @@
 	onclick={handleBackdrop}
 	onkeydown={(e) => e.key === 'Enter' && handleBackdrop()}
 >
-	<div class="chest-pick-title feature-modal-title">
-		{stage === 'pick' ? 'Pick a chest!' : stage === 'done' || stage === 'revealOthers' ? 'Treasure found!' : 'Opening...'}
+	<div class="chest-pick-head">
+		{#if stage === 'done' || stage === 'revealOthers'}
+			<img class="chest-pick-banner" src={treasureFoundUrl} alt="Treasure found!" draggable="false" />
+		{:else}
+			<div class="chest-pick-title feature-modal-title">{stage === 'pick' ? 'Pick a chest!' : 'Opening...'}</div>
+		{/if}
 	</div>
 
 	<div class="chest-pick-row">
@@ -103,9 +113,12 @@
 				<span class="chest-pick-glow"></span>
 				<img src={opened[i] ? chest.open : chest.closed} alt="" draggable="false" />
 				{#if opened[i]}
-					<span class="chest-pick-prize" class:win={picked === i}>
-						<span class="chest-pick-prize-amt">{fmt(prizes[i])}</span>
-						<span class="chest-pick-prize-mult">{mult(prizes[i])}</span>
+					<span class={`chest-pick-plaque chest-pick-plaque--${chest.color}`} class:win={picked === i}>
+						<img src={chest.plaque} alt="" draggable="false" />
+						<span class="chest-pick-plaque-text">
+							<span class="chest-pick-prize-amt" style={fit(fmt(prizes[i]))}>{fmt(prizes[i])}</span>
+							<span class="chest-pick-prize-mult">{mult(prizes[i])}</span>
+						</span>
 					</span>
 					{#if picked === i}
 						<span class="chest-pick-burst"></span>
