@@ -44,7 +44,8 @@
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
 	import modeMediumUrl from '../assets/signs/mode_medium.webp';
 	import modeHardUrl from '../assets/signs/mode_hard.webp';
-	import megaWinUrl from '../assets/winpop/mega_win.webp';
+	import wsChatUrl from '../assets/winpop/ws_chat.webp';
+	import niceWinUrl from '../assets/winpop/nice_win.webp';
 	import epicWinUrl from '../assets/winpop/epic_win.webp';
 	import maxWinUrl from '../assets/winpop/max_win.webp';
 	import type { SymbolName } from '../game/types';
@@ -406,17 +407,23 @@
 	// "big" get a pop-up (smaller wins just show in the Win plaque with the
 	// win sound); the tiers above it escalate the art. Hitting the mode's
 	// max win gets the MAX WIN banner.
-	type WinTier = 'big' | 'mega' | 'epic' | 'max';
-	const WIN_TIER_ART: Record<WinTier, string> = { big: bigWinUrl, mega: megaWinUrl, epic: epicWinUrl, max: maxWinUrl };
-	const WIN_TIERS: Record<string, { big: number; mega: number; epic: number }> = {
-		easy: { big: 16, mega: 27, epic: 45 },
-		medium: { big: 41, mega: 110, epic: 300 },
-		hard: { big: 130, mega: 400, epic: 1000 },
+	type WinTier = 'nice' | 'big' | 'mega' | 'epic' | 'max';
+	const WIN_TIER_ART: Record<WinTier, string> = {
+		nice: niceWinUrl,
+		big: bigWinUrl,
+		mega: wsChatUrl, // "W's in the chat"
+		epic: epicWinUrl,
+		max: maxWinUrl,
+	};
+	const WIN_TIERS: Record<string, { nice: number; big: number; mega: number; epic: number }> = {
+		easy: { nice: 9, big: 16, mega: 27, epic: 45 },
+		medium: { nice: 20, big: 41, mega: 110, epic: 300 },
+		hard: { nice: 40, big: 130, mega: 400, epic: 1000 },
 	};
 
 	function isBigWin(): boolean {
 		if (awardedFreeScratches > 0) return true;
-		return betAmount > 0 && totalWin / betAmount >= WIN_TIERS[betMode].big;
+		return betAmount > 0 && totalWin / betAmount >= WIN_TIERS[betMode].nice;
 	}
 
 	const winTier = $derived.by((): WinTier | null => {
@@ -427,6 +434,7 @@
 		if (x >= t.epic) return 'epic';
 		if (x >= t.mega) return 'mega';
 		if (x >= t.big) return 'big';
+		if (x >= t.nice) return 'nice';
 		return null;
 	});
 
@@ -437,7 +445,7 @@
 		if (untrack(() => winTier !== null && awardedFreeScratches === 0)) {
 			playSound('cannon');
 			const tier = untrack(() => winTier);
-			setTimeout(() => playSound(tier === 'big' ? 'pirateCheer' : 'tavern'), 450);
+			setTimeout(() => playSound(tier === 'nice' || tier === 'big' ? 'pirateCheer' : 'tavern'), 450);
 			if (tier === 'max') setTimeout(() => playSound('krakenRoar'), 150);
 		}
 		const target = untrack(() => totalWin);
@@ -1546,7 +1554,7 @@
 			<div class={`bigwin bigwin--${winTier}`}>
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
-				<Sparkles count={winTier === 'max' ? 28 : 18} coins={winTier === 'big' ? 10 : winTier === 'max' ? 32 : 22} spread={65} color={winTier === 'max' ? '#d9f99d' : '#ffe9a0'} />
+				<Sparkles count={winTier === 'max' ? 28 : 18} coins={winTier === 'nice' ? 6 : winTier === 'big' ? 10 : winTier === 'max' ? 32 : 22} spread={65} color={winTier === 'max' ? '#d9f99d' : '#ffe9a0'} />
 				<div class="bigwin-amount">{money(shownWin)}</div>
 				<div class="bigwin-mult">{(totalWin / betAmount).toFixed(1)}x bet</div>
 				{#if awardedFreeScratches > 0}
