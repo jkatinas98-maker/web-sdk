@@ -2681,10 +2681,10 @@ button:disabled {
 }
 .bonus-medallion-mult-slot {
 	position: absolute;
-	left: 20%;
-	right: 19.4%;
-	top: 32.5%;
-	bottom: 42.3%;
+	left: 18%;
+	right: 17%;
+	top: 30%;
+	bottom: 40%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -2716,7 +2716,7 @@ button:disabled {
 }
 .bonus-medallion-count span {
 	font-family: var(--font-display);
-	font-size: 9.5cqw;
+	font-size: 15cqw;
 	color: #ffd75e;
 	text-shadow: 0 0.06em 0 #5a2a00, 0 0 0.2em rgba(0, 0, 0, 0.8);
 }
@@ -2724,7 +2724,7 @@ button:disabled {
 	margin-top: 0.15em;
 	font-family: 'Cinzel', Georgia, serif;
 	font-weight: 900;
-	font-size: 3.6cqw;
+	font-size: 4.6cqw;
 	text-transform: uppercase;
 	color: #fbe2a0;
 	text-shadow: 0 1px 0 #3a1f08, 0 0 4px rgba(0, 0, 0, 0.9);
@@ -3015,4 +3015,28 @@ button:disabled {
 /* the chests not picked: plaques dimmed a touch */
 .chest-pick-chest.missed .chest-pick-plaque {
 	filter: brightness(0.8) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.7));
+}
+
+/* Bonus: the "N free scratches left" sign gets big (it's the headline). */
+.header-bar.mobile .maxwin-sign.free {
+	width: min(200px, 54vw);
+	margin-top: -4px;
+}
+/* make room for it: the logo shrinks a little while the bonus runs */
+.header-bar.mobile:has(.maxwin-sign.free) .logo {
+	height: 60px;
+}
+.maxwin-sign.free {
+	width: min(300px, 70vw);
+}
+.maxwin-sign.free .maxwin-sign-text {
+	font-size: 8.4cqw;
+}
+
+/* Key feature: hint line centred under the chests (wraps on phones). */
+.chest-pick-hint {
+	text-align: center;
+	max-width: min(92vw, 560px);
+	margin: 0 auto;
+	align-self: center;
 }

@@ -34,6 +34,8 @@
 	import medallionUrl from '../assets/ui/medallion.webp';
 	import bonusWinArtUrl from '../assets/ui/bonus_win.webp';
 	import matchBarUrl from '../assets/ui/match_bar.webp';
+	import matchBarGoldUrl from '../assets/ui/match_bar_gold.webp';
+	import matchBarRedUrl from '../assets/ui/match_bar_red.webp';
 	import btnSoundUrl from '../assets/ui/btn_sound.webp';
 	import btnMusicUrl from '../assets/ui/btn_music.webp';
 	import loadBarUrl from '../assets/ui/load_bar.webp';
@@ -161,6 +163,30 @@
 	> = [];
 	let featureOverlayQueue: typeof pendingFeatureEvents = $state([]);
 	const activeFeatureOverlay = $derived(featureOverlayQueue[0] ?? null);
+	// Features that cover the whole screen with their own scene.
+	const fullscreenFeature = $derived(
+		activeFeatureOverlay?.kind === 'chestPick' || activeFeatureOverlay?.kind === 'kraken',
+	);
+
+	// If the browser drops the grid's WebGL context (phones do this when GPU
+	// memory runs low), rebuild the pixi app so the grid comes back instead
+	// of staying invisible. The grid's state lives outside pixi, so the
+	// rebuilt canvas shows exactly the same card.
+	let glEpoch = $state(0);
+	$effect(() => {
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const onLost = (e: Event) => {
+			if (!(e.target instanceof HTMLCanvasElement)) return;
+			e.preventDefault();
+			clearTimeout(timer);
+			timer = setTimeout(() => (glEpoch += 1), 250);
+		};
+		document.addEventListener('webglcontextlost', onLost, true);
+		return () => {
+			clearTimeout(timer);
+			document.removeEventListener('webglcontextlost', onLost, true);
+		};
+	});
 
 	// Kraken is shown in-card (over the ticket), not as a full-screen modal,
 	// and steps through stages on taps:
@@ -1048,16 +1074,24 @@
 <!-- Animated backgrounds are looping animated WebP images, not <video>:
      Stake's hosting blocks inlined media in <video>/<audio> but allows
      images. -->
-<img class="bg-video" src={bgAnimUrl} alt="" aria-hidden="true" draggable="false" />
-<!-- Sunny beach cove while the free-scratch bonus runs (cross-fades). -->
-<img class="bonus-bg" class:on={bonusActive} src={bonusAnimUrl} alt="" aria-hidden="true" draggable="false" />
+<!-- Only the background actually on screen is kept in the page: animated
+     WebPs are heavy to decode, and on phones keeping all of them alive
+     starved the GPU until the grid's WebGL canvas was dropped. -->
+{#if !bonusActive && !fullscreenFeature}
+	<img class="bg-video" src={bgAnimUrl} alt="" aria-hidden="true" draggable="false" />
+{/if}
+<!-- Sunny beach cove while the free-scratch bonus runs (fades in). -->
+{#if bonusActive && !fullscreenFeature}
+	<img class="bonus-bg on" src={bonusAnimUrl} alt="" aria-hidden="true" draggable="false" />
+{/if}
 <!-- Sunken ruins while the Octopus bonus cards play. -->
 <div class="octo-bg" class:on={octoActive} style={`background-image:url(${octopusBgUrl});`} aria-hidden="true"></div>
 <div class="bg-dim" aria-hidden="true"></div>
 
+<EnableGameActor />
 <div class="pixi-layer">
+	{#key glEpoch}
 	<App>
-		<EnableGameActor />
 		<Ticket
 			{betMode}
 			top={gridRect.top}
@@ -1070,6 +1104,7 @@
 			onRevealIndex={revealPanel}
 		/>
 	</App>
+	{/key}
 </div>
 
 <!-- Illustrated frame: the art itself plus invisible hit areas / text laid
@@ -1149,7 +1184,7 @@
 			<div class="bonus-medallion-mult-slot">
 				{#key bonusMult}
 					{@const mt = fmtMult(bonusMult)}
-					<span class="bonus-medallion-mult" style={fitText(mt, 17, 4)}>{mt}</span>
+					<span class="bonus-medallion-mult" style={fitText(mt, 26, 3)}>{mt}</span>
 				{/key}
 			</div>
 			<div class="bonus-medallion-count">
@@ -1302,8 +1337,7 @@
 
 {#snippet matchBar(icon: string, label: string, value: string, tone: 'match' | 'extra' | 'cursed', bumped: boolean)}
 	<div class={`match-bar match-bar--${tone}`}>
-		<img class="match-bar-art" src={matchBarUrl} alt="" draggable="false" />
-		<img class="match-bar-tint" src={matchBarUrl} alt="" draggable="false" />
+		<img class="match-bar-art" src={tone === 'extra' ? matchBarGoldUrl : tone === 'cursed' ? matchBarRedUrl : matchBarUrl} alt="" draggable="false" />
 		<img class="match-bar-icon" src={icon} alt="" draggable="false" />
 		<div class="match-bar-text">
 			<span class="match-bar-label" style={fitText(label, 4.8, 13)}>{label}</span>
