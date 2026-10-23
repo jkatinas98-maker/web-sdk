@@ -3292,3 +3292,34 @@ button:disabled {
 	inset: 0;
 	clip-path: inset(6% 10.4% 14% 10.6%);
 }
+
+/* Key feature: size everything by screen height too so the banner, the
+   hanging plaques and the chests always fit (the banner's top was being
+   pushed off short / landscape screens). */
+.chest-pick {
+	justify-content: center;
+	padding: 1vh 0 2vh;
+	overflow: hidden;
+}
+.chest-pick-head {
+	min-height: clamp(60px, 26vh, 230px);
+}
+.chest-pick-banner {
+	width: min(92vw, 560px, 26vh * 2.19);
+}
+.chest-pick-row {
+	margin-top: clamp(60px, 18vh, 220px);
+}
+.chest-pick-chest {
+	max-width: min(32vw, 34vh, 340px);
+}
+.chest-pick-plaque {
+	width: 60%;
+	bottom: 88%;
+}
+.chest-pick-plaque.win {
+	width: 72%;
+}
+@media (max-aspect-ratio: 4/5) {
+	.chest-pick-chest { max-width: 33vw; }
+}
