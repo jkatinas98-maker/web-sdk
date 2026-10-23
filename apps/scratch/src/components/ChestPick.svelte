@@ -11,6 +11,7 @@
 	import plaqueGreen from '../assets/chests/ui/plaque_green.webp';
 	import treasureFoundUrl from '../assets/chests/ui/treasure_found.webp';
 	import { playSound } from '../game/sound';
+	import Sparkles from './Sparkles.svelte';
 
 	// Key feature: full-screen ship deck, three chests. The player picks
 	// one; it bursts open with the prize the book decided (`win`), then the
@@ -89,6 +90,7 @@
 	<div class="chest-pick-head">
 		{#if stage === 'done' || stage === 'revealOthers'}
 			<img class="chest-pick-banner" src={treasureFoundUrl} alt="Treasure found!" draggable="false" />
+			<Sparkles count={16} coins={14} spread={55} loop={false} />
 		{:else}
 			<div class="chest-pick-title feature-modal-title">{stage === 'pick' ? 'Pick a chest!' : 'Opening...'}</div>
 		{/if}
@@ -115,6 +117,7 @@
 				{#if opened[i]}
 					<span class={`chest-pick-plaque chest-pick-plaque--${chest.color}`} class:win={picked === i}>
 						<img src={chest.plaque} alt="" draggable="false" />
+						{#if picked === i}<Sparkles count={8} coins={10} spread={50} />{/if}
 						<span class="chest-pick-plaque-text">
 							<span class="chest-pick-prize-amt" style={fit(fmt(prizes[i]))}>{fmt(prizes[i])}</span>
 							<span class="chest-pick-prize-mult">{mult(prizes[i])}</span>

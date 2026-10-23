@@ -53,6 +53,7 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import Sparkles from './Sparkles.svelte';
 	import RulesModal from './RulesModal.svelte';
 
 	const context = getContext();
@@ -1181,6 +1182,9 @@
 		<!-- Bonus multiplier medallion over the anchor -->
 		<div class="bonus-medallion" style={at(1041, 883, 240, 228)}>
 			<img class="bonus-medallion-art" src={medallionUrl} alt="" draggable="false" />
+			{#key bonusMult}
+				<Sparkles count={8} coins={bonusMult > 0 ? 10 : 0} spread={45} loop={false} />
+			{/key}
 			<div class="bonus-medallion-mult-slot">
 				{#key bonusMult}
 					{@const mt = fmtMult(bonusMult)}
@@ -1338,7 +1342,9 @@
 {#snippet matchBar(icon: string, label: string, value: string, tone: 'match' | 'extra' | 'cursed', bumped: boolean)}
 	<div class={`match-bar match-bar--${tone}`}>
 		<img class="match-bar-art" src={tone === 'extra' ? matchBarGoldUrl : tone === 'cursed' ? matchBarRedUrl : matchBarUrl} alt="" draggable="false" />
+		<div class="shine"></div>
 		<img class="match-bar-icon" src={icon} alt="" draggable="false" />
+		<Sparkles count={tone === 'match' ? 5 : 9} coins={tone === 'extra' ? 8 : 0} spread={40} color={tone === 'cursed' ? '#ff8a7a' : '#ffe9a0'} />
 		<div class="match-bar-text">
 			<span class="match-bar-label" style={fitText(label, 4.8, 13)}>{label}</span>
 			{#key value}
@@ -1517,6 +1523,7 @@
 			<div class="bigwin bigwin--bonus">
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={epicBonusUrl} alt="Epic bonus" draggable="false" />
+				<Sparkles count={18} coins={14} spread={60} />
 				{#if awardedFreeScratches !== 10}
 					<div class="bigwin-mult">+{awardedFreeScratches} Free Scratches</div>
 				{/if}
@@ -1529,6 +1536,7 @@
 			<div class={`bigwin bigwin--${winTier}`}>
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
+				<Sparkles count={18} coins={winTier === 'big' ? 10 : 22} spread={65} />
 				<div class="bigwin-amount">${shownWin.toFixed(2)}</div>
 				<div class="bigwin-mult">{(totalWin / betAmount).toFixed(1)}x bet</div>
 				{#if awardedFreeScratches > 0}
@@ -1564,6 +1572,7 @@
 			<div class="bigwin-rays"></div>
 			<div class="bonus-win-art">
 				<img src={bonusWinArtUrl} alt="Bonus win" draggable="false" />
+				<Sparkles count={22} coins={18} spread={60} />
 				<div class="bonus-win-text">
 					<span class="bonus-win-mult" style={fitText(fmtMult(bonusMult), 8.2, 6)}>{fmtMult(bonusMult)}</span>
 					<span class="bonus-win-amount" style={fitText(money(bonusWinSum), 6.2, 8)}>{money(bonusWinSum)}</span>

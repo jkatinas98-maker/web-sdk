@@ -3040,3 +3040,235 @@ button:disabled {
 	margin: 0 auto;
 	align-self: center;
 }
+
+/* ======================================================================
+   Motion pass: glows, bounces, shines and particles on the banners.
+   ====================================================================== */
+
+/* ---------- Particles (Sparkles.svelte) ---------- */
+.sparkles {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 4;
+	container-type: size;
+}
+.sparkle {
+	position: absolute;
+	width: calc(14px * var(--s));
+	height: calc(14px * var(--s));
+	translate: -50% -50%;
+	background: radial-gradient(circle, #fff 0 12%, var(--c) 22%, transparent 60%);
+	clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+	opacity: 0;
+	animation: sparkle-twinkle 1.6s ease-in-out infinite;
+	filter: drop-shadow(0 0 4px var(--c));
+}
+@keyframes sparkle-twinkle {
+	0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+	45% { opacity: 1; transform: scale(1) rotate(45deg); }
+	70% { opacity: 0.7; transform: scale(0.8) rotate(80deg); }
+}
+.coin {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: calc(18px * var(--s));
+	height: calc(18px * var(--s));
+	margin: calc(-9px * var(--s)) 0 0 calc(-9px * var(--s));
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, #fff6c8, #ffd04a 35%, #c98410 70%, #7a4a06);
+	box-shadow: inset 0 0 0 1.5px rgba(122, 74, 6, 0.8), 0 0 6px rgba(255, 200, 60, 0.7);
+	opacity: 0;
+	animation: coin-burst 1.2s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.sparkles.loop .coin {
+	animation-iteration-count: infinite;
+}
+@keyframes coin-burst {
+	0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
+	12% { opacity: 1; }
+	70% { opacity: 1; }
+	100% {
+		opacity: 0;
+		transform: translate(calc(var(--dx) * 1cqw), calc(var(--dy) * 1cqh + 25cqh)) scale(1) rotate(var(--r));
+	}
+}
+
+/* ---------- Shine sweep (reusable) ---------- */
+@keyframes shine-sweep {
+	0% { transform: translateX(-120%) skewX(-20deg); }
+	55%, 100% { transform: translateX(260%) skewX(-20deg); }
+}
+.shine {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+	z-index: 3;
+}
+.shine::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 30%;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+	animation: shine-sweep 2.6s ease-in-out infinite;
+}
+
+/* ---------- Match banners ---------- */
+.match-bar {
+	animation: match-in 0.6s cubic-bezier(0.25, 1.7, 0.45, 1) both;
+	filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7));
+}
+.match-bar-art {
+	animation: match-glow-green 1.4s ease-in-out infinite alternate;
+}
+.match-bar--extra .match-bar-art {
+	animation: match-glow-gold 1s ease-in-out infinite alternate;
+}
+.match-bar--cursed .match-bar-art {
+	animation: match-glow-red 0.9s ease-in-out infinite alternate;
+}
+@keyframes match-in {
+	0% { transform: translateY(-40%) scale(0.4); opacity: 0; }
+	60% { transform: translateY(4%) scale(1.06); opacity: 1; }
+	100% { transform: none; opacity: 1; }
+}
+@keyframes match-glow-green {
+	from { filter: drop-shadow(0 0 3px rgba(120, 255, 170, 0.6)) brightness(1); }
+	to { filter: drop-shadow(0 0 12px rgba(120, 255, 170, 0.95)) drop-shadow(0 0 24px rgba(40, 200, 110, 0.6)) brightness(1.12); }
+}
+@keyframes match-glow-gold {
+	from { filter: drop-shadow(0 0 4px rgba(255, 210, 90, 0.7)) brightness(1.02); }
+	to { filter: drop-shadow(0 0 16px rgba(255, 210, 90, 1)) drop-shadow(0 0 30px rgba(255, 150, 30, 0.7)) brightness(1.2); }
+}
+@keyframes match-glow-red {
+	from { filter: drop-shadow(0 0 4px rgba(255, 60, 60, 0.7)) brightness(1); }
+	to { filter: drop-shadow(0 0 16px rgba(255, 60, 60, 1)) drop-shadow(0 0 28px rgba(200, 20, 20, 0.7)) brightness(1.15); }
+}
+/* symbol in the porthole bobs */
+.match-bar-icon {
+	animation: match-icon-bob 1.2s ease-in-out infinite;
+}
+@keyframes match-icon-bob {
+	0%, 100% { transform: translate(-50%, -50%) rotate(-6deg) scale(1); }
+	50% { transform: translate(-50%, -56%) rotate(6deg) scale(1.08); }
+}
+/* the light sweep only over the panel */
+.match-bar .shine {
+	left: 27%;
+	right: 13%;
+	top: 26%;
+	bottom: 23%;
+	border-radius: 0 999px 999px 0;
+}
+.match-bar-value.bumped {
+	animation: tally-bump 0.5s cubic-bezier(0.3, 2, 0.5, 1);
+}
+.match-bar--extra {
+	animation: match-in 0.6s cubic-bezier(0.25, 1.7, 0.45, 1) both;
+}
+
+/* ---------- Header sign ---------- */
+.maxwin-sign {
+	animation: sign-sway 4s ease-in-out infinite;
+	transform-origin: 50% 0;
+}
+@keyframes sign-sway {
+	0%, 100% { rotate: -1.2deg; }
+	50% { rotate: 1.2deg; }
+}
+.maxwin-sign.free {
+	animation: sign-sway 3s ease-in-out infinite, sign-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sign-pulse {
+	0%, 100% { scale: 1; filter: drop-shadow(0 0 0 rgba(255, 140, 60, 0)); }
+	50% { scale: 1.05; filter: drop-shadow(0 0 12px rgba(255, 140, 60, 0.85)); }
+}
+
+/* ---------- Medallion: bounce when the multiplier grows ---------- */
+.bonus-medallion-mult {
+	animation: medallion-pop 0.7s cubic-bezier(0.3, 1.9, 0.5, 1);
+}
+.bonus-medallion .sparkles {
+	inset: 10%;
+}
+
+/* ---------- Octopus bar / pirate banner ---------- */
+.octo-bar img {
+	animation: banner-bob 2.4s ease-in-out infinite;
+}
+@keyframes banner-bob {
+	0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+	50% { transform: translateY(-3%) rotate(0.6deg); }
+}
+.pirate-banner {
+	animation: banner-shake-in 0.7s cubic-bezier(0.3, 1.7, 0.5, 1) both, banner-bob 2.4s 0.7s ease-in-out infinite;
+}
+@keyframes banner-shake-in {
+	0% { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+	55% { transform: scale(1.08) rotate(4deg); opacity: 1; }
+	75% { transform: rotate(-2deg); }
+	100% { transform: none; }
+}
+
+/* ---------- Big pop-ups ---------- */
+.bigwin-art {
+	animation: bigwin-art-in 0.8s cubic-bezier(0.25, 1.7, 0.45, 1) both, bigwin-art-bob 2.2s 0.8s ease-in-out infinite;
+}
+@keyframes bigwin-art-in {
+	0% { transform: scale(0.2) rotate(-10deg); opacity: 0; }
+	60% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+	100% { transform: none; }
+}
+@keyframes bigwin-art-bob {
+	0%, 100% { transform: translateY(0) scale(1); }
+	50% { transform: translateY(-2.5%) scale(1.03); }
+}
+.bonus-win-art {
+	animation: bigwin-art-in 0.8s cubic-bezier(0.25, 1.7, 0.45, 1) both;
+}
+.bonus-win-art > img {
+	animation: bigwin-art-bob 2.4s 0.8s ease-in-out infinite;
+}
+
+/* ---------- Key feature ---------- */
+.chest-pick-banner {
+	animation: bigwin-art-in 0.8s cubic-bezier(0.25, 1.7, 0.45, 1) both, bigwin-art-bob 2.4s 0.8s ease-in-out infinite;
+}
+.chest-pick-head {
+	position: relative;
+}
+.chest-pick-plaque.win {
+	animation: chest-prize-pop 0.45s cubic-bezier(0.3, 1.8, 0.5, 1), plaque-swing 1.8s 0.45s ease-in-out infinite;
+	transform-origin: 50% 0;
+}
+@keyframes plaque-swing {
+	0%, 100% { rotate: -3deg; }
+	50% { rotate: 3deg; }
+}
+
+/* ---------- Kraken treasure result ---------- */
+.kraken-result-hit {
+	animation: win-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), result-glow 1.1s 0.5s ease-in-out infinite alternate;
+}
+@keyframes result-glow {
+	from { text-shadow: 0 0 6px rgba(255, 210, 90, 0.5); }
+	to { text-shadow: 0 0 18px rgba(255, 210, 90, 1), 0 0 30px rgba(255, 150, 30, 0.7); }
+}
+
+/* ---------- Buttons: a little life ---------- */
+.sound-toggle:active img {
+	transform: scale(0.88) rotate(-8deg);
+}
+.mode-signs button:not(:disabled):hover img,
+.mode-sign:not(:disabled):hover img {
+	transform: translateY(-3px) scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sparkles, .shine { display: none; }
+	.maxwin-sign, .octo-bar img, .match-bar-art, .match-bar-icon { animation: none !important; }
+}
