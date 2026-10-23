@@ -3561,3 +3561,23 @@ button:disabled {
 	/* one scroll for the whole content on phones, not one per panel */
 	.rx-left, .rx-right { overflow: visible; flex: none; }
 }
+
+/* Shark Bite result banner over the grid */
+.shark-result-banner {
+	position: relative;
+	width: min(78%, 360px);
+	animation: shark-banner-in 0.55s cubic-bezier(0.25, 1.7, 0.45, 1) both;
+	filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px rgba(90, 200, 255, 0.45));
+}
+.shark-result-banner img {
+	display: block;
+	width: 100%;
+	height: auto;
+	animation: banner-bob 2.2s 0.55s ease-in-out infinite;
+	user-select: none;
+}
+@keyframes shark-banner-in {
+	0% { transform: translateY(-60%) scale(0.3) rotate(-8deg); opacity: 0; }
+	60% { transform: translateY(4%) scale(1.08) rotate(2deg); opacity: 1; }
+	100% { transform: none; opacity: 1; }
+}

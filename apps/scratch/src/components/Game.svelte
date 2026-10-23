@@ -55,6 +55,11 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import resultKrakenUrl from '../assets/shark/result_kraken.webp';
+	import resultOctopusUrl from '../assets/shark/result_octopus.webp';
+	import resultPirateUrl from '../assets/shark/result_pirate.webp';
+	import resultKeyUrl from '../assets/shark/result_key.webp';
+	import resultBonusUrl from '../assets/shark/result_bonus.webp';
 	import { money } from '../game/money';
 	import { stateConfig } from 'state-shared';
 	import Sparkles from './Sparkles.svelte';
@@ -330,6 +335,14 @@
 	$effect(() => {
 		if (sharkOutcome === null) sharkLanded = null;
 	});
+	// Banner shown over the grid once the Shark Bite bar lands.
+	const SHARK_RESULT_ART: Record<SharkOutcome, string> = {
+		kraken: resultKrakenUrl,
+		octopus: resultOctopusUrl,
+		pirate: resultPirateUrl,
+		key: resultKeyUrl,
+		bonus: resultBonusUrl,
+	};
 	const SHARK_OUTCOME_LABEL: Record<SharkOutcome, string> = {
 		kraken: 'Kraken!',
 		octopus: 'Octopus — 3 bonus cards!',
@@ -1334,7 +1347,10 @@
 		<!-- What Shark Bite landed on: over the top of the card, in front of
 		     the frame and its crest. -->
 		<div class="shark-result-slot" style={`top:${gridRect.top + 6}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
-			<div class={`shark-result shark-result--${sharkLanded}`}>{SHARK_OUTCOME_LABEL[sharkLanded]}</div>
+			<div class="shark-result-banner">
+				<img src={SHARK_RESULT_ART[sharkLanded]} alt={SHARK_OUTCOME_LABEL[sharkLanded]} draggable="false" />
+				<Sparkles count={8} coins={6} spread={40} loop={false} />
+			</div>
 		</div>
 	{/if}
 
