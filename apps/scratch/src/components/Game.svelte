@@ -649,8 +649,12 @@
 		return () => clearTimeout(t);
 	});
 	// Reveal the card (and Octopus bonus cards) automatically.
+	// (Keyed on the panel count: with a real bet the card arrives from the
+	// server a moment after the deal, so it waits for it instead of firing
+	// once on an empty grid.)
 	$effect(() => {
-		if (!autoplay || !(viewState === 'playing' || octoScratching)) return;
+		const n = context.stateGame.panels.length;
+		if (!autoplay || !(viewState === 'playing' || octoScratching) || n === 0) return;
 		const t = setTimeout(() => revealEverything(), 500);
 		return () => clearTimeout(t);
 	});
@@ -1061,7 +1065,7 @@
 			pendingAward = pendingFreeScratches;
 			const animMs =
 				winningSymbols.length > 0
-					? buildWinSchedule(panels, winningSymbols, betMode).total + 500
+					? buildWinSchedule(panels, winningSymbols, betMode).total + 1600
 					: 0;
 			presentPending = true;
 			setTimeout(() => {
@@ -1117,14 +1121,12 @@
 <!-- Animated backgrounds are looping animated WebP images, not <video>:
      Stake's hosting blocks inlined media in <video>/<audio> but allows
      images. -->
-<!-- Only the background actually on screen is kept in the page: animated
-     WebPs are heavy to decode, and on phones keeping all of them alive
-     starved the GPU until the grid's WebGL canvas was dropped. -->
-{#if !bonusActive && !fullscreenFeature}
-	<img class="bg-video" src={bgAnimUrl} alt="" aria-hidden="true" draggable="false" />
-{/if}
-<!-- Sunny beach cove while the free-scratch bonus runs (fades in). -->
-{#if bonusActive && !fullscreenFeature}
+<!-- Still poster underneath, so nothing ever flashes black while an
+     animated background decodes. The harbour loop stays mounted; the
+     bonus cove is only in the page while the bonus runs (memory). -->
+<div class="bg-poster" style={`background-image:url(${bgPosterUrl});`} aria-hidden="true"></div>
+<img class="bg-video" src={bgAnimUrl} alt="" aria-hidden="true" draggable="false" />
+{#if bonusActive}
 	<img class="bonus-bg on" src={bonusAnimUrl} alt="" aria-hidden="true" draggable="false" />
 {/if}
 <!-- Sunken ruins while the Octopus bonus cards play. -->
