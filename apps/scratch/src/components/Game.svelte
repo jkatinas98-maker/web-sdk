@@ -31,6 +31,14 @@
 	import bonusAnimUrl from '../assets/bonus_anim.webp';
 	import bonusMusicUrl from '../assets/music_bonus.mp3';
 	import maxWinSignUrl from '../assets/signs/maxwin_sign.webp';
+	import medallionUrl from '../assets/ui/medallion.webp';
+	import bonusWinArtUrl from '../assets/ui/bonus_win.webp';
+	import matchBarUrl from '../assets/ui/match_bar.webp';
+	import btnSoundUrl from '../assets/ui/btn_sound.webp';
+	import btnMusicUrl from '../assets/ui/btn_music.webp';
+	import loadBarUrl from '../assets/ui/load_bar.webp';
+	import loadWaterUrl from '../assets/ui/load_water.webp';
+	import loadBtnUrl from '../assets/ui/load_btn.webp';
 	import modeEasyUrl from '../assets/signs/mode_easy.webp';
 	import modeMediumUrl from '../assets/signs/mode_medium.webp';
 	import modeHardUrl from '../assets/signs/mode_hard.webp';
@@ -436,6 +444,17 @@
 	// Arrives with the book; shown once the card is scratched.
 	let pendingBonusMult: number | null = null;
 	const fmtMult = (m: number) => `x${+m.toFixed(2)}`;
+	// Shrink a line of baked-style text so it fits its slot in the art:
+	// `base` cqw for short strings, scaled down once it's longer than `fit`.
+	const fitText = (text: string, base: number, fit: number) =>
+		`font-size:${(base * Math.min(1, fit / Math.max(1, text.length))).toFixed(2)}cqw;`;
+
+	// Match banner names ("3 CRABS MATCH x2").
+	const MATCH_NAME: Partial<Record<SymbolName, string>> = {
+		mult1_5: 'Pistols', mult2: 'Crabs', mult4: 'Barrels', mult5: 'Parrots', mult6: 'Cutlasses',
+		mult9: 'Wheels', mult16: 'Spyglasses', mult36: 'Anchors', mult41: 'Maps', mult45: 'Flags',
+		mult110: 'Crowns', mult130: 'Gold Bars', mult1000: 'Hoards',
+	};
 
 	// Summary once nothing else is on screen.
 	$effect(() => {
@@ -1125,11 +1144,18 @@
 	></button>
 	{#if bonusActive}
 		<!-- Bonus multiplier medallion over the anchor -->
-		<div class="bonus-medallion" style={at(1041, 875, 176, 176)}>
-			{#key bonusMult}
-				<span class="bonus-medallion-mult">{fmtMult(bonusMult)}</span>
-			{/key}
-			<span class="bonus-medallion-count">{Math.min(bonusPlayed + (viewState === 'playing' ? 1 : 0), bonusSpins)}/{bonusSpins}</span>
+		<div class="bonus-medallion" style={at(1041, 883, 240, 228)}>
+			<img class="bonus-medallion-art" src={medallionUrl} alt="" draggable="false" />
+			<div class="bonus-medallion-mult-slot">
+				{#key bonusMult}
+					{@const mt = fmtMult(bonusMult)}
+					<span class="bonus-medallion-mult" style={fitText(mt, 17, 4)}>{mt}</span>
+				{/key}
+			</div>
+			<div class="bonus-medallion-count">
+				<span>{Math.min(bonusPlayed + (viewState === 'playing' ? 1 : 0), bonusSpins)}/{bonusSpins}</span>
+				<small>Free scratches</small>
+			</div>
 		</div>
 	{/if}
 
@@ -1205,31 +1231,15 @@
 			onclick={toggleMusic}
 			aria-label={musicOn ? 'Turn music off' : 'Turn music on'}
 		>
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M9 18V6l10-2v12" />
-				<circle cx="6.5" cy="18" r="2.5" fill="currentColor" stroke="none" />
-				<circle cx="16.5" cy="16" r="2.5" fill="currentColor" stroke="none" />
-				{#if !musicOn}
-					<path d="M4 4l16 16" stroke-width="2.6" />
-				{/if}
-			</svg>
+			<img src={btnMusicUrl} alt="" draggable="false" />
+			{#if !musicOn}<span class="sound-toggle-slash" aria-hidden="true"></span>{/if}
 		</button>
 		<button class="sound-toggle" class:off={volumeLevel === 0} onclick={cycleVolume} aria-label="Change effects volume">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
-				{#if volumeLevel === 0}
-					<path d="M17 9l5 6M22 9l-5 6" />
-				{/if}
-				{#if volumeLevel >= 1}
-					<path d="M16 10a3 3 0 0 1 0 4" />
-				{/if}
-				{#if volumeLevel >= 2}
-					<path d="M18.5 7.5a6.5 6.5 0 0 1 0 9" />
-				{/if}
-				{#if volumeLevel >= 3}
-					<path d="M21 5a10 10 0 0 1 0 14" />
-				{/if}
-			</svg>
+			<img src={btnSoundUrl} alt="" draggable="false" />
+			{#if volumeLevel === 0}<span class="sound-toggle-slash" aria-hidden="true"></span>{/if}
+			<span class="sound-pips" aria-hidden="true">
+				{#each [1, 2, 3] as l (l)}<i class:on={volumeLevel >= l}></i>{/each}
+			</span>
 		</button>
 	</div>
 
@@ -1290,30 +1300,38 @@
 	{/if}
 </div>
 
+{#snippet matchBar(icon: string, label: string, value: string, tone: 'match' | 'extra' | 'cursed', bumped: boolean)}
+	<div class={`match-bar match-bar--${tone}`}>
+		<img class="match-bar-art" src={matchBarUrl} alt="" draggable="false" />
+		<img class="match-bar-tint" src={matchBarUrl} alt="" draggable="false" />
+		<img class="match-bar-icon" src={icon} alt="" draggable="false" />
+		<div class="match-bar-text">
+			<span class="match-bar-label" style={fitText(label, 4.8, 13)}>{label}</span>
+			{#key value}
+				<span class="match-bar-value" class:bumped style={fitText(value, 8.5, 4)}>{value}</span>
+			{/key}
+		</div>
+	</div>
+{/snippet}
+
 {#if skullGrid}
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
-		<div class="win-tally-pill cursed">
-			<img src={SYMBOL_IMAGE_URL.skull} alt="" />
-			<span class="win-tally-label">Cursed! Full grid of skulls</span>
-			<span class="win-tally-value">+{SKULL_GRID_PRIZE[betMode]}x</span>
-		</div>
+		{@render matchBar(SYMBOL_IMAGE_URL.skull, 'Cursed! Skull grid', `+${SKULL_GRID_PRIZE[betMode]}x`, 'cursed', false)}
 	</div>
 {/if}
 
 {#if tallies.length > 0}
-	<!-- Win tally: one pill per winning symbol ("3 match · Crab x2", gold
-	     "3 + 2 extra · x2.5" once extras land) -->
+	<!-- Win tally: one banner per winning symbol ("3 CRABS MATCH x2"); it
+	     turns gold and counts up as extra copies land ("5 CRABS MATCH x2.5") -->
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
 		{#each tallies as t (t.name)}
-			<div class="win-tally-pill" class:extra={t.step > 0}>
-				<img src={SYMBOL_IMAGE_URL[t.name]} alt="" />
-				<span class="win-tally-label">
-					{t.step > 0 ? `3 + ${t.step} extra` : '3 match'} · {SYMBOL_LABEL[t.name]}
-				</span>
-				{#key t.value}
-					<span class="win-tally-value" class:bumped={t.step > 0}>x{t.value}</span>
-				{/key}
-			</div>
+			{@render matchBar(
+				SYMBOL_IMAGE_URL[t.name],
+				`${3 + t.step} ${MATCH_NAME[t.name] ?? SYMBOL_LABEL[t.name]} match`,
+				`x${t.value}`,
+				t.step > 0 ? 'extra' : 'match',
+				t.step > 0,
+			)}
 		{/each}
 	</div>
 {/if}
@@ -1510,10 +1528,14 @@
 	>
 		<div class="bigwin bigwin--bonus">
 			<div class="bigwin-rays"></div>
-			<div class="bonus-summary-title">Bonus complete!</div>
-			<div class="bonus-summary-medal">{fmtMult(bonusMult)}</div>
-			<div class="bigwin-amount">${bonusWinSum.toFixed(2)}</div>
-			<div class="bigwin-mult">{bonusSpins} free scratches</div>
+			<div class="bonus-win-art">
+				<img src={bonusWinArtUrl} alt="Bonus win" draggable="false" />
+				<div class="bonus-win-text">
+					<span class="bonus-win-mult" style={fitText(fmtMult(bonusMult), 8.2, 6)}>{fmtMult(bonusMult)}</span>
+					<span class="bonus-win-amount" style={fitText(money(bonusWinSum), 6.2, 8)}>{money(bonusWinSum)}</span>
+					<span class="bonus-win-count">{bonusSpins} Free Scratches</span>
+				</div>
+			</div>
 			<div class="win-modal-hint">Tap anywhere to continue</div>
 		</div>
 	</div>
@@ -1530,10 +1552,17 @@
 	>
 		<img class="loader-logo" src={logoUrl} alt="Pirate Scratch" />
 		<div class="loader-bar" aria-label="Loading">
-			<div class="loader-bar-fill" style={`width:${loaderProgress * 100}%;`}></div>
+			<div class="loader-tube">
+				<div class="loader-water-clip" style={`width:${loaderProgress * 100}%;`}>
+					<div class="loader-water" style={`--water:url(${loadWaterUrl});`}></div>
+				</div>
+			</div>
+			<img class="loader-bar-art" src={loadBarUrl} alt="" draggable="false" />
 		</div>
 		{#if loaderProgress >= 1}
-			<button class="loader-start" onclick={(e) => { e.stopPropagation(); startGame(); }}>Tap to set sail</button>
+			<button class="loader-start" onclick={(e) => { e.stopPropagation(); startGame(); }}>
+				<img src={loadBtnUrl} alt="Tap to set sail" draggable="false" />
+			</button>
 		{:else}
 			<div class="loader-text">Hoisting the sails… {Math.round(loaderProgress * 100)}%</div>
 		{/if}

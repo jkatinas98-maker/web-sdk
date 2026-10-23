@@ -2589,3 +2589,341 @@ button:disabled {
 .mode-signs-bottom .mode-signs {
 	max-width: 420px;
 }
+
+/* ======================================================================
+   Final UI art (medallion, bonus win, match banners, sound buttons,
+   loading screen). Overrides the earlier CSS-drawn versions above.
+   ====================================================================== */
+
+/* ---------- Sound / music buttons ---------- */
+.sound-toggle {
+	width: 46px;
+	height: 46px;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	overflow: visible;
+}
+.sound-toggle img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+	pointer-events: none;
+	user-select: none;
+	transition: transform 0.12s;
+}
+.sound-toggle:active img {
+	transform: scale(0.92);
+}
+.sound-toggle.off {
+	filter: none;
+}
+.sound-toggle.off img {
+	filter: grayscale(0.85) brightness(0.6) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+/* red "off" slash across the porthole */
+.sound-toggle-slash {
+	position: absolute;
+	left: 50%;
+	top: 54%;
+	width: 62%;
+	height: 4px;
+	border-radius: 2px;
+	background: #e11d2a;
+	box-shadow: 0 0 0 1px #3a0505, 0 0 6px rgba(225, 29, 42, 0.8);
+	transform: translate(-50%, -50%) rotate(-45deg);
+	pointer-events: none;
+}
+/* effects volume level: three little pips under the button */
+.sound-pips {
+	position: absolute;
+	left: 50%;
+	bottom: -7px;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 3px;
+	pointer-events: none;
+}
+.sound-pips i {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.55);
+	box-shadow: 0 0 0 1px rgba(242, 199, 68, 0.6);
+}
+.sound-pips i.on {
+	background: #f2c744;
+	box-shadow: 0 0 4px rgba(242, 199, 68, 0.9);
+}
+
+/* ---------- Bonus medallion (over the anchor) ---------- */
+.bonus-medallion {
+	display: block;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	container-type: size;
+	animation: medallion-in 0.6s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+@keyframes medallion-in {
+	from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+.bonus-medallion-art {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 0 6px rgba(255, 170, 40, 0.75)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+	animation: medallion-glow 1.2s ease-in-out infinite alternate;
+	user-select: none;
+}
+.bonus-medallion-mult-slot {
+	position: absolute;
+	left: 20%;
+	right: 19.4%;
+	top: 32.5%;
+	bottom: 42.3%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.bonus-medallion-mult {
+	font-family: var(--font-display);
+	line-height: 1;
+	white-space: nowrap;
+	background: linear-gradient(180deg, #fff6c8, #ffd04a 50%, #e08a10);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 0.08em 0 #7a1405) drop-shadow(0 0 0.15em rgba(0, 0, 0, 0.7));
+	text-shadow: none;
+}
+.bonus-medallion-count {
+	position: absolute;
+	left: 28.1%;
+	right: 27.2%;
+	top: 60.9%;
+	bottom: 21.4%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+	color: inherit;
+	letter-spacing: 0;
+}
+.bonus-medallion-count span {
+	font-family: var(--font-display);
+	font-size: 9.5cqw;
+	color: #ffd75e;
+	text-shadow: 0 0.06em 0 #5a2a00, 0 0 0.2em rgba(0, 0, 0, 0.8);
+}
+.bonus-medallion-count small {
+	margin-top: 0.15em;
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+	font-size: 3.6cqw;
+	text-transform: uppercase;
+	color: #fbe2a0;
+	text-shadow: 0 1px 0 #3a1f08, 0 0 4px rgba(0, 0, 0, 0.9);
+	white-space: nowrap;
+}
+
+/* ---------- Bonus win summary ---------- */
+.bonus-win-art {
+	position: relative;
+	z-index: 1;
+	width: min(94vw, 62vh * 1.21, 660px);
+	aspect-ratio: 900 / 743;
+	container-type: inline-size;
+	animation: win-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bonus-win-art img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.7));
+	user-select: none;
+}
+.bonus-win-text {
+	position: absolute;
+	left: 32.1%;
+	right: 32.2%;
+	top: 73.2%;
+	bottom: 4.7%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6cqw;
+	line-height: 1;
+	white-space: nowrap;
+}
+.bonus-win-mult,
+.bonus-win-amount {
+	font-family: var(--font-display);
+	background: linear-gradient(180deg, #fff6c8, #ffd04a 50%, #e08a10);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 0.07em 0 #6a1405) drop-shadow(0 0 0.2em rgba(0, 0, 0, 0.6));
+}
+.bonus-win-count {
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+	font-size: 2.6cqw;
+	color: #fbe9c9;
+	text-shadow: 0 2px 0 #2a1406, 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+/* ---------- Match banners (win tally over the grid) ---------- */
+.win-tally {
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+.match-bar {
+	position: relative;
+	width: min(96%, 420px);
+	aspect-ratio: 1100 / 318;
+	container-type: inline-size;
+	filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+	animation: chest-prize-pop 0.4s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
+.match-bar-art {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	user-select: none;
+}
+/* recolours just the panel (gold for extras, blood-red when cursed): a
+   hue-shifted copy of the art, clipped to the panel */
+.match-bar-tint {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	clip-path: inset(26.6% 13.4% 22.8% 28.6% round 0 999px 999px 0);
+	opacity: 0;
+	transition: opacity 0.3s;
+	user-select: none;
+}
+.match-bar--extra .match-bar-tint {
+	filter: hue-rotate(-105deg) saturate(1.5) brightness(1.25);
+	opacity: 1;
+}
+.match-bar--cursed .match-bar-tint {
+	filter: hue-rotate(-165deg) saturate(1.8) brightness(0.95);
+	opacity: 1;
+}
+.match-bar-icon {
+	position: absolute;
+	left: 20.05%;
+	top: 48.9%;
+	width: 17.5%;
+	transform: translate(-50%, -50%);
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+	user-select: none;
+}
+.match-bar-text {
+	position: absolute;
+	left: 29.5%;
+	right: 13%;
+	top: 26.4%;
+	bottom: 22.8%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2cqw;
+	white-space: nowrap;
+	line-height: 1;
+}
+.match-bar-label,
+.match-bar-value {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	background: linear-gradient(180deg, #fff6c8, #ffd04a 50%, #c97a0c);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 0.06em 0 #3a1f08) drop-shadow(0 0 0.12em rgba(0, 0, 0, 0.75));
+}
+.match-bar-value {
+	display: inline-block;
+}
+.match-bar-label,
+.match-bar-value,
+.bonus-win-mult,
+.bonus-win-amount {
+	text-shadow: none;
+}
+.match-bar-value.bumped {
+	animation: tally-bump 0.5s cubic-bezier(0.3, 2, 0.5, 1);
+}
+.match-bar--cursed {
+	animation: chest-prize-pop 0.5s cubic-bezier(0.3, 1.8, 0.5, 1), cursed-shake 0.5s 0.5s ease-in-out 2;
+}
+
+/* ---------- Loading screen ---------- */
+.loader-bar {
+	position: relative;
+	width: min(90vw, 560px);
+	height: auto;
+	aspect-ratio: 1000 / 165;
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+}
+.loader-bar-art {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
+	user-select: none;
+}
+/* the glass tube inside the art; water fills it left to right */
+.loader-tube {
+	position: absolute;
+	z-index: 1;
+	left: 13.59%;
+	width: 70.55%;
+	top: 31.8%;
+	height: 41%;
+	container-type: inline-size;
+	border-radius: 6px;
+	overflow: hidden;
+}
+.loader-water-clip {
+	height: 100%;
+	overflow: hidden;
+	transition: width 0.15s linear;
+	box-shadow: 2px 0 6px rgba(200, 245, 255, 0.7);
+}
+.loader-water {
+	width: 100cqw;
+	height: 100%;
+	background: var(--water) 0 0 / 100% 100% no-repeat;
+}
+.loader-start {
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: min(80vw, 440px);
+}
+.loader-start img {
+	display: block;
+	width: 100%;
+	height: auto;
+	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 12px rgba(242, 199, 68, 0.45));
+	user-select: none;
+}
+.loader-start:active img {
+	transform: scale(0.96);
+}
