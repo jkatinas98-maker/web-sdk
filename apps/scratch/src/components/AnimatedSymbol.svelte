@@ -88,8 +88,12 @@
 	const SPECIAL: Partial<Record<SymbolName, { aura: number; ray: number; sparkle: number }>> = {
 		bonus: { aura: 0xff3a2a, ray: 0xffd75e, sparkle: 0xfff1b8 },
 		key: { aura: 0xffb21f, ray: 0xfff1b8, sparkle: 0xffffff },
+		mult2500: { aura: 0x8b2cff, ray: 0x5ee7ff, sparkle: 0xe9d5ff },
 	};
 	const special = SPECIAL[props.name];
+	// The 2500x cosmic kraken: always smouldering with violet/blue flames,
+	// and its win is a much bigger cosmic inferno with a swirling vortex.
+	const cosmic = props.name === 'mult2500';
 
 	$effect(() => {
 		size = props.size;
@@ -184,9 +188,17 @@
 		{ color: 0xfff6c8, scale: 0.26, width: 0.28, alpha: 0.9 },
 	];
 
-	const fire = (g: PIXI.Graphics) => {
-		const splashBoost = 1 + winSplash * 1.4;
-		for (const layer of FIRE_LAYERS) {
+	// Cosmic fire for the 2500x: deep violet rim -> magenta -> cyan -> white core.
+	const COSMIC_LAYERS = [
+		{ color: 0x5b0bd6, scale: 1, width: 1.1, alpha: 0.9 },
+		{ color: 0xc026ff, scale: 0.76, width: 0.8, alpha: 0.9 },
+		{ color: 0x38bdf8, scale: 0.52, width: 0.52, alpha: 0.95 },
+		{ color: 0xe0f7ff, scale: 0.28, width: 0.3, alpha: 0.9 },
+	];
+
+	const fire = (g: PIXI.Graphics, layers = FIRE_LAYERS, power = 1) => {
+		const splashBoost = (1 + winSplash * 1.4) * power;
+		for (const layer of layers) {
 			for (let i = 0; i < FLAMES.length; i++) {
 				const f = FLAMES[i];
 				const flicker =
@@ -224,9 +236,32 @@
 			g.fill({ color: 0xff5a00, alpha: 0.2 + 0.08 * pulse });
 			g.circle(0, 0, size * (0.48 + grow));
 			g.fill({ color: 0xffb21f, alpha: 0.22 + 0.1 * pulse });
-			rays(g, 14, size * 0.25, size * (1.0 + winSplash * 0.5), tw * 1.2, 0xffc21f, 0.22 + 0.12 * pulse);
-			rays(g, 14, size * 0.2, size * 0.75, -tw * 0.8 + 0.22, 0xff4a1a, 0.2);
-			fire(g);
+			if (cosmic) {
+				g.circle(0, 0, size * (1.15 + grow));
+				g.fill({ color: 0x6d28d9, alpha: 0.22 + 0.1 * pulse });
+				rays(g, 18, size * 0.25, size * (1.35 + winSplash * 0.7), tw * 1.6, 0x5ee7ff, 0.26 + 0.14 * pulse);
+				rays(g, 18, size * 0.2, size * 1.0, -tw * 1.1 + 0.17, 0xc026ff, 0.24);
+				vortex(g, size * 1.05, tw);
+				fire(g, COSMIC_LAYERS, 1.45);
+			} else {
+				rays(g, 14, size * 0.25, size * (1.0 + winSplash * 0.5), tw * 1.2, 0xffc21f, 0.22 + 0.12 * pulse);
+				rays(g, 14, size * 0.2, size * 0.75, -tw * 0.8 + 0.22, 0xff4a1a, 0.2);
+				fire(g);
+			}
+		}
+	};
+
+	// Swirling spiral arms (2500x): a galaxy turning behind the kraken.
+	const vortex = (g: PIXI.Graphics, radius: number, time: number) => {
+		for (let arm = 0; arm < 4; arm++) {
+			const base = time * 2.2 + (arm / 4) * TAU;
+			for (let k = 0; k < 14; k++) {
+				const f = k / 14;
+				const a = base + f * 2.6;
+				const r = radius * (0.25 + 0.75 * f);
+				g.circle(Math.cos(a) * r, Math.sin(a) * r, size * (0.045 * (1 - f) + 0.012));
+				g.fill({ color: arm % 2 ? 0xc026ff : 0x5ee7ff, alpha: 0.55 * (1 - f) });
+			}
 		}
 	};
 
@@ -239,6 +274,14 @@
 		g.fill({ color: special.aura, alpha: 0.2 + 0.1 * pulse });
 		rays(g, 12, size * 0.22, size * (0.85 + 0.08 * pulse), t * 0.7, special.ray, 0.18 + 0.1 * pulse);
 		rays(g, 12, size * 0.18, size * 0.62, -t * 0.5 + 0.26, special.aura, 0.16);
+		if (cosmic) {
+			// always burning: low violet flames + a slow galaxy swirl
+			const saved = tw;
+			tw = t;
+			vortex(g, size * 0.85, t * 0.5);
+			fire(g, COSMIC_LAYERS, 0.62);
+			tw = saved;
+		}
 	};
 
 	const drawSpecialFront = (g: PIXI.Graphics) => {
@@ -261,6 +304,16 @@
 	// In front: bursts, idle glints, win embers.
 	const drawFront = (g: PIXI.Graphics) => {
 		burst(g, revealP < 1 ? revealP : 0);
+		if (cosmic && revealP < 1) {
+			// landing: double violet/cyan shockwave
+			for (const [d, col] of [[0, 0xc026ff], [0.18, 0x5ee7ff]] as const) {
+				const p = clamp01((revealP - d) / (1 - d));
+				if (p > 0 && p < 1) {
+					g.circle(0, 0, size * (0.3 + 1.3 * p));
+					g.stroke({ color: col, width: Math.max(1, size * 0.09 * (1 - p)), alpha: 1 - p });
+				}
+			}
+		}
 		if (isWin) {
 			burst(g, tw / 0.7);
 			// second, wider fire-colored splash ring
@@ -285,7 +338,7 @@
 					g.fill({ color: 0xf2c744, alpha: a });
 				} else {
 					g.circle(x, y, size * e.r);
-					g.fill({ color: 0xff7a1a, alpha: a * 0.9 });
+					g.fill({ color: cosmic ? (e.phase > 0.5 ? 0xc026ff : 0x5ee7ff) : 0xff7a1a, alpha: a * 0.9 });
 				}
 			}
 		} else if (!revealing) {
@@ -338,7 +391,7 @@
 				rotation = 0.22 * (1 - revealP) * Math.sin(revealP * 16);
 				y = 0;
 			} else if (isWin) {
-				scale = winSplash * 0.25 + 1.08 + 0.12 * Math.abs(Math.sin(tw * 5));
+				scale = winSplash * (cosmic ? 0.45 : 0.25) + 1.08 + (cosmic ? 0.18 : 0.12) * Math.abs(Math.sin(tw * 5));
 				rotation = 0.035 * Math.sin(tw * 9);
 				y = -Math.abs(Math.sin(tw * 5)) * size * 0.08;
 			} else if (special) {

@@ -209,7 +209,11 @@
 			// synth once the feature it triggers is built).
 			// Bonus scatters get their own rising chime from Game.svelte (it
 			// knows how many have landed).
-			if (!isBonus) playSound(jackpot ? 'jackpot' : isKey ? 'keyLand' : isKraken || isShark ? 'scatterLand' : 'reveal');
+			if (panel?.name === 'mult2500') {
+				// the cosmic kraken roars when it surfaces
+				playSound('jackpot');
+				playSound('krakenRoar');
+			} else if (!isBonus) playSound(jackpot ? 'jackpot' : isKey ? 'keyLand' : isKraken || isShark ? 'scatterLand' : 'reveal');
 			const start = performance.now();
 			const duration = 280;
 
