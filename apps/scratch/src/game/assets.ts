@@ -59,7 +59,12 @@ export const symbolAssetKey = (name: SymbolName) => `symbol_${name}`;
 // (no empty-texture flash, no "key not found" console noise). Pixi detects
 // the format either from the .png extension (dev) or the data:image/png
 // mime prefix (inlined production build).
+import tileCoverUrl from '../assets/tile_cover.png';
+
+export const TILE_COVER_KEY = 'tile_cover';
+
 export default {
+	[TILE_COVER_KEY]: { type: 'sprite' as const, src: tileCoverUrl, preload: true },
 	...Object.fromEntries(
 		SYMBOL_NAMES.map((name) => [
 			symbolAssetKey(name),

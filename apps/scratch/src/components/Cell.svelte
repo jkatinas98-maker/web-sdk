@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type * as PIXI from 'pixi.js';
-	import { Container, Graphics, Text } from 'pixi-svelte';
+	import { Container, Graphics, Sprite, Text } from 'pixi-svelte';
+	import { TILE_COVER_KEY } from '../game/assets';
 
 	import AnimatedSymbol from './AnimatedSymbol.svelte';
 	import type { CellWinInfo } from '../game/winTiming';
@@ -237,7 +238,12 @@
 </script>
 
 <Container {x} {y} scale={pulseScale}>
-	<Graphics draw={revealed ? drawTile : drawFoil} />
+	{#if revealed}
+		<Graphics draw={drawTile} />
+	{:else}
+		<!-- Unscratched: the illustrated "SCRATCH" compass tile -->
+		<Sprite key={TILE_COVER_KEY} anchor={0.5} width={size * 1.04} height={size * 1.04} />
+	{/if}
 
 	{#if revealed && panel}
 		<!-- The artist's reveal frames do their own pop-in, so the symbol
