@@ -1,5 +1,6 @@
 <script lang="ts">
 	import config from '../game/config';
+	import { stateConfig } from 'state-shared';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { EXTRA_MATCH_LADDER, SKULL_GRID_PRIZE } from '../game/rules';
@@ -148,7 +149,11 @@
 					<li>Choose a mode — Easy, Medium or Hard — and your bet with − / +.</li>
 					<li>Press the anchor to buy a card, then scratch the tiles (or press the anchor again to reveal all).</li>
 					<li>Wins and features are shown once every tile is revealed; the outcome of the card is decided when it is bought.</li>
-					<li>The circular-arrows button turns <b>Autoplay</b> on or off. Feature choices (Kraken, chests) still wait for you.</li>
+					{#if stateConfig.jurisdiction?.disabledAutoplay}
+						<li>The circular-arrows button reveals every tile at once.</li>
+					{:else}
+						<li>The circular-arrows button turns <b>Autoplay</b> on or off. Feature choices (Kraken, chests) still wait for you.</li>
+					{/if}
 				</ul>
 
 				<h4>Modes</h4>

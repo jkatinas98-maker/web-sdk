@@ -12,6 +12,7 @@
 	import treasureFoundUrl from '../assets/chests/ui/treasure_found.webp';
 	import { playSound } from '../game/sound';
 	import Sparkles from './Sparkles.svelte';
+	import { money } from '../game/money';
 
 	// Key feature: full-screen ship deck, three chests. The player picks
 	// one; it bursts open with the prize the book decided (`win`), then the
@@ -73,7 +74,7 @@
 		}
 	}
 
-	const fmt = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const fmt = money;
 	// Amount font shrinks for long numbers so it stays on the cloth.
 	const fit = (t: string) => `font-size:${(17 * Math.min(1, 6 / t.length)).toFixed(2)}cqw;`;
 	const mult = (v: number) => (betAmount > 0 ? `×${+(v / betAmount).toFixed(2)}` : '');

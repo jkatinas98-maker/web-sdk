@@ -53,6 +53,8 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import { money } from '../game/money';
+	import { stateConfig } from 'state-shared';
 	import Sparkles from './Sparkles.svelte';
 	import RulesModal from './RulesModal.svelte';
 
@@ -581,6 +583,12 @@
 	// (Kraken taps, chest pick) still wait for the player. Stops when the
 	// balance can't cover the bet, or when tapped again.
 	let autoplay = $state(false);
+	// Some jurisdictions forbid autoplay (Stake sends this on authenticate):
+	// then the circular-arrows button is a plain "reveal all" instead.
+	const autoplayAllowed = $derived(!stateConfig.jurisdiction?.disabledAutoplay);
+	$effect(() => {
+		if (!autoplayAllowed) autoplay = false;
+	});
 	function toggleAutoplay() {
 		autoplay = !autoplay;
 		playSound('click');
@@ -867,9 +875,7 @@
 	// Absolutely position an overlay (hit area / text) on the frame art by
 	// its center + size in source-image pixels.
 	// (Anything below the stretch cut moves down by the stretch.)
-	// $1,234.56 — and long amounts shrink so they stay inside the plaque.
-	const money = (v: number) =>
-		'$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	// Amounts in the player's currency; long ones shrink to fit the plaque.
 	const valueFit = (v: number) => {
 		const len = money(v).length;
 		return len <= 9 ? '' : `font-size:${(0.66 * 9) / len}em;`;
@@ -1144,7 +1150,7 @@
 	></button>
 	<div class="frame-text frame-bet" style={at(356, 884, 172, 76)}>
 		<span class="frame-label">Bet</span>
-		<span class="frame-value">${betAmount.toFixed(2)}</span>
+		<span class="frame-value" style={valueFit(betAmount)}>{money(betAmount)}</span>
 	</div>
 	<button
 		class="frame-btn"
@@ -1202,9 +1208,12 @@
 		class="frame-btn frame-btn--auto"
 		class:auto-on={autoplay}
 		style={at(1210, 875, 100, 100)}
-		aria-label={autoplay ? 'Stop autoplay' : 'Start autoplay'}
-		aria-pressed={autoplay}
-		onclick={toggleAutoplay}
+		aria-label={!autoplayAllowed ? 'Reveal all' : autoplay ? 'Stop autoplay' : 'Start autoplay'}
+		aria-pressed={autoplayAllowed ? autoplay : undefined}
+		onclick={() => {
+			if (autoplayAllowed) toggleAutoplay();
+			else if (viewState === 'playing' || octoScratching) revealEverything();
+		}}
 	>
 		{#if autoplay}<span class="auto-badge">AUTO</span>{/if}
 	</button>
@@ -1327,11 +1336,11 @@
 					<div class="octo-bar-title">Bonus card {octoIndex + 1}/{octoCards.length}</div>
 					<div class="octo-bar-sub">
 						{#if octoCardDone}
-							{octoCards[octoIndex].win > 0 ? `+$${octoCards[octoIndex].win.toFixed(2)}` : 'No win'}
+							{octoCards[octoIndex].win > 0 ? `+${money(octoCards[octoIndex].win)}` : 'No win'}
 						{:else}
 							Scratch it!
 						{/if}
-						<span class="octo-bar-dot">•</span> Bonus total: <span class="octo-bar-total">${octoWinSum.toFixed(2)}</span>
+						<span class="octo-bar-dot">•</span> Bonus total: <span class="octo-bar-total">{money(octoWinSum)}</span>
 					</div>
 				{/if}
 			</div>
@@ -1385,7 +1394,7 @@
 		<img class="octo-banner-icon" src={pirateIconUrl} alt="" />
 		<div class="octo-banner-text">
 			<div class="octo-banner-title">The Pirate plunders!</div>
-			<div class="octo-banner-sub">{SYMBOL_LABEL[pb.symbol]} · x{pb.multiplier} · +${pb.amount.toFixed(2)}</div>
+			<div class="octo-banner-sub">{SYMBOL_LABEL[pb.symbol]} · x{pb.multiplier} · +{money(pb.amount)}</div>
 		</div>
 		<img class="octo-banner-icon pirate-loot" src={SYMBOL_IMAGE_URL[pb.symbol]} alt="" />
 	</div>
@@ -1426,7 +1435,7 @@
 					</div>
 				</div>
 				{#if krakenStage === 'landed'}
-					<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +${k.amount.toFixed(2)}</div>
+					<div class="kraken-result kraken-result-hit">×{k.multiplier} &mdash; +{money(k.amount)}</div>
 					<div class="kraken-card-hint">Tap to continue</div>
 				{:else}
 					<div class="kraken-card-hint">Opening...</div>
@@ -1494,7 +1503,7 @@
 				{#each chests as chest, i (i)}
 					<div class={`chest-pill chest-pill--${chest.kind}`}>
 						{#if chest.kind === 'cash'}
-							+${chest.value.toFixed(2)}
+							+{money(chest.value)}
 						{:else if chest.kind === 'multiplier'}
 							×{chest.value}
 						{:else if chest.kind === 'retrigger'}
@@ -1528,7 +1537,7 @@
 					<div class="bigwin-mult">+{awardedFreeScratches} Free Scratches</div>
 				{/if}
 				{#if totalWin > 0}
-					<div class="bigwin-mult">+${totalWin.toFixed(2)} this card</div>
+					<div class="bigwin-mult">+{money(totalWin)} this card</div>
 				{/if}
 				<div class="win-modal-hint">Tap to start the bonus</div>
 			</div>
@@ -1537,7 +1546,7 @@
 				<div class="bigwin-rays"></div>
 				<img class="bigwin-art" src={WIN_TIER_ART[winTier]} alt={`${winTier} win`} draggable="false" />
 				<Sparkles count={18} coins={winTier === 'big' ? 10 : 22} spread={65} />
-				<div class="bigwin-amount">${shownWin.toFixed(2)}</div>
+				<div class="bigwin-amount">{money(shownWin)}</div>
 				<div class="bigwin-mult">{(totalWin / betAmount).toFixed(1)}x bet</div>
 				{#if awardedFreeScratches > 0}
 					<div class="win-modal-bonus">+{awardedFreeScratches} Free Scratches</div>
@@ -1548,7 +1557,7 @@
 			<div class="win-modal">
 				<div class="win-modal-title">{totalWin > 0 ? 'Treasure won!' : 'Bonus!'}</div>
 				{#if totalWin > 0}
-					<div class="win-modal-amount">${totalWin.toFixed(2)}</div>
+					<div class="win-modal-amount">{money(totalWin)}</div>
 					<div class="win-modal-mult">{(totalWin / betAmount).toFixed(1)}x</div>
 				{/if}
 				{#if awardedFreeScratches > 0}
