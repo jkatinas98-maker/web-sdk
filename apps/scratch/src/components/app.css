@@ -3598,3 +3598,12 @@ button:disabled {
 	0%, 100% { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
 	50% { transform: translate(-50%, -53%) rotate(5deg) scale(1.05); }
 }
+
+.kraken-case-banner {
+	width: min(92vw, 620px, 36vh * 2.34);
+	height: auto;
+	margin-bottom: -2%;
+	filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.7));
+	animation: bigwin-art-in 0.8s cubic-bezier(0.25, 1.7, 0.45, 1) both, bigwin-art-bob 2.4s 0.8s ease-in-out infinite;
+	user-select: none;
+}

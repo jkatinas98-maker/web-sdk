@@ -55,6 +55,7 @@
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
 	import ChestPick from './ChestPick.svelte';
+	import krakensTreasureUrl from '../assets/krakens_treasure.webp';
 	import resultKrakenUrl from '../assets/shark/result_kraken.webp';
 	import resultOctopusUrl from '../assets/shark/result_octopus.webp';
 	import resultPirateUrl from '../assets/shark/result_pirate.webp';
@@ -1470,7 +1471,7 @@
 		<div class="kraken-scene-vignette" aria-hidden="true"></div>
 		{#if krakenStage === 'case' || krakenStage === 'landed'}
 			<div class="kraken-case" style={`width:${krakenReelW}px;`}>
-				<div class="feature-modal-title kraken-case-title">The Kraken's Treasure</div>
+				<img class="kraken-case-banner" src={krakensTreasureUrl} alt="The Kraken's Treasure" draggable="false" />
 				<!-- Phones: the reel is zoomed in (sides of the frame cropped) so
 				     the rolling tiles and the prize are big enough to read. -->
 				<div class="case-reel-zoom" style={`--reel-zoom:${mobile ? 1.75 : 1};`}>
