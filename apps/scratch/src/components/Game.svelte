@@ -9,7 +9,7 @@
 	import type { BookEvent, BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockRound, cardMatchWin, SKULL_GRID_PRIZE } from '../game/mockBet';
 	import { playBookEvents } from '../game/utils';
-	import { playSound, stopSound, setVolume, startMusic, setMusicEnabled, setMusicTrack, setBeachMode } from '../game/sound';
+	import { playSound, stopSound, setVolume, startMusic, setMusicVolume, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
@@ -730,11 +730,12 @@
 	const VOLUME_LEVELS = [0, 0.4, 0.7, 1];
 	let volumeLevel = $state(VOLUME_LEVELS.length - 1);
 
-	// Music has its own on/off toggle, separate from the effects volume.
-	let musicOn = $state(true);
-	function toggleMusic() {
-		musicOn = !musicOn;
-		setMusicEnabled(musicOn);
+	// Music has its own volume knob, same 4 steps as the effects.
+	let musicLevel = $state(VOLUME_LEVELS.length - 1);
+	const musicOn = $derived(musicLevel > 0);
+	function cycleMusic() {
+		musicLevel = (musicLevel + 1) % VOLUME_LEVELS.length;
+		setMusicVolume(VOLUME_LEVELS[musicLevel]);
 		playSound('click');
 	}
 	function cycleVolume() {
@@ -1298,11 +1299,14 @@
 		<button
 			class="sound-toggle music-toggle"
 			class:off={!musicOn}
-			onclick={toggleMusic}
-			aria-label={musicOn ? 'Turn music off' : 'Turn music on'}
+			onclick={cycleMusic}
+			aria-label="Change music volume"
 		>
 			<img src={btnMusicUrl} alt="" draggable="false" />
 			{#if !musicOn}<span class="sound-toggle-slash" aria-hidden="true"></span>{/if}
+			<span class="sound-pips" aria-hidden="true">
+				{#each [1, 2, 3] as l (l)}<i class:on={musicLevel >= l}></i>{/each}
+			</span>
 		</button>
 		<button class="sound-toggle" class:off={volumeLevel === 0} onclick={cycleVolume} aria-label="Change effects volume">
 			<img src={btnSoundUrl} alt="" draggable="false" />

@@ -194,6 +194,7 @@ const tracks = new Map<string, Track>();
 let currentSrc: string | null = null;
 let musicStarted = false;
 let musicEnabled = true;
+let musicLevel = 1; // 0-1 music volume knob (0 = off)
 
 const ensureTrack = (url: string) => {
 	let t = tracks.get(url);
@@ -241,7 +242,7 @@ const fadeTrack = (t: Track, on: boolean) => {
 		}
 		t.gain!.gain.cancelScheduledValues(now);
 		t.gain!.gain.setValueAtTime(t.gain!.gain.value, now);
-		t.gain!.gain.linearRampToValueAtTime(MUSIC_GAIN, now + FADE_S);
+		t.gain!.gain.linearRampToValueAtTime(MUSIC_GAIN * musicLevel, now + FADE_S);
 	} else if (t.src && t.gain) {
 		const { src, gain } = t;
 		gain.gain.cancelScheduledValues(now);
@@ -256,7 +257,7 @@ const fadeTrack = (t: Track, on: boolean) => {
 const applyMusicState = () => {
 	const ctx = getContext();
 	if (ctx && ctx.state === 'suspended' && musicStarted) ctx.resume();
-	for (const [url, t] of tracks) fadeTrack(t, musicEnabled && musicStarted && url === currentSrc);
+	for (const [url, t] of tracks) fadeTrack(t, musicEnabled && musicLevel > 0 && musicStarted && url === currentSrc);
 };
 
 // Browsers block audio until the player interacts with the page, so this
@@ -284,6 +285,12 @@ export const setMusicEnabled = (value: boolean) => {
 };
 
 export const isMusicEnabled = () => musicEnabled;
+
+// Music volume (0 = off), same steps as the effects knob. Fades to it.
+export const setMusicVolume = (value: number) => {
+	musicLevel = Math.min(1, Math.max(0, value));
+	applyMusicState();
+};
 
 // Effects-only volume (0 = muted). Doesn't touch the music.
 export const setVolume = (value: number) => {
