@@ -2836,8 +2836,8 @@ button:disabled {
 	bottom: 22.8%;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 2cqw;
+	justify-content: center;
+	gap: 3.5cqw;
 	white-space: nowrap;
 	line-height: 1;
 }
