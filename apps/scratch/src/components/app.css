@@ -3787,3 +3787,15 @@ button:disabled {
 	text-shadow: 0 2px 0 #3a1f08, 0 0 8px rgba(255, 170, 40, 0.7);
 	animation: tally-bump 0.5s cubic-bezier(0.3, 2, 0.5, 1);
 }
+/* Barrel Blast / chest screen: "Tap to continue" pinned to the bottom
+   edge so it never gets pushed off screen. */
+.chest-pick .tap-continue {
+	position: absolute;
+	left: 50%;
+	bottom: max(1.5vh, 8px);
+	translate: -50% 0;
+	margin: 0;
+	width: min(56vw, 230px, 22vh * 3);
+	z-index: 5;
+}
+.chest-pick { padding-bottom: calc(min(56vw, 230px, 22vh * 3) * 0.33 + 3vh); }
