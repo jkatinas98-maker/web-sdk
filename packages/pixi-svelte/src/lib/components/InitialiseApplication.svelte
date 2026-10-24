@@ -54,6 +54,8 @@
 					clearBeforeRender: true,
 					preference: 'webgl',
 					resizeTo: window,
+					// accept a slower (e.g. blocklisted-GPU) WebGL rather than none
+					failIfMajorPerformanceCaveat: false,
 					...opts,
 				});
 				context.stateApp.pixiApplication = app;
