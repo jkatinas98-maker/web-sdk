@@ -128,8 +128,14 @@
 						<li>Total win on a card, including its features and any free scratches, is capped at the mode's max win.</li>
 						<li>Free scratches play at the bet and mode that triggered them; mode and bet are locked until they finish.</li>
 						<li>The return to player (RTP) is the long-term theoretical average; individual results vary.</li>
-						<li>Malfunction voids all pays and plays.</li>
 					</ul>
+					<p class="rx-disclaimer">
+						Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a
+						disconnection, reload the game to finish any uncompleted rounds. The expected return is calculated over many
+						plays. The game display is not representative of any physical device and is for illustrative purposes only.
+						Winnings are settled according to the amount received from the Remote Game Server and not from events within
+						the web browser. TM and © 2026 Engine.
+					</p>
 				{/if}
 			</section>
 

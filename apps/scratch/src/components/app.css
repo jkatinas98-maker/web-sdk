@@ -3845,3 +3845,4 @@ button:disabled {
 	.barrel-row { gap: 3vw; width: auto; }
 	.barrel { width: 27vw; max-width: none; }
 }
+.rx-disclaimer { margin: 0.6em 0 0; font-size: 0.82em; line-height: 1.4; color: #cdb98f; font-family: Georgia, serif; }
