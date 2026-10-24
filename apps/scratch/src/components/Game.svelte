@@ -180,25 +180,9 @@
 		activeFeatureOverlay?.kind === 'chestPick' || activeFeatureOverlay?.kind === 'kraken',
 	);
 
-	// If the browser drops the grid's WebGL context (phones do this when GPU
-	// memory runs low), rebuild the pixi app so the grid comes back instead
-	// of staying invisible. The grid's state lives outside pixi, so the
-	// rebuilt canvas shows exactly the same card.
-	let glEpoch = $state(0);
-	$effect(() => {
-		let timer: ReturnType<typeof setTimeout> | undefined;
-		const onLost = (e: Event) => {
-			if (!(e.target instanceof HTMLCanvasElement)) return;
-			e.preventDefault();
-			clearTimeout(timer);
-			timer = setTimeout(() => (glEpoch += 1), 250);
-		};
-		document.addEventListener('webglcontextlost', onLost, true);
-		return () => {
-			clearTimeout(timer);
-			document.removeEventListener('webglcontextlost', onLost, true);
-		};
-	});
+	// (WebGL context loss is handled by Pixi itself: it restores the
+	// context and re-uploads textures. Rebuilding the app here instead could
+	// loop on phones -- destroying the app fires another context loss.)
 
 	// Kraken is shown in-card (over the ticket), not as a full-screen modal,
 	// and steps through stages on taps:
@@ -1240,7 +1224,6 @@
 
 <EnableGameActor />
 <div class="pixi-layer">
-	{#key glEpoch}
 	<App>
 		<Ticket
 			{betMode}
@@ -1254,7 +1237,6 @@
 			onRevealIndex={revealPanel}
 		/>
 	</App>
-	{/key}
 </div>
 
 <!-- Illustrated frame: the art itself plus invisible hit areas / text laid
