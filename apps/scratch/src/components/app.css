@@ -3846,3 +3846,27 @@ button:disabled {
 	.barrel { width: 27vw; max-width: none; }
 }
 .rx-disclaimer { margin: 0.6em 0 0; font-size: 0.82em; line-height: 1.4; color: #cdb98f; font-family: Georgia, serif; }
+
+/* Numbers: Pirata One's zero has a mark inside that reads like an 8
+   ($1.00 looked like $1.88). Every amount / multiplier uses Cinzel. */
+.chest-pick-prize-amt,
+.chest-pick-plaque .chest-pick-prize-mult,
+.match-bar-value,
+.bonus-medallion-mult,
+.bonus-total span,
+.bonus-win-mult,
+.bonus-win-amount,
+.bigwin-amount,
+.bigwin-mult,
+.win-modal-amount,
+.kraken-result,
+.kraken-plaque-num,
+.case-tile-mult,
+.maxwin-sign-text,
+.rx-card-mult,
+.rx-chip,
+.frame-value,
+.octo-bar-total {
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+}
