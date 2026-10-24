@@ -17,6 +17,7 @@ export type EmitterEventGame =
 	| { type: 'octopusCards'; data: BookEventOfType<'octopusCards'> }
 	| { type: 'chestPick'; data: BookEventOfType<'chestPick'> }
 	| { type: 'bonusMultiplier'; data: BookEventOfType<'bonusMultiplier'> }
+	| { type: 'bonusMinimum'; data: BookEventOfType<'bonusMinimum'> }
 	| { type: 'pirateBounty'; data: BookEventOfType<'pirateBounty'> }
 	| { type: 'freeScratchesAwarded'; data: BookEventOfType<'freeScratchesAwarded'> }
 	// A whole round's book from the RGS, played card by card by Game.svelte.

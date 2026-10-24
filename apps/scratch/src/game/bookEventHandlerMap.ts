@@ -69,6 +69,12 @@ export const bookEventHandlerMap: BookEventHandlerMap<BookEvent, BookEventContex
 			},
 		});
 	},
+	bonusMinimum: async (bookEvent: BookEventOfType<'bonusMinimum'>) => {
+		await eventEmitter.broadcastAsync({
+			type: 'bonusMinimum',
+			data: { ...bookEvent, amount: bookEvent.amount * stateBet.betAmount },
+		});
+	},
 	bonusMultiplier: async (bookEvent: BookEventOfType<'bonusMultiplier'>) => {
 		await eventEmitter.broadcastAsync({ type: 'bonusMultiplier', data: bookEvent });
 	},

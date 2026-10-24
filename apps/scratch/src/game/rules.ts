@@ -17,33 +17,33 @@ export const MAX_WIN: Record<BetMode, number> = { easy: 110, medium: 1000, hard:
 // Calibrated draw weights (math-sdk calibrate.py -> weights.json).
 export const WEIGHTS: Record<BetMode, Partial<Record<SymbolName, number>>> = {
 	easy: {
-		skull: 105.8078,
+		skull: 106.1631,
 		mult1_5: 14.1097,
 		mult2: 8.4658,
 		mult4: 5.6438,
 		mult16: 2.3038,
 		mult45: 0.9907,
 		mult110: 0.3656,
-		kraken: 1.7309,
-		shark: 1.0028,
-		key: 0.0479,
-		bonus: 2.8033,
+		kraken: 1.7354,
+		shark: 1.0054,
+		key: 0.048,
+		bonus: 2.8106,
 	},
 	medium: {
-		skull: 115.6729,
+		skull: 116.1911,
 		mult1_5: 17.5225,
 		mult2: 10.2215,
 		mult5: 6.5709,
 		mult41: 2.9922,
 		mult110: 2.0769,
 		mult1000: 0.6921,
-		kraken: 2.4668,
-		shark: 1.4301,
-		key: 0.0683,
-		bonus: 3.8804,
+		kraken: 2.475,
+		shark: 1.4348,
+		key: 0.0685,
+		bonus: 3.8933,
 	},
 	hard: {
-		skull: 106.8569,
+		skull: 107.5468,
 		mult2: 17.9649,
 		mult6: 11.7362,
 		mult9: 8.5658,
@@ -51,14 +51,16 @@ export const WEIGHTS: Record<BetMode, Partial<Record<SymbolName, number>>> = {
 		mult130: 2.6814,
 		mult1000: 1.0075,
 		mult2500: 0.3699,
-		kraken: 3.2822,
-		shark: 1.9048,
-		key: 0.0911,
-		bonus: 5.1125,
+		kraken: 3.2969,
+		shark: 1.9134,
+		key: 0.0915,
+		bonus: 5.1355,
 	},
 };
 
 export const FREE_SCRATCHES_AWARDED = 10;
+// A bonus always pays at least this many times the bet (topped up at the end).
+export const BONUS_MINIMUM: Record<BetMode, number> = { easy: 5, medium: 5, hard: 5 };
 const BONUS_TRIGGER_COUNT = 3;
 const MAX_FREE_CARDS = 100;
 const FEATURE_SYMBOLS: SymbolName[] = ['bonus', 'key', 'kraken', 'shark'];
@@ -236,6 +238,14 @@ export const playRound = (betMode: BetMode): { events: BookEvent[]; payout: numb
 			bonusMult = Math.round((bonusMult + c.amount) * 100) / 100;
 			events.push({ type: 'bonusMultiplier', added: c.amount, total: bonusMult } as Ev);
 			total += bonusMult;
+		}
+	}
+	if (played > 0) {
+		const bonusPaid = Math.round((total - base.amount) * 100) / 100;
+		if (bonusPaid < BONUS_MINIMUM[betMode]) {
+			const topUp = Math.round((BONUS_MINIMUM[betMode] - bonusPaid) * 100) / 100;
+			total += topUp;
+			events.push({ type: 'bonusMinimum', amount: topUp, minimum: BONUS_MINIMUM[betMode] } as Ev);
 		}
 	}
 	const payout = Math.min(Math.round(total * 100) / 100, MAX_WIN[betMode]);

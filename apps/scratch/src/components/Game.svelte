@@ -246,6 +246,7 @@
 				bonusActive = true;
 				bonusMult = 0;
 				bonusWinSum = 0;
+				bonusTopUp = 0;
 				bonusPlayed = 0;
 				bonusSpins = pendingAward;
 			} else {
@@ -518,6 +519,8 @@
 	let bonusWinSum = $state(0);
 	// Arrives with the book; shown once the card is scratched.
 	let pendingBonusMult: number | null = null;
+	// Minimum-bonus top-up (dollars) shown on the Bonus Win screen.
+	let bonusTopUp = $state(0);
 	const fmtMult = (m: number) => `x${+m.toFixed(2)}`;
 	// Shrink a line of baked-style text so it fits its slot in the art:
 	// `base` cqw for short strings, scaled down once it's longer than `fit`.
@@ -1143,6 +1146,9 @@
 		freeScratchesAwarded: ({ data }: { data: BookEventOfType<'freeScratchesAwarded'> }) => {
 			pendingFreeScratches += data.count;
 		},
+		bonusMinimum: ({ data }: { data: BookEventOfType<'bonusMinimum'> }) => {
+			bonusTopUp = data.amount;
+		},
 		bonusMultiplier: ({ data }: { data: BookEventOfType<'bonusMultiplier'> }) => {
 			pendingBonusMult = data.total;
 		},
@@ -1685,7 +1691,7 @@
 				<div class="bonus-win-text">
 					<span class="bonus-win-mult" style={fitText(fmtMult(bonusMult), 8.2, 6)}>{fmtMult(bonusMult)}</span>
 					<span class="bonus-win-amount" style={fitText(money(bonusWinSum), 6.2, 8)}>{money(bonusWinSum)}</span>
-					<span class="bonus-win-count">{bonusSpins} Free Scratches</span>
+					<span class="bonus-win-count">{bonusTopUp > 0 ? 'Minimum bonus win' : `${bonusSpins} Free Scratches`}</span>
 				</div>
 			</div>
 			<img class="tap-continue" src={tapContinueUrl} alt="Tap to continue" draggable="false" />

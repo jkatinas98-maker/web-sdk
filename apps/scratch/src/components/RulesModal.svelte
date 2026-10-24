@@ -3,7 +3,7 @@
 	import { stateConfig } from 'state-shared';
 	import { SYMBOL_IMAGE_URL } from '../game/assets';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
-	import { EXTRA_MATCH_LADDER, SKULL_GRID_PRIZE } from '../game/rules';
+	import { BONUS_MINIMUM, EXTRA_MATCH_LADDER, SKULL_GRID_PRIZE } from '../game/rules';
 	import { KRAKEN_NUMBER_RANGE, KRAKEN_PRIZE_TABLE } from '../game/kraken';
 	import octopusUrl from '../assets/symbols/octopus.png';
 	import pirateUrl from '../assets/symbols/pirate.png';
@@ -166,7 +166,7 @@
 						<img src={SYMBOL_IMAGE_URL.bonus} alt="" />
 						<div>
 							<h4>Free Scratches</h4>
-							<p>3 <b>Bonus</b> symbols award <b>10 Free Scratches</b> at the same bet. Each winning free card adds its win to the <b>bonus multiplier</b> and pays your bet × the whole multiplier so far. Landing the bonus again adds 10 more.</p>
+							<p>3 <b>Bonus</b> symbols award <b>10 Free Scratches</b> at the same bet. Each winning free card adds its win to the <b>bonus multiplier</b> and pays your bet × the whole multiplier so far. Landing the bonus again adds 10 more. A bonus always pays at least <b>{BONUS_MINIMUM[betMode]}x</b> your bet in total.</p>
 						</div>
 					</div>
 				{:else}

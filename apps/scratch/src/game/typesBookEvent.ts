@@ -103,6 +103,15 @@ type BookEventBonusMultiplier = {
 	total: number;
 };
 
+// End of a bonus that paid less than the minimum: tops it up. `amount`
+// per-$1 like the rest; `minimum` is the guaranteed bonus total (x bet).
+type BookEventBonusMinimum = {
+	index: number;
+	type: 'bonusMinimum';
+	amount: number;
+	minimum: number;
+};
+
 // Shark Bite -> Pirate: plunders the highest-paying symbol on the card
 // (any count), paying its multiplier. `amount` is per-$1 like the rest.
 type BookEventPirateBounty = {
@@ -131,6 +140,7 @@ export type BookEvent =
 	| BookEventOctopusCards
 	| BookEventChestPick
 	| BookEventBonusMultiplier
+	| BookEventBonusMinimum
 	| BookEventPirateBounty
 	| BookEventFreeScratchesAwarded;
 
