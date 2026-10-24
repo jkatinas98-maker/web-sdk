@@ -219,8 +219,23 @@
 	});
 	const krakenRevealed = $derived(krakenStage !== 'numbers');
 
+	// During free scratches each feature's win goes onto the medallion the
+	// moment the feature ends (the exact book total is set again once the
+	// whole card has been presented).
+	function bumpBonusMult(mult: number) {
+		if (!bonusActive || !roundIsFree || !(mult > 0)) return;
+		bonusMult = Math.round((bonusMult + mult) * 100) / 100;
+		playSound('bonusCoins');
+	}
+
 	function advanceFeatureOverlay() {
 		playSound('click');
+		const done = featureOverlayQueue[0];
+		if (done && betAmount > 0) {
+			if (done.kind === 'kraken' && done.data.hit) bumpBonusMult(done.data.multiplier);
+			else if (done.kind === 'chestPick') bumpBonusMult(done.data.win / betAmount);
+			else if (done.kind === 'pirate') bumpBonusMult(done.data.amount / betAmount);
+		}
 		featureOverlayQueue = featureOverlayQueue.slice(1);
 		if (featureOverlayQueue.length === 0) finishPresentation();
 	}
@@ -421,10 +436,7 @@
 			// During free scratches each Octopus card's win feeds the bonus
 			// multiplier straight away, so the medallion ticks up live (the
 			// exact book total is set again when the feature finishes).
-			if (bonusActive && roundIsFree && card.win > 0 && betAmount > 0) {
-				bonusMult = Math.round((bonusMult + card.win / betAmount) * 100) / 100;
-				playSound('bonusCoins');
-			}
+			if (betAmount > 0) bumpBonusMult(card.win / betAmount);
 			playSound(card.win > 0 ? 'win' : 'click');
 			clearTimeout(featureTimer);
 			featureTimer = setTimeout(() => {
@@ -1152,6 +1164,12 @@
 				presented = true;
 				skipPresent = null;
 				presentPending = false;
+				if (roundIsFree) {
+					const names = panels.map((p) => p!.name);
+					let own = cardMatchWin(betMode, names);
+					if (names.every((n) => n === 'skull')) own += SKULL_GRID_PRIZE[betMode];
+					bumpBonusMult(own);
+				}
 				featureOverlayQueue = events;
 				if (events.length === 0) finishPresentation();
 			};
