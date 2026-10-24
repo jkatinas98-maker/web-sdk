@@ -35,6 +35,7 @@ type SoundType =
 	| 'krakenTreasure' // the treasure reel rises
 	| 'bonusLand' // a Bonus scatter is revealed (pitch rises 1st -> 3rd)
 	| 'keyLand' // a Key is revealed
+	| 'modeSwitch' // a difficulty sign is picked
 	| 'woodCrack' // picked chest shaking before it bursts
 	| 'oldChestOpen'; // the other two chests creaking open
 
@@ -75,6 +76,7 @@ const loadSamples = (ctx: AudioContext) => {
 
 // Per-type loudness for samples (tweak by ear).
 const SAMPLE_GAIN: Partial<Record<SoundType, number>> = {
+	modeSwitch: 0.8,
 	// frequent / small -- kept well under the big moments
 	click: 0.35,
 	scratch: 0.5, // wet-sand scratch (same as the bonus one now)
