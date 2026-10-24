@@ -1009,6 +1009,9 @@
 		if (!isFreeRound && isMockMode && mockBalance < betAmount) return;
 
 		playSound('click');
+		fastRound = false;
+		cascade.forEach(clearTimeout);
+		cascade = [];
 		isProcessing = true;
 		viewState = 'playing';
 		totalWin = 0;
@@ -1046,32 +1049,51 @@
 		context.stateGameDerived.reveal(index);
 	}
 
+	// Reveal-all cascade. Pressing the anchor a second time while it's
+	// running (or while the win is still playing out) makes it a fast round:
+	// every remaining tile flips at once and the features start right away.
+	let cascade: ReturnType<typeof setTimeout>[] = [];
+	let fastRound = false;
 	function revealEverything() {
 		playSound('click');
-
-		// Stagger each panel's reveal instead of flipping them all in the same
-		// frame — reuses the same per-index reveal() action a manual tap
-		// uses, so each tile still gets its own pop-in + reveal sound, just
-		// cascading left-to-right/top-to-bottom instead of all at once.
 		const { panels, revealed } = context.stateGame;
 		let delay = 0;
 		for (let i = 0; i < panels.length; i++) {
 			if (revealed.has(i)) continue;
 			// Each tile gets its scratch + its own reveal sound (Cell plays
 			// the reveal), like scratching it by hand.
-			setTimeout(() => {
-				playSound('scratch');
-				context.stateGameDerived.reveal(i);
-			}, delay);
+			cascade.push(
+				setTimeout(() => {
+					playSound('scratch');
+					context.stateGameDerived.reveal(i);
+				}, delay),
+			);
 			delay += 45;
 		}
 	}
+	function fastReveal() {
+		fastRound = true;
+		cascade.forEach(clearTimeout);
+		cascade = [];
+		playSound('click');
+		playSound('scratch');
+		const { panels, revealed } = context.stateGame;
+		for (let i = 0; i < panels.length; i++) if (!revealed.has(i)) context.stateGameDerived.reveal(i);
+	}
+	let skipPresent: (() => void) | null = null;
 
 	// One main action button, like the reference: it plays a round while
 	// idle/done, and becomes "Reveal all" while a round is in progress.
 	function handleMainAction() {
 		if (viewState === 'playing' || octoScratching) {
-			revealEverything();
+			const { panels, revealed } = context.stateGame;
+			const started = panels.length - revealed.size < panels.length && cascade.length > 0;
+			if (started) fastReveal();
+			else revealEverything();
+		} else if (presentPending && skipPresent) {
+			// win still playing out: fast-forward to the features / payout
+			fastRound = true;
+			skipPresent();
 		} else {
 			playGame();
 		}
@@ -1119,14 +1141,22 @@
 			pendingAward = pendingFreeScratches;
 			const animMs =
 				winningSymbols.length > 0
-					? buildWinSchedule(panels, winningSymbols, betMode).total + 1600
+					? fastRound
+						? 700
+						: buildWinSchedule(panels, winningSymbols, betMode).total + 1600
 					: 0;
 			presentPending = true;
-			setTimeout(() => {
+			let presented = false;
+			const present = () => {
+				if (presented) return;
+				presented = true;
+				skipPresent = null;
 				presentPending = false;
 				featureOverlayQueue = events;
 				if (events.length === 0) finishPresentation();
-			}, animMs);
+			};
+			skipPresent = present;
+			setTimeout(present, animMs);
 		}
 	});
 
