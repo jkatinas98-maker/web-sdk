@@ -3687,3 +3687,58 @@ button:disabled {
 	bottom: 24%;
 }
 .bonus-medallion-count { display: none; }
+
+/* ---------- Key feature v2: Barrel Blast ---------- */
+.barrel-row {
+	align-items: flex-end;
+}
+.barrel {
+	position: relative;
+	flex: 1 1 0;
+	max-width: min(30vw, 30vh, 300px);
+	aspect-ratio: 420 / 531;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: crosshair;
+	-webkit-tap-highlight-color: transparent;
+	transition: transform 0.25s, filter 0.3s;
+}
+.barrel:disabled { cursor: default; opacity: 1; }
+.barrel > img {
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	width: 100%;
+	height: auto;
+	translate: -50% 0;
+	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.7));
+	user-select: none;
+}
+.barrel--idle > img { animation: chest-bob 2.4s ease-in-out infinite; }
+.barrel:nth-child(2) > img { animation-delay: -0.8s; }
+.barrel:nth-child(3) > img { animation-delay: -1.6s; }
+.barrel--idle:hover:not(:disabled) > img { filter: brightness(1.18) drop-shadow(0 0 14px rgba(255, 160, 60, 0.7)); }
+.barrel--exploding > img {
+	width: 125%;
+	bottom: -6%;
+	animation: barrel-boom 0.5s ease-out both;
+}
+@keyframes barrel-boom {
+	0% { scale: 0.8; filter: brightness(2.2); }
+	40% { scale: 1.12; }
+	100% { scale: 1; filter: brightness(1); }
+}
+.barrel--exploded > img { width: 118%; }
+.barrel--shaking > img { animation: chest-shake 0.11s linear infinite; }
+.barrel--gold > img {
+	width: 112%;
+	animation: chest-pop 0.5s cubic-bezier(0.3, 1.8, 0.5, 1);
+	filter: drop-shadow(0 0 18px rgba(255, 200, 80, 0.8)) drop-shadow(0 10px 12px rgba(0, 0, 0, 0.7));
+}
+.barrel.missed .chest-pick-plaque { filter: brightness(0.8) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.7)); }
+.barrel .chest-pick-plaque { bottom: 78%; }
+.barrel.won { transform: scale(1.08); z-index: 2; }
+@media (max-aspect-ratio: 4/5) {
+	.barrel { max-width: 32vw; }
+}

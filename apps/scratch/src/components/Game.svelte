@@ -54,7 +54,7 @@
 	import CaseReel from './CaseReel.svelte';
 	import SharkBiteBar from './SharkBiteBar.svelte';
 	import { buildWinSchedule, findWinningSymbols } from '../game/winTiming';
-	import ChestPick from './ChestPick.svelte';
+	import BarrelShoot from './BarrelShoot.svelte';
 	import tapContinueUrl from '../assets/ui/tap_continue.webp';
 	import krakensTreasureUrl from '../assets/krakens_treasure.webp';
 	import resultKrakenUrl from '../assets/shark/result_kraken.webp';
@@ -1537,7 +1537,7 @@
 {#if activeFeatureOverlay?.kind === 'chestPick'}
 	{@const cp = activeFeatureOverlay.data}
 	{#key cp}
-		<ChestPick win={cp.win} missed={cp.missed} {betAmount} onDone={advanceFeatureOverlay} />
+		<BarrelShoot win={cp.win} missed={cp.missed} {betAmount} auto={autoplay} onDone={advanceFeatureOverlay} />
 	{/key}
 {/if}
 

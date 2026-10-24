@@ -45,7 +45,7 @@
 		{ img: SYMBOL_IMAGE_URL.kraken, name: 'Kraken', text: 'Opens the Kraken number match.' },
 		{ img: octopusUrl, name: 'Octopus', text: '3 bonus cards — every win on them is added.' },
 		{ img: pirateUrl, name: 'Pirate', text: 'Plunders the best symbol on the card and pays it, even a single one.' },
-		{ img: SYMBOL_IMAGE_URL.key, name: 'Key', text: 'Opens the treasure chest pick.' },
+		{ img: SYMBOL_IMAGE_URL.key, name: 'Key', text: 'Opens Barrel Blast.' },
 		{ img: SYMBOL_IMAGE_URL.bonus, name: 'Bonus', text: 'Awards 10 Free Scratches.' },
 	];
 </script>
@@ -120,7 +120,7 @@
 						{#if autoplayOff}
 							<li>The circular-arrows button reveals every tile at once.</li>
 						{:else}
-							<li>The circular-arrows button turns <b>Autoplay</b> on or off. During autoplay the Kraken carries on by itself after 1 second; the treasure chest pick still waits for you.</li>
+							<li>The circular-arrows button turns <b>Autoplay</b> on or off. During autoplay the Kraken and Barrel Blast carry on by themselves after 1 second if you don't tap.</li>
 						{/if}
 					</ul>
 					<h3 class="rx-title">General</h3>
@@ -158,8 +158,8 @@
 					<div class="rx-feature">
 						<img src={SYMBOL_IMAGE_URL.key} alt="" />
 						<div>
-							<h4>Treasure Chests</h4>
-							<p>A <b>Key</b> lets you pick one of three chests and win its prize. The other two then open to show what they held.</p>
+							<h4>Barrel Blast</h4>
+							<p>A <b>Key</b> opens Barrel Blast: shoot two of the three barrels — each shows what it held — and the last barrel standing is your prize.</p>
 						</div>
 					</div>
 					<div class="rx-feature">
