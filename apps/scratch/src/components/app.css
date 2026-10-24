@@ -3652,3 +3652,6 @@ button:disabled {
 /* feature banners always above the match banners */
 .shark-result-slot { z-index: 12; }
 .kraken-card-overlay { z-index: 21; }
+/* chest plaque: sparkles stay behind the prize amount */
+.chest-pick-plaque .sparkles { z-index: 1; }
+.chest-pick-plaque-text { z-index: 3; }

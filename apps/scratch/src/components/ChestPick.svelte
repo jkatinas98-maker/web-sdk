@@ -119,7 +119,7 @@
 				{#if opened[i]}
 					<span class={`chest-pick-plaque chest-pick-plaque--${chest.color}`} class:win={picked === i}>
 						<img src={chest.plaque} alt="" draggable="false" />
-						{#if picked === i}<Sparkles count={8} coins={10} spread={50} />{/if}
+						{#if picked === i}<Sparkles count={8} />{/if}
 						<span class="chest-pick-plaque-text">
 							<span class="chest-pick-prize-amt" style={fit(fmt(prizes[i]))}>{fmt(prizes[i])}</span>
 							<span class="chest-pick-prize-mult">{mult(prizes[i])}</span>
