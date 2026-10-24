@@ -3624,3 +3624,27 @@ button:disabled {
 	0%, 100% { scale: 1; }
 	50% { scale: 1.05; }
 }
+
+/* Match banner v2: no porthole; symbol sits on the panel's left end and glows */
+.match-bar {
+	aspect-ratio: 1100 / 379;
+}
+.match-bar-icon {
+	left: 20%;
+	top: 49%;
+	width: 15%;
+	filter: drop-shadow(0 0 6px rgba(255, 230, 140, 0.95)) drop-shadow(0 0 14px rgba(255, 190, 60, 0.7)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+.match-bar-text {
+	left: 29.5%;
+	right: 15%;
+	top: 26%;
+	bottom: 26%;
+}
+.match-bar .shine {
+	left: 13%;
+	right: 13%;
+	top: 26%;
+	bottom: 27%;
+	border-radius: 999px;
+}

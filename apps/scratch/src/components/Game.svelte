@@ -1408,9 +1408,9 @@
 		<img class="match-bar-icon" src={icon} alt="" draggable="false" />
 		<Sparkles count={tone === 'match' ? 5 : 9} coins={tone === 'extra' ? 8 : 0} spread={40} color={tone === 'cursed' ? '#ff8a7a' : '#ffe9a0'} />
 		<div class="match-bar-text">
-			<span class="match-bar-label" style={fitText(label, 4.8, 13)}>{label}</span>
+			<span class="match-bar-label" style={fitText(label, 4.2, 13)}>{label}</span>
 			{#key value}
-				<span class="match-bar-value" class:bumped style={fitText(value, 8.5, 4)}>{value}</span>
+				<span class="match-bar-value" class:bumped style={fitText(value, 7.4, 4)}>{value}</span>
 			{/key}
 		</div>
 	</div>
