@@ -8,7 +8,7 @@
 	import type { BetMode } from '../game/types';
 	import type { BookEvent, BookEventOfType, ChestOutcome, OctopusCard, SharkOutcome } from '../game/typesBookEvent';
 	import { createMockRound, cardMatchWin, SKULL_GRID_PRIZE } from '../game/mockBet';
-	import { playBookEvents } from '../game/utils';
+	import { playBookEvents, roundPresented } from '../game/utils';
 	import { playSound, stopSound, setVolume, startMusic, setMusicVolume, setMusicTrack, setBeachMode } from '../game/sound';
 	import musicUrl from '../assets/music.mp3';
 	import { SYMBOL_LABEL } from '../game/symbolIcons';
@@ -260,6 +260,8 @@
 		} else if (roundCards.length === 0) {
 			// Round fully shown: the Win plaque shows what the round paid.
 			stateBet.winBookEventAmount = Math.round(roundFinal * betAmount * 100) / 100;
+			// Round fully shown: now let the SDK credit the win to the balance.
+			roundPresented();
 		}
 		if (totalWin > 0 || awardedFreeScratches > 0) {
 			showWinModal = isBigWin();
