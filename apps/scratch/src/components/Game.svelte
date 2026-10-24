@@ -1231,25 +1231,6 @@
 				: 'Play card'}
 		onclick={handleMainAction}
 	></button>
-	{#if bonusActive}
-		<!-- Bonus multiplier medallion over the anchor -->
-		<div class="bonus-medallion" style={at(1041, 883, 240, 228)}>
-			<img class="bonus-medallion-art" src={medallionUrl} alt="" draggable="false" />
-			{#key bonusMult}
-				<Sparkles count={8} coins={bonusMult > 0 ? 10 : 0} spread={45} loop={false} />
-			{/key}
-			<div class="bonus-medallion-mult-slot">
-				{#key bonusMult}
-					{@const mt = fmtMult(bonusMult)}
-					<span class="bonus-medallion-mult" style={fitText(mt, 26, 3)}>{mt}</span>
-				{/key}
-			</div>
-			<div class="bonus-medallion-count">
-				<span>{Math.min(bonusPlayed + (viewState === 'playing' ? 1 : 0), bonusSpins)}/{bonusSpins}</span>
-				<small>Free scratches</small>
-			</div>
-		</div>
-	{/if}
 
 	<button
 		class="frame-btn frame-btn--auto"
@@ -1415,6 +1396,23 @@
 		</div>
 	</div>
 {/snippet}
+
+{#if bonusActive}
+	<!-- Bonus multiplier medallion: top right, just the big multiplier
+	     (the sign under the logo already counts the free scratches). -->
+	<div class="bonus-medallion" class:mobile>
+		<img class="bonus-medallion-art" src={medallionUrl} alt="" draggable="false" />
+		{#key bonusMult}
+			<Sparkles count={8} coins={bonusMult > 0 ? 10 : 0} spread={45} loop={false} />
+		{/key}
+		<div class="bonus-medallion-mult-slot">
+			{#key bonusMult}
+				{@const mt = fmtMult(bonusMult)}
+				<span class="bonus-medallion-mult" style={fitText(mt, 34, 3)}>{mt}</span>
+			{/key}
+		</div>
+	</div>
+{/if}
 
 {#if skullGrid && featureOverlayQueue.length === 0}
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>

@@ -3665,3 +3665,25 @@ button:disabled {
 	color: #ffd75e;
 	-webkit-text-stroke: 1px #3a1f08;
 }
+
+/* Bonus medallion v2: fixed top-right, big multiplier only */
+.bonus-medallion {
+	position: fixed;
+	z-index: 9;
+	top: 74px;
+	right: 18px;
+	width: 150px;
+	aspect-ratio: 520 / 494;
+}
+.bonus-medallion.mobile {
+	top: 64px;
+	right: 10px;
+	width: min(25vw, 100px);
+}
+.bonus-medallion-mult-slot {
+	left: 14%;
+	right: 13%;
+	top: 30%;
+	bottom: 24%;
+}
+.bonus-medallion-count { display: none; }
