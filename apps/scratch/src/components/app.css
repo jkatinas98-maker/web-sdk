@@ -3655,3 +3655,13 @@ button:disabled {
 /* chest plaque: sparkles stay behind the prize amount */
 .chest-pick-plaque .sparkles { z-index: 1; }
 .chest-pick-plaque-text { z-index: 3; }
+/* Kraken: readable miss text, big treasure win */
+.kraken-result-miss {
+	color: #ffffff;
+	text-shadow: 0 2px 0 #06121a, 0 0 10px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.7);
+}
+.kraken-case .kraken-result {
+	font-size: clamp(2.2rem, 6.5vw, 4rem);
+	color: #ffd75e;
+	-webkit-text-stroke: 1px #3a1f08;
+}
