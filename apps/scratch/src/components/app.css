@@ -3742,3 +3742,5 @@ button:disabled {
 @media (max-aspect-ratio: 4/5) {
 	.barrel { max-width: 32vw; }
 }
+.barrel--exploded .chest-pick-plaque { bottom: 46%; }
+.barrel--gold .chest-pick-plaque { bottom: 70%; }
