@@ -28,7 +28,7 @@ export const SYMBOL_PLACEHOLDER_GLYPH: Record<SymbolName, string> = {
 	mult110: '❖', // jeweled crown / gem cluster
 	mult130: '✧', // stacked gold bars
 	mult1000: '✪', // overflowing treasure hoard (open chest)
-	mult2500: '♛', // pirate king's crown (Hard's top tier)
+	mult2500: '♛', // abyssal leviathan (Hard's top tier)
 };
 
 // Human-readable label for the paytable modal -- symbol ids (mult1_5,
@@ -53,7 +53,7 @@ export const SYMBOL_LABEL: Record<SymbolName, string> = {
 	mult110: 'Jeweled Crown',
 	mult130: 'Gold Bars',
 	mult1000: 'Overflowing Hoard',
-	mult2500: "Pirate King's Crown",
+	mult2500: 'Abyssal Leviathan',
 };
 
 // Accent colors: `fill` is the symbol's accent hue (used for the DOM

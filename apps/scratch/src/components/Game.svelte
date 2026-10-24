@@ -526,7 +526,7 @@
 	const MATCH_NAME: Partial<Record<SymbolName, string>> = {
 		mult1_5: 'Pistols', mult2: 'Crabs', mult4: 'Barrels', mult5: 'Parrots', mult6: 'Cutlasses',
 		mult9: 'Wheels', mult16: 'Spyglasses', mult36: 'Anchors', mult41: 'Maps', mult45: 'Flags',
-		mult110: 'Crowns', mult130: 'Gold Bars', mult1000: 'Hoards', mult2500: 'King Crowns',
+		mult110: 'Crowns', mult130: 'Gold Bars', mult1000: 'Hoards', mult2500: 'Leviathans',
 	};
 
 	// Summary once nothing else is on screen.
