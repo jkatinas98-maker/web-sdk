@@ -727,6 +727,46 @@
 	let mockLastWin = $state(0);
 
 	const isMockMode = !stateUrlDerived.rgsUrl();
+
+	// --- Dev panel (local demo only) --------------------------------------
+	// Forces the next demo card to contain a chosen feature by dealing demo
+	// rounds until one matches. Only exists in the local demo (no rgs_url);
+	// on Stake every outcome comes from the certified books, so there is
+	// nothing to force and the panel never renders.
+	type Force = { label: string; test: (events: BookEvent[], payout: number) => boolean };
+	const FORCES: Force[] = [
+		{ label: 'Bonus', test: (e) => e.some((x) => x.type === 'freeScratchesAwarded') },
+		{ label: 'Shark Bite', test: (e) => e.some((x) => x.type === 'sharkBite') },
+		{ label: 'Kraken win', test: (e) => e.some((x) => x.type === 'krakenResult' && x.hit) },
+		{ label: 'Kraken miss', test: (e) => e.some((x) => x.type === 'krakenResult' && !x.hit) },
+		{ label: 'Barrel Blast', test: (e) => e.some((x) => x.type === 'chestPick') },
+		{ label: 'Octopus', test: (e) => e.some((x) => x.type === 'octopusCards') },
+		{ label: 'Pirate', test: (e) => e.some((x) => x.type === 'pirateBounty') },
+		{ label: 'Skull grid', test: (e) => {
+			const r = e.find((x) => x.type === 'revealPanels');
+			return !!r && r.type === 'revealPanels' && r.panels.every((p) => p.name === 'skull');
+		} },
+		{ label: 'Big win', test: (_e, pay) => pay >= WIN_TIERS[betMode].big },
+		{ label: 'Max win', test: (_e, pay) => pay >= config.betModes[betMode].max_win - 1e-9 },
+	];
+	const devPanelAllowed = isMockMode;
+	let devOpen = $state(false);
+	let forced: Force | null = $state(null);
+	function nextMockRound() {
+		const f = forced;
+		forced = null;
+		if (!f) return createMockRound(betMode);
+		for (let i = 0; i < 400_000; i++) {
+			const r = createMockRound(betMode);
+			if (f.test(r.events, r.payout)) return r;
+		}
+		return createMockRound(betMode);
+	}
+	function devForce(f: Force) {
+		forced = f;
+		devOpen = false;
+		playGame();
+	}
 	const displayBalance = $derived(isMockMode ? mockBalance : stateBet.balanceAmount);
 	const displayLastWin = $derived(isMockMode ? mockLastWin : stateBet.winBookEventAmount);
 
@@ -992,7 +1032,7 @@
 
 		if (isMockMode) {
 			mockBalance = Math.round((mockBalance - betAmount) * 100) / 100;
-			startRound(createMockRound(betMode).events);
+			startRound(nextMockRound().events);
 			return;
 		}
 
@@ -1670,6 +1710,21 @@
 			</button>
 		{:else}
 			<div class="loader-text">Hoisting the sails… {Math.round(loaderProgress * 100)}%</div>
+		{/if}
+	</div>
+{/if}
+
+{#if devPanelAllowed}
+	<div class="dev-panel">
+		<button class="dev-toggle" onclick={() => (devOpen = !devOpen)}>DEV</button>
+		{#if devOpen}
+			<div class="dev-menu">
+				<small>Next card ({betMode}):</small>
+				{#each FORCES as f (f.label)}
+					<button disabled={viewState === 'playing' || isProcessing || featureOverlayQueue.length > 0 || freeScratchesRemaining > 0} onclick={() => devForce(f)}>{f.label}</button>
+				{/each}
+				<button onclick={() => (mockBalance = 1000)}>Balance → 1000</button>
+			</div>
 		{/if}
 	</div>
 {/if}
