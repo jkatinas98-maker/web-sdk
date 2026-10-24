@@ -3799,3 +3799,27 @@ button:disabled {
 	z-index: 5;
 }
 .chest-pick { padding-bottom: calc(min(56vw, 230px, 22vh * 3) * 0.33 + 3vh); }
+/* Regular 3-match banner: flickers and gives a little shake now and then */
+.match-bar--match {
+	animation: match-in 0.6s cubic-bezier(0.25, 1.7, 0.45, 1) both, match-rattle 1.8s 0.7s ease-in-out infinite;
+}
+.match-bar--match .match-bar-art {
+	animation: match-glow-green 1.4s ease-in-out infinite alternate, match-flicker 2.3s steps(1, end) infinite;
+}
+@keyframes match-rattle {
+	0%, 70%, 100% { transform: none; }
+	74% { transform: translateX(-2.5%) rotate(-1.4deg); }
+	78% { transform: translateX(2.5%) rotate(1.4deg); }
+	82% { transform: translateX(-1.6%) rotate(-0.8deg); }
+	86% { transform: translateX(1.2%) rotate(0.5deg); }
+	90% { transform: none; }
+}
+@keyframes match-flicker {
+	0%, 100% { opacity: 1; }
+	12% { opacity: 0.82; }
+	14% { opacity: 1; }
+	47% { opacity: 0.88; }
+	49% { opacity: 1; }
+	51% { opacity: 0.78; }
+	53% { opacity: 1; }
+}
