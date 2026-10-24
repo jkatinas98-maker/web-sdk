@@ -73,7 +73,7 @@
 
 	let viewState: ViewState = $state('start');
 	let isProcessing = $state(false);
-	let betMode: BetMode = $state('easy');
+	let betMode: BetMode = $state('medium');
 	let betAmount = $state(1);
 	let totalWin: number = $state(0);
 	let showWinModal = $state(false);
