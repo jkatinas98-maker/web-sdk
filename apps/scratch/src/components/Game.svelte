@@ -1416,13 +1416,13 @@
 	</div>
 {/snippet}
 
-{#if skullGrid}
+{#if skullGrid && featureOverlayQueue.length === 0}
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>
 		{@render matchBar(SYMBOL_IMAGE_URL.skull, 'Cursed! Skull grid', `+${SKULL_GRID_PRIZE[betMode]}x`, 'cursed', false)}
 	</div>
 {/if}
 
-{#if tallies.length > 0}
+{#if tallies.length > 0 && featureOverlayQueue.length === 0}
 	<!-- Win tally: one banner per winning symbol ("3 CRABS MATCH x2"); it
 	     turns gold and counts up as extra copies land ("5 CRABS MATCH x2.5") -->
 	<div class="win-tally" style={`top:${gridRect.top + 4}px;left:${gridRect.left}px;right:${gridRect.right}px;`}>

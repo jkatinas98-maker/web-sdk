@@ -3648,3 +3648,7 @@ button:disabled {
 	bottom: 27%;
 	border-radius: 999px;
 }
+
+/* feature banners always above the match banners */
+.shark-result-slot { z-index: 12; }
+.kraken-card-overlay { z-index: 21; }
