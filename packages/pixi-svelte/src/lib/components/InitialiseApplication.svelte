@@ -31,19 +31,41 @@
 		// WebGPU) worked immediately. A try/catch around a 'webgpu' attempt
 		// can't defend against a silent black canvas, so the only reliable
 		// fix is to never ask for WebGPU in the first place.
-		context.stateApp.pixiApplication = new PIXI.Application<PIXI.Renderer<HTMLCanvasElement>>();
-		await context.stateApp.pixiApplication.init({
-			autoDensity: true,
-			backgroundAlpha: 0,
-			hello: true,
-			multiView: false,
-			antialias: true,
-			clearBeforeRender: true,
-			preference: 'webgl',
-			powerPreference: 'high-performance',
-			resolution: devicePixelRatio.current,
-			resizeTo: window,
-		});
+		// Older / low-memory phones can refuse a high-performance,
+		// antialiased context at full device resolution. Try that first,
+		// then fall back to a lighter context instead of leaving the canvas
+		// blank. Resolution is capped at 2 either way (a 3x canvas costs a lot
+		// of GPU memory for no visible gain).
+		const dpr = Math.min(devicePixelRatio.current ?? 1, 2);
+		const attempts = [
+			{ antialias: true, powerPreference: 'high-performance' as const, resolution: dpr },
+			{ antialias: false, powerPreference: 'default' as const, resolution: Math.min(dpr, 1.5) },
+			{ antialias: false, powerPreference: 'low-power' as const, resolution: 1 },
+		];
+		let lastError: unknown;
+		for (const opts of attempts) {
+			const app = new PIXI.Application<PIXI.Renderer<HTMLCanvasElement>>();
+			try {
+				await app.init({
+					autoDensity: true,
+					backgroundAlpha: 0,
+					hello: true,
+					multiView: false,
+					clearBeforeRender: true,
+					preference: 'webgl',
+					resizeTo: window,
+					...opts,
+				});
+				context.stateApp.pixiApplication = app;
+				lastError = undefined;
+				break;
+			} catch (error) {
+				lastError = error;
+				console.warn('Pixi init failed, retrying lighter', opts, error);
+				try { app.destroy(); } catch { /* ignore */ }
+			}
+		}
+		if (lastError) throw lastError;
 
 		wrap.appendChild(context.stateApp.pixiApplication.canvas);
 
