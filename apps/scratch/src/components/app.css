@@ -3753,3 +3753,37 @@ button:disabled {
 .dev-menu button { padding: 5px 8px; border-radius: 5px; border: 1px solid #7a5a2e; background: #2a1a0b; color: #f3e6c8; font-size: 12px; text-align: left; cursor: pointer; }
 .dev-menu button:hover:not(:disabled) { background: #4a2d16; }
 .dev-menu button:disabled { opacity: 0.4; }
+
+.bonus-total {
+	position: absolute;
+	top: 96%;
+	left: 50%;
+	translate: -50% 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0.2em 0.8em 0.25em;
+	border-radius: 10px;
+	white-space: nowrap;
+	background: linear-gradient(180deg, rgba(40, 24, 10, 0.95), rgba(16, 9, 3, 0.95));
+	border: 2px solid #c9a227;
+	box-shadow: 0 0 12px rgba(242, 199, 68, 0.45), 0 4px 8px rgba(0, 0, 0, 0.6);
+	font-size: 15px;
+	line-height: 1.05;
+}
+.bonus-medallion.mobile .bonus-total { font-size: 12px; }
+.bonus-total small {
+	font-family: 'Cinzel', Georgia, serif;
+	font-weight: 900;
+	font-size: 0.62em;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #f3e6c8;
+}
+.bonus-total span {
+	font-family: var(--font-display);
+	font-size: 1.25em;
+	color: #ffd75e;
+	text-shadow: 0 2px 0 #3a1f08, 0 0 8px rgba(255, 170, 40, 0.7);
+	animation: tally-bump 0.5s cubic-bezier(0.3, 2, 0.5, 1);
+}

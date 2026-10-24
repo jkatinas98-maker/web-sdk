@@ -1453,6 +1453,13 @@
 				<span class="bonus-medallion-mult" style={fitText(mt, 34, 3)}>{mt}</span>
 			{/key}
 		</div>
+		<!-- Running total won during the bonus -->
+		<div class="bonus-total">
+			<small>Bonus win</small>
+			{#key bonusWinSum}
+				<span>{money(bonusWinSum)}</span>
+			{/key}
+		</div>
 	</div>
 {/if}
 
