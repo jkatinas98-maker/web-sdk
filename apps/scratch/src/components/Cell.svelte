@@ -361,18 +361,6 @@
 			onpointerup={interactive ? handleReveal : undefined}
 		>
 			<Graphics draw={drawHitArea} />
-			<Text
-				anchor={0.5}
-				y={size * 0.34}
-				text="SCRATCH"
-				style={{
-					fontFamily: 'Cinzel, Georgia, serif',
-					fontWeight: '900',
-					fontSize: size * 0.095,
-					letterSpacing: 1.5,
-					fill: 0x3d2614,
-				}}
-			/>
 		</Container>
 	{/if}
 </Container>
