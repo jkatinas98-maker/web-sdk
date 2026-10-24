@@ -3829,3 +3829,19 @@ button:disabled {
 .match-bar-icon { left: 18.6%; top: 48.8%; width: 13.5%; }
 .match-bar-text { left: 30.5%; right: 12.5%; top: 24%; bottom: 24%; }
 .match-bar .shine { left: 27%; right: 11%; top: 23%; bottom: 23%; border-radius: 0 999px 999px 0; }
+/* Barrel Blast: fixed barrel width so all three always fit on screen */
+.barrel-row {
+	width: auto;
+	max-width: 100vw;
+	gap: clamp(8px, 3vw, 40px);
+	justify-content: center;
+}
+.barrel {
+	flex: 0 0 auto;
+	width: min(24vw, 30vh, 270px);
+	max-width: none;
+}
+@media (max-aspect-ratio: 4/5) {
+	.barrel-row { gap: 3vw; width: auto; }
+	.barrel { width: 27vw; max-width: none; }
+}
