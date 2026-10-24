@@ -415,6 +415,13 @@
 			octoCardDone = true;
 			octoWinSum += card.win;
 			winningSymbols = findWinningSymbols(card.panels);
+			// During free scratches each Octopus card's win feeds the bonus
+			// multiplier straight away, so the medallion ticks up live (the
+			// exact book total is set again when the feature finishes).
+			if (bonusActive && roundIsFree && card.win > 0 && betAmount > 0) {
+				bonusMult = Math.round((bonusMult + card.win / betAmount) * 100) / 100;
+				playSound('bonusCoins');
+			}
 			playSound(card.win > 0 ? 'win' : 'click');
 			clearTimeout(featureTimer);
 			featureTimer = setTimeout(() => {
